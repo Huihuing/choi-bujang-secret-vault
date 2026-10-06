@@ -1,79 +1,78 @@
-# BYTE BACK 방어전 시작 틀 R5
+# BYTE BACK 방어전 · 3단계 저장점
 
-이 저장소는 1단계에서 학생 본인이 GitHub 저장소와 Vercel 배포를 만드는 출발점입니다. 포함된 메모 네 건은 가상 자료입니다. 실제 학생 자료, 토큰, 비밀키를 넣지 마세요.
+현재 단계는 **3단계 「진짜 로그인을 붙입니다」**입니다. 2단계에서 Supabase로 옮긴 가상 메모는 계속 서버에서만 읽고, 이제 Supabase Auth 로그인 토큰을 서버가 직접 검증합니다.
 
-## 학생이 하는 일: 세 걸음
+## 현재 동작
 
-1. GitHub 계정을 만듭니다.
-2. 방어전 1단계 카드의 **Deploy** 버튼을 누릅니다. Vercel에 GitHub로 로그인하고, 새 저장소가 **본인 계정의 Public 저장소**인지 확인한 뒤 Deploy를 누릅니다.
-3. 배포가 끝나면 화면에 나온 `https://…vercel.app` 주소를 방어전 1단계 카드에 붙여넣고 제출합니다. 저장소 주소나 설정 파일은 적지 않습니다.
+- 이메일·비밀번호 로그인/로그아웃은 Supabase Auth 공식 SDK를 사용합니다.
+- `GET /api/notes`와 메모 CRUD API는 로그인 토큰이 없거나 검증에 실패하면 자료 없이 JSON 오류로 거부합니다.
+- 로그인한 사용자는 서버 API를 통해 가상 메모를 추가·수정·삭제할 수 있고, 새 메모의 `owner_id`는 서버가 검증한 사용자 ID로 저장합니다.
+- 3단계에서는 아직 소유자 검사를 하지 않으므로 다른 로그인 사용자가 메모 ID를 알면 접근할 수 있습니다. 이 허점은 4단계 대상입니다.
+- 브라우저에는 서버 전용 `SUPABASE_SECRET_KEY`를 넣지 않습니다. 로그인용 Project URL과 Publishable Key만 공개 설정으로 사용합니다.
 
-배포가 끝나면 `/`에서 점령된 가상 자료실을 볼 수 있습니다. `/data.json`에는 같은 가상 메모가 공개됩니다. 이 공개 상태를 확인하는 것이 1단계의 출발점입니다. 1단계 접수와 심판 판정은 포털에서 확인합니다.
+## 인증과 API 계약
 
-## 시작 틀의 자동 처리
+`src/verify-login.mjs`는 시작 틀의 파일을 그대로 사용합니다. 브라우저가 임의로 보낸 `userId`나 `role`은 신뢰하지 않고, 검증된 로그인 결과의 사용자 ID만 서버가 사용합니다.
 
-`vercel.json`은 정적 결과물 `public`을 배포합니다. 빌드 명령 `npm run build`는 Vercel이 제공하는 GitHub 저장소 소유자·이름, 커밋 SHA, 배포 URL을 검증하고 `public/aleph.json`을 생성합니다. 이 값이 없으면 빌드가 실패하므로, 성공한 것처럼 빈 주소를 내보내지 않습니다. `aleph.json`의 내용만으로 저장소 소유권이나 방어 성공을 인정하지 않습니다. 심판이 공개 저장소의 실제 커밋과 배포된 자료를 따로 대조해야 합니다.
+`aleph.config.json.identityProvider`에는 Supabase Auth의 issuer, audience, JWKS URL만 기록하며 비밀 키는 넣지 않습니다.
 
-`aleph.config.json`의 `repoUrl`과 `publicAppUrl`은 이전 제출 묶음 방식의 자리표시자입니다. 1단계에서는 학생이 편집하지 않습니다. 2단계 이후 코딩 도구가 필요한 설정과 보호 기능을 단계별로 작성합니다. `npm run bundle`과 `bundle-notes.json`도 1단계의 세 걸음에는 포함되지 않습니다.
+`aleph.config.json.allowedRoutes`:
 
-로컬에서 가상 화면만 확인할 때는 `npm run build -- --local`을 사용합니다. 로컬 실행은 Vercel 배포나 심판 접수를 증명하지 않습니다. 저장소의 `src/attack-check.mjs`는 실제 배포가 된 뒤 `/data.json`을 비로그인으로 요청해 공개 가상 메모의 확인 표시를 읽습니다.
-
-## 다음 단계의 코딩 도구에 전달할 규칙
-
-[AGENTS.md](AGENTS.md)를 먼저 읽히고 한 번에 한 제작 단위만 요청하세요. 2단계부터는 자료 보호를 구현할 때 `public/data.json`을 복사하는 1단계 빌드 흐름도 함께 바꿔야 합니다. 3단계 이후의 로그인, 허용 경로, 5단계의 원본 API 주소, 6단계 이후 정책 규칙은 해당 단계 원고와 계약에 맞춰 추가합니다. 비밀번호·토큰·서버 전용 키·실제 학생 기록을 코드, Git, 제출 묶음에 넣지 않습니다.
-
-`src/decider.mjs`와 `src/detect.mjs`의 로컬 시험은 반 엔진이나 운영 심판의 결과가 아닙니다. 1단계 이후 제출 묶음 계약 `aleph.defense.submission.v2`는 `scripts/bundle.mjs`에 남아 있으며, 코딩 도구가 해당 단계의 최신 배포 주소와 Git 원격을 맞춘 뒤 사용합니다.
-
-
-## 2단계 · 자료를 코드 밖으로 옮깁니다
-
-정적 `data.json`에는 더 이상 가상 메모 본문을 두지 않습니다. 화면은 Vercel의 `/api/notes` 서버 함수를 호출하고, 서버 함수가 학습용 Supabase의 `notes` 테이블에서 자료를 읽습니다.
-
-서버 함수는 `SUPABASE_URL`과 서버 전용 `SUPABASE_SECRET_KEY`를 Vercel 환경변수에서만 읽습니다. 이 값은 브라우저 파일, API 응답, 로그에 넣지 않습니다.
-
-현재 남은 약점: 2단계의 `/api/notes` 주소에는 아직 사용자 인증이 없으므로 누구나 직접 호출할 수 있습니다. 이 단계에서는 가상 자료만 유지하고, 다음 단계에서 접근 제어를 추가해야 합니다.
-
-
-### 2단계 확인 절차와 현재 결과
-
-최신 GitHub 파일에 1단계의 가상 메모 본문이 남아 있는지는, 이전 1단계 커밋의 `data.json`에서 검사 문자열을 메모리로 읽어 현재 `HEAD`와 대조합니다. 검사할 문장 자체를 README나 새 스크립트에 다시 적지 않습니다.
-
-```powershell
-$old = git show 0f9a3c9d23b9eead50b8c03ac78c8a61a7efb7fd:data.json | ConvertFrom-Json
-foreach ($note in $old.notes) {
-  git grep -n -F -- $note.content HEAD -- .
-}
+```text
+/api/notes
+/api/notes/:id
 ```
 
-정상 결과는 출력이 없는 것입니다. 현재 GitHub `main`에서 이전 가상 메모 본문 네 건을 대조한 결과 모두 0건이었습니다.
+실제 자료 메서드:
 
-현재 배포의 정적 응답도 같은 방식으로 `/`, `/data.json`, `/aleph.json`을 묶어 이전 메모 본문과 대조합니다.
-
-```powershell
-$DEPLOY_URL = "https://choi-bujang-secret-vault-jwnp.vercel.app"
-$old = git show 0f9a3c9d23b9eead50b8c03ac78c8a61a7efb7fd:data.json | ConvertFrom-Json
-$deployed = @(
-  (Invoke-WebRequest "$DEPLOY_URL/").Content
-  (Invoke-WebRequest "$DEPLOY_URL/data.json").Content
-  (Invoke-WebRequest "$DEPLOY_URL/aleph.json").Content
-) -join "`n"
-
-for ($i = 0; $i -lt $old.notes.Count; $i++) {
-  "memo-$($i + 1): $($deployed.Contains($old.notes[$i].content))"
-}
+```text
+GET    /api/notes
+POST   /api/notes
+GET    /api/notes/:id
+PUT    /api/notes/:id
+DELETE /api/notes/:id
 ```
 
-정상 결과는 네 항목이 모두 `False`인 것입니다. 현재 배포에서는 세 정적 경로에서 이전 메모 본문이 확인되지 않았고, `/data.json`은 `notes: []` 상태입니다.
+POST 요청은 `{ id?, title, body }`를 받습니다. id가 없으면 서버가 UUID를 생성해 응답의 `{ id }`로 돌려줍니다. 한 건 GET은 `{ id, title, body }`이고 삭제된 id를 다시 GET하면 404가 정상입니다.
 
-공개 API의 남은 약점은 별개입니다. `/api/notes`에는 아직 사용자 인증 검사가 없으므로 서버 환경변수와 DB 연결이 준비되면 누구나 직접 호출할 수 있습니다. 현재 배포에서는 서버 환경변수가 아직 설정되지 않아 `503 server_not_configured`를 반환하지만, 이것을 접근 제어가 된 것으로 간주하지 않습니다.
+## 현재 직접 확인
 
-또한 최신 GitHub 파일과 최신 정적 배포에서 메모 본문을 제거했더라도 1단계의 공개 커밋과 이전 Vercel 배포 이력은 남아 있습니다. 따라서 **현재 버전에서 정적 노출을 제거했을 뿐, 과거 공개 노출이 해소됐다고 기록하지 않습니다.**
+무로그인 요청은 다음처럼 거부되는 것을 확인했습니다.
 
+```text
+GET /api/notes
+HTTP 401
+{"error":"authentication_required"}
+```
 
-## 2단계 저장점
+POST와 `/api/notes/:id` 무로그인 요청도 같은 방식으로 401 JSON 오류를 반환합니다.
 
-현재 정적 `/data.json`에는 메모가 0건이며, 화면은 `/api/notes` 서버 함수에서 자료를 읽도록 전환했습니다. 서버 함수는 `SUPABASE_URL`과 `SUPABASE_SECRET_KEY`의 값 자체를 코드에 두지 않고 Vercel 환경변수에서만 읽습니다.
+100점 추가 조건도 현재 배포에서 확인했습니다.
 
-로컬에서 정적 빌드 흐름만 다시 확인하려면 `npm run build -- --local`을 실행합니다. 실제 서버 자료 조회는 Vercel에 두 환경변수를 직접 등록하고 학습용 Supabase의 `notes` 테이블을 준비한 뒤 Production을 다시 배포해 확인합니다.
+- 로그인 없이 메모 목록 요청 → 401 JSON 오류
+- `/aleph.json` → HTTP 200, step 3
+- 첫 화면 → `X-Content-Type-Options: nosniff`
 
-현재 Vercel 프로젝트에는 두 Supabase 환경변수가 아직 등록되지 않아 `/api/notes`가 503을 반환합니다. 이는 접근 제어 성공이 아니라 서버 설정 미완료 상태이며, 환경변수 설정 후에도 3단계 전까지 API 주소 자체는 인증 없이 공개된다는 약점이 남습니다.
+A 계정의 실제 비밀번호를 도구에 전달하지 않았으므로, **A 로그인 → 추가 → 수정 → 삭제의 브라우저 E2E는 학생이 직접 확인해야 합니다.** 정상이라면 로그인 뒤 메모 카드와 추가 폼이 보이고, 추가·수정·삭제 결과가 새로고침된 목록에 반영됩니다.
+
+## 정적 자료와 과거 공개 이력
+
+`/data.json`은 계속 `notes: []`만 유지하며 1단계 확인 표시와 메모 본문을 다시 넣지 않습니다. 현재 GitHub 최신 파일과 최신 정적 배포에서 메모 본문을 제거했더라도, 1단계의 공개 커밋과 이전 Vercel 배포 이력은 남아 있습니다. 따라서 과거 공개 노출이 삭제되거나 해소됐다고 기록하지 않습니다.
+
+## 다시 실행
+
+로컬 정적 빌드:
+
+```powershell
+npm run build -- --local
+```
+
+무로그인 거부 확인:
+
+```powershell
+curl.exe -i https://choi-bujang-secret-vault-jwnp.vercel.app/api/notes
+```
+
+정상 결과는 401 또는 403과 JSON 오류이며, 로그인한 A 계정은 배포 화면에서 메모를 읽고 CRUD할 수 있어야 합니다.
+
+제출 묶음은 저장점 커밋 뒤 `npm run bundle`로 생성합니다. `bundle-notes.json`과 `artifacts/submission.json`은 Git에 커밋하지 않습니다.
