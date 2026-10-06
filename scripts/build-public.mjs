@@ -17,14 +17,14 @@ await mkdir(resolve(root, 'public'), { recursive: true });
 if (config.step === 1) {
   await copyFile(source, output);
   console.log('1단계 실습용 공개 자료를 public/data.json에 복사했습니다.');
-} else if (config.step === 2 || config.step === 3) {
+} else if (config.step >= 2 && config.step <= 4) {
   if (data.notes.length !== 0) {
     throw new Error('2단계 이후에는 정적 data.json에 메모를 남기지 마세요.');
   }
   await writeFile(output, `${JSON.stringify({ notes: [] }, null, 2)}\n`, 'utf8');
-  console.log('2~3단계 정적 data.json은 메모와 1단계 확인 표시 없이 유지합니다.');
+  console.log('2~4단계 정적 data.json은 메모와 1단계 확인 표시 없이 유지합니다.');
 } else {
-  throw new Error('현재 빌드 흐름은 1~3단계까지만 준비되어 있습니다.');
+  throw new Error('현재 빌드 흐름은 1~4단계까지만 준비되어 있습니다.');
 }
 
 if (!process.argv.includes('--local')) {

@@ -64,6 +64,20 @@ async function context(request, response) {
   return { supabase, login };
 }
 
+async function loadNote(supabase, id) {
+  const { data, error } = await supabase
+    .from('notes')
+    .select('id,owner_id,title,content')
+    .eq('id', id)
+    .maybeSingle();
+
+  return { data, error };
+}
+
+function denyOtherOwner(response) {
+  return sendJson(response, 403, { error: 'note_forbidden' });
+}
+
 export default async function handler(request, response) {
   if (!['GET', 'PUT', 'DELETE'].includes(request.method)) {
     response.setHeader('Allow', 'GET, PUT, DELETE');
@@ -76,33 +90,41 @@ export default async function handler(request, response) {
   const ctx = await context(request, response);
   if (!ctx) return;
 
-  if (request.method === 'GET') {
-    const { data, error } = await ctx.supabase
-      .from('notes')
-      .select('id,title,content')
-      .eq('id', id)
-      .maybeSingle();
+  const current = await loadNote(ctx.supabase, id);
+  if (current.error) return sendJson(response, 500, { error: 'notes_unavailable' });
+  if (!current.data) return sendJson(response, 404, { error: 'note_not_found' });
+  if (current.data.owner_id !== ctx.login.userId) return denyOtherOwner(response);
 
-    if (error) return sendJson(response, 500, { error: 'notes_unavailable' });
-    if (!data) return sendJson(response, 404, { error: 'note_not_found' });
-    return sendJson(response, 200, { id: data.id, title: data.title, body: data.content });
+  if (request.method === 'GET') {
+    return sendJson(response, 200, {
+      id: current.data.id,
+      title: current.data.title,
+      body: current.data.content,
+    });
   }
 
   if (request.method === 'PUT') {
     const body = parseBody(request);
-    const title = cleanText(body?.title, 120);
-    const noteBody = cleanText(body?.body, 4000);
+    if (!body || Object.keys(body).sort().join(',') !== 'body,title') {
+      return sendJson(response, 400, { error: 'invalid_note' });
+    }
+
+    const title = cleanText(body.title, 120);
+    const noteBody = cleanText(body.body, 4000);
     if (!title || !noteBody) return sendJson(response, 400, { error: 'invalid_note' });
 
     const { data, error } = await ctx.supabase
       .from('notes')
       .update({ title, content: noteBody })
       .eq('id', id)
-      .select('id,title,content')
+      .eq('owner_id', ctx.login.userId)
+      .select('id,owner_id,title,content')
       .maybeSingle();
 
     if (error) return sendJson(response, 500, { error: 'note_update_failed' });
-    if (!data) return sendJson(response, 404, { error: 'note_not_found' });
+    if (!data) return sendJson(response, 403, { error: 'note_forbidden' });
+    if (data.owner_id !== ctx.login.userId) return denyOtherOwner(response);
+
     return sendJson(response, 200, { id: data.id, title: data.title, body: data.content });
   }
 
@@ -110,10 +132,13 @@ export default async function handler(request, response) {
     .from('notes')
     .delete()
     .eq('id', id)
-    .select('id')
+    .eq('owner_id', ctx.login.userId)
+    .select('id,owner_id')
     .maybeSingle();
 
   if (error) return sendJson(response, 500, { error: 'note_delete_failed' });
-  if (!data) return sendJson(response, 404, { error: 'note_not_found' });
+  if (!data) return sendJson(response, 403, { error: 'note_forbidden' });
+  if (data.owner_id !== ctx.login.userId) return denyOtherOwner(response);
+
   return sendJson(response, 200, { id: data.id });
 }

@@ -35,7 +35,7 @@
 </head>
 <body>
   <main>
-    <div class="eyebrow">BYTE BACK · 3단계 진짜 로그인</div>
+    <div class="eyebrow">BYTE BACK · 4단계 내 자료만</div>
     <h1>서버 자료실</h1>
     <p>로그인한 사용자는 서버 API를 통해 가상 메모를 읽고 추가·수정·삭제할 수 있습니다.</p>
 
@@ -59,7 +59,7 @@
       </form>
     </section>
 
-    <div class="notice">현재 3단계는 로그인 여부만 검사합니다. 메모 소유자 검사는 아직 하지 않으므로 다른 로그인 사용자가 메모 ID를 알면 접근할 수 있는 허점은 4단계에서 막습니다.</div>
+    <div class="notice">현재 4단계는 서버가 검증한 사용자 ID와 메모 owner_id를 비교해 본인 메모만 읽고 수정·삭제하도록 제한합니다.</div>
     <ul id="notes" aria-live="polite"><li>로그인 상태를 확인하는 중입니다.</li></ul>
   </main>
 

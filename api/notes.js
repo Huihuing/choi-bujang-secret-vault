@@ -32,6 +32,10 @@ function cleanText(value, max) {
     ? value.trim() : null;
 }
 
+function hasOnlyKeys(body, allowed) {
+  return body && Object.keys(body).every(key => allowed.includes(key));
+}
+
 async function context(request, response) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
@@ -74,6 +78,7 @@ export default async function handler(request, response) {
     const { data, error } = await ctx.supabase
       .from('notes')
       .select('id,title,content,created_at')
+      .eq('owner_id', ctx.login.userId)
       .order('created_at', { ascending: true })
       .order('id', { ascending: true });
 
@@ -85,6 +90,10 @@ export default async function handler(request, response) {
   }
 
   const body = parseBody(request);
+  if (!hasOnlyKeys(body, ['id', 'title', 'body'])) {
+    return sendJson(response, 400, { error: 'invalid_note' });
+  }
+
   const title = cleanText(body?.title, 120);
   const noteBody = cleanText(body?.body, 4000);
   const id = body?.id === undefined || body?.id === null || body?.id === ''
