@@ -14,6 +14,19 @@ function appUrl(config) {
   return app;
 }
 
+function originalApiUrl(config) {
+  let url;
+  try {
+    url = new URL(config.originalApiUrl);
+  } catch {
+    throw new Error('aleph.config.json의 원본 자료 API 주소를 확인해 주세요.');
+  }
+  if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) {
+    throw new Error('원본 자료 API는 쿼리 없는 HTTPS 주소여야 합니다.');
+  }
+  return url;
+}
+
 async function jsonOrNull(response) {
   try { return await response.json(); } catch { return null; }
 }
@@ -30,7 +43,8 @@ async function standardChecks(app, step) {
     redirect: 'error', signal: AbortSignal.timeout(10000),
   });
   const identity = identityResponse.ok ? await jsonOrNull(identityResponse) : null;
-  const identityOk = identityResponse.ok && identity?.step === step;
+  const routesOk = step < 5 || (Array.isArray(identity?.allowedRoutes) && identity.allowedRoutes.length > 0);
+  const identityOk = identityResponse.ok && identity?.step === step && routesOk;
 
   const rootResponse = await fetch(new URL('/', app), {
     method: 'HEAD', redirect: 'error', signal: AbortSignal.timeout(10000),
@@ -79,7 +93,7 @@ export async function runAttackChecks(config) {
     ];
   }
 
-  if (config.step === 3 || config.step === 4) {
+  if (config.step >= 3 && config.step <= 5) {
     const checks = await standardChecks(app, config.step);
     const attempts = [
       { attackId: 'anonymous_notes_denied',
@@ -88,9 +102,11 @@ export async function runAttackChecks(config) {
           ? `비로그인 메모 목록이 JSON 오류로 거부됨 (HTTP ${checks.apiResponse.status})`
           : `비로그인 거부 확인 필요 (HTTP ${checks.apiResponse.status})` },
       { attackId: `deployment_identity_step${config.step}`,
-        expected: `배포 /aleph.json이 열리고 step ${config.step}이어야 함`,
+        expected: config.step >= 5
+          ? `배포 /aleph.json이 열리고 step ${config.step} 및 allowedRoutes가 있어야 함`
+          : `배포 /aleph.json이 열리고 step ${config.step}이어야 함`,
         observed: checks.identityOk
-          ? `배포 /aleph.json에서 step ${config.step} 확인`
+          ? `배포 /aleph.json에서 step ${config.step}${config.step >= 5 ? ' 및 allowedRoutes' : ''} 확인`
           : `배포 식별 정보 확인 필요 (HTTP ${checks.identityResponse.status})` },
       { attackId: 'first_page_security_header',
         expected: '첫 화면에 nosniff 또는 Content-Security-Policy 헤더가 있어야 함',
@@ -105,8 +121,7 @@ export async function runAttackChecks(config) {
       const publicConfig = publicConfigResponse.ok ? await jsonOrNull(publicConfigResponse) : null;
       let anonStatus = 0;
       if (typeof publicConfig?.url === 'string' && typeof publicConfig?.publishableKey === 'string') {
-        const dataApi = new URL('/rest/v1/notes?select=id&limit=1', publicConfig.url);
-        const direct = await fetch(dataApi, {
+        const direct = await fetch(new URL('/rest/v1/notes?select=id&limit=1', publicConfig.url), {
           headers: { apikey: publicConfig.publishableKey },
           redirect: 'error', signal: AbortSignal.timeout(10000),
         });
@@ -118,6 +133,43 @@ export async function runAttackChecks(config) {
         observed: [401, 403].includes(anonStatus)
           ? `anon 직접 Data API 요청이 거부됨 (HTTP ${anonStatus})`
           : `anon 직접 Data API 차단 확인 필요 (HTTP ${anonStatus || '확인불가'})`,
+      });
+    }
+
+    if (config.step === 5) {
+      const publicConfigResponse = await fetch(new URL('/api/public-config', app), {
+        redirect: 'error', signal: AbortSignal.timeout(10000),
+      });
+      const publicConfig = publicConfigResponse.ok ? await jsonOrNull(publicConfigResponse) : null;
+      let directStatus = 0;
+      if (typeof publicConfig?.publishableKey === 'string') {
+        const direct = await fetch(originalApiUrl(config), {
+          headers: { apikey: publicConfig.publishableKey },
+          redirect: 'error', signal: AbortSignal.timeout(10000),
+        });
+        directStatus = direct.status;
+      }
+      attempts.push({
+        attackId: 'original_data_api_denied',
+        expected: '공개 키로 원본 자료 주소를 직접 호출하면 메모 자료 없이 거부되어야 함',
+        observed: [401, 403].includes(directStatus)
+          ? `원본 자료 직접 요청이 거부됨 (HTTP ${directStatus})`
+          : `원본 자료 직접 접근 차단 확인 필요 (HTTP ${directStatus || '확인불가'})`,
+      });
+
+      const sourceResponse = await fetch(new URL('/', app), {
+        redirect: 'error', signal: AbortSignal.timeout(10000),
+      });
+      const source = sourceResponse.ok ? await sourceResponse.text() : '';
+      const hasPublishableLiteral = /sb_publishable_[A-Za-z0-9_-]+/u.test(source);
+      const hasAnonJwtLiteral = /eyJ[A-Za-z0-9_-]{12,}\.eyJ[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{8,}/u.test(source);
+      const sourceSafe = sourceResponse.ok && !hasPublishableLiteral && !hasAnonJwtLiteral;
+      attempts.push({
+        attackId: 'browser_source_has_no_supabase_key',
+        expected: '첫 화면 HTML 소스에 Supabase publishable/anon 키 문자열이 없어야 함',
+        observed: sourceSafe
+          ? '첫 화면 HTML 소스에서 Supabase 공개 키 문자열이 발견되지 않음'
+          : `첫 화면 공개 키 문자열 확인 필요 (HTTP ${sourceResponse.status})`,
       });
     }
 
