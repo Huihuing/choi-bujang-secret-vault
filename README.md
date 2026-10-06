@@ -23,3 +23,57 @@
 [AGENTS.md](AGENTS.md)를 먼저 읽히고 한 번에 한 제작 단위만 요청하세요. 2단계부터는 자료 보호를 구현할 때 `public/data.json`을 복사하는 1단계 빌드 흐름도 함께 바꿔야 합니다. 3단계 이후의 로그인, 허용 경로, 5단계의 원본 API 주소, 6단계 이후 정책 규칙은 해당 단계 원고와 계약에 맞춰 추가합니다. 비밀번호·토큰·서버 전용 키·실제 학생 기록을 코드, Git, 제출 묶음에 넣지 않습니다.
 
 `src/decider.mjs`와 `src/detect.mjs`의 로컬 시험은 반 엔진이나 운영 심판의 결과가 아닙니다. 1단계 이후 제출 묶음 계약 `aleph.defense.submission.v2`는 `scripts/bundle.mjs`에 남아 있으며, 코딩 도구가 해당 단계의 최신 배포 주소와 Git 원격을 맞춘 뒤 사용합니다.
+
+
+## 2단계 · 자료를 코드 밖으로 옮깁니다
+
+정적 `data.json`에는 더 이상 가상 메모 본문을 두지 않습니다. 화면은 Vercel의 `/api/notes` 서버 함수를 호출하고, 서버 함수가 학습용 Supabase의 `notes` 테이블에서 자료를 읽습니다.
+
+서버 함수는 `SUPABASE_URL`과 서버 전용 `SUPABASE_SECRET_KEY`를 Vercel 환경변수에서만 읽습니다. 이 값은 브라우저 파일, API 응답, 로그에 넣지 않습니다.
+
+현재 남은 약점: 2단계의 `/api/notes` 주소에는 아직 사용자 인증이 없으므로 누구나 직접 호출할 수 있습니다. 이 단계에서는 가상 자료만 유지하고, 다음 단계에서 접근 제어를 추가해야 합니다.
+
+
+### 2단계 확인 절차와 현재 결과
+
+최신 GitHub 파일에 1단계의 가상 메모 본문이 남아 있는지는, 이전 1단계 커밋의 `data.json`에서 검사 문자열을 메모리로 읽어 현재 `HEAD`와 대조합니다. 검사할 문장 자체를 README나 새 스크립트에 다시 적지 않습니다.
+
+```powershell
+$old = git show 0f9a3c9d23b9eead50b8c03ac78c8a61a7efb7fd:data.json | ConvertFrom-Json
+foreach ($note in $old.notes) {
+  git grep -n -F -- $note.content HEAD -- .
+}
+```
+
+정상 결과는 출력이 없는 것입니다. 현재 GitHub `main`에서 이전 가상 메모 본문 네 건을 대조한 결과 모두 0건이었습니다.
+
+현재 배포의 정적 응답도 같은 방식으로 `/`, `/data.json`, `/aleph.json`을 묶어 이전 메모 본문과 대조합니다.
+
+```powershell
+$DEPLOY_URL = "https://choi-bujang-secret-vault-jwnp.vercel.app"
+$old = git show 0f9a3c9d23b9eead50b8c03ac78c8a61a7efb7fd:data.json | ConvertFrom-Json
+$deployed = @(
+  (Invoke-WebRequest "$DEPLOY_URL/").Content
+  (Invoke-WebRequest "$DEPLOY_URL/data.json").Content
+  (Invoke-WebRequest "$DEPLOY_URL/aleph.json").Content
+) -join "`n"
+
+for ($i = 0; $i -lt $old.notes.Count; $i++) {
+  "memo-$($i + 1): $($deployed.Contains($old.notes[$i].content))"
+}
+```
+
+정상 결과는 네 항목이 모두 `False`인 것입니다. 현재 배포에서는 세 정적 경로에서 이전 메모 본문이 확인되지 않았고, `/data.json`은 `notes: []` 상태입니다.
+
+공개 API의 남은 약점은 별개입니다. `/api/notes`에는 아직 사용자 인증 검사가 없으므로 서버 환경변수와 DB 연결이 준비되면 누구나 직접 호출할 수 있습니다. 현재 배포에서는 서버 환경변수가 아직 설정되지 않아 `503 server_not_configured`를 반환하지만, 이것을 접근 제어가 된 것으로 간주하지 않습니다.
+
+또한 최신 GitHub 파일과 최신 정적 배포에서 메모 본문을 제거했더라도 1단계의 공개 커밋과 이전 Vercel 배포 이력은 남아 있습니다. 따라서 **현재 버전에서 정적 노출을 제거했을 뿐, 과거 공개 노출이 해소됐다고 기록하지 않습니다.**
+
+
+## 2단계 저장점
+
+현재 정적 `/data.json`에는 메모가 0건이며, 화면은 `/api/notes` 서버 함수에서 자료를 읽도록 전환했습니다. 서버 함수는 `SUPABASE_URL`과 `SUPABASE_SECRET_KEY`의 값 자체를 코드에 두지 않고 Vercel 환경변수에서만 읽습니다.
+
+로컬에서 정적 빌드 흐름만 다시 확인하려면 `npm run build -- --local`을 실행합니다. 실제 서버 자료 조회는 Vercel에 두 환경변수를 직접 등록하고 학습용 Supabase의 `notes` 테이블을 준비한 뒤 Production을 다시 배포해 확인합니다.
+
+현재 Vercel 프로젝트에는 두 Supabase 환경변수가 아직 등록되지 않아 `/api/notes`가 503을 반환합니다. 이는 접근 제어 성공이 아니라 서버 설정 미완료 상태이며, 환경변수 설정 후에도 3단계 전까지 API 주소 자체는 인증 없이 공개된다는 약점이 남습니다.
