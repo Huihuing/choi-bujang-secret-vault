@@ -26,7 +26,11 @@
 npm run xdr:run -- brute-force
 ```
 
-실제 Node 22 격리 환경 검증 결과는 `alerts=13 extracted=13`, `block=8 alert=3 record=2 normalEventBlocks=0`, `ZTNA_BRIDGE attack=true normal=false`였습니다. 기존 `npm run test:r5`도 2/2 통과했고 이번 변경 diff의 개인키/JWT/일반 토큰 형태 검사도 CLEAN이었습니다.
+실제 Node 22 격리 환경 검증 결과는 `alerts=28 extracted=28`, `block=10 alert=9 record=9 normalEventBlocks=0`이었습니다. 추가 `npm run xdr:test`는 3/3, 기존 `npm run test:r5`는 2/2 통과했고, `decide.mjs`를 형제 파일 없이 data URL로 독립 로드한 검사도 `10/9/9`로 통과했습니다.
+
+### X01_CLEAR_NOT_BLOCKED 보완
+
+심판의 `X01_CLEAR_NOT_BLOCKED` 피드백에 따라 `decide(alert)`가 raw Wazuh의 `rule.mitre`, `rule.level`, `data.count`, `data.accounts`를 직접 읽도록 수정했습니다. 명확한 T1110 상관 경보는 문구 하나에 의존하지 않고 block하며, 낮은 수준·횟수의 T1110은 alert, 일반 이벤트는 record로 유지합니다. 심판 격리 실행에서 형제 파일이 없어도 동작하도록 `decide.mjs`의 파일 읽기/import-time 의존성도 제거했습니다. 공개 기준 fixture 28건에서 정답 분포 `block 10 / alert 9 / record 9`를 재현했습니다.
 
 ## 서버 API와 원본 자료 주소
 
