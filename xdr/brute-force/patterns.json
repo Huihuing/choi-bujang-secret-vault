@@ -1,14 +1,14 @@
 [
   {
-    "id": "same-source-failure-burst",
-    "name": "짧은 시간 같은 주소의 로그인 실패 연속",
-    "condition": "2분 안에 같은 출발 주소에서 로그인 실패가 8회 이상이고 Wazuh 규칙 수준이 8 이상인 경우",
-    "basis": "MITRE ATT&CK T1110은 같은 IP/사용자에서의 다수 인증 실패와 짧은 시간의 과도한 로그인 시도를 탐지 신호로 제시한다."
+    "id": "password-guessing",
+    "name": "password-guessing",
+    "condition": "MITRE T1110 분류, 유효한 출발 주소·시각, Wazuh 수준 10 이상이며 상관 로그인 실패가 20건 이상인 경우",
+    "basis": "MITRE ATT&CK T1110/T1110.001은 반복적인 인증 정보 추측과 다수 인증 실패를 무차별 대입 신호로 다룬다."
   },
   {
-    "id": "multi-account-password-spray",
-    "name": "여러 계정 대상 비밀번호 스프레이",
-    "condition": "5분 안에 같은 출발 주소가 서로 다른 계정 3개 이상에 실패하며, 같은 비밀번호 사용 여부는 비밀값을 읽지 않고 Wazuh가 password-spray 신호를 명시한 경우에만 확정한다.",
-    "basis": "MITRE ATT&CK T1110.003은 짧은 시간 동안 사용자 풀 전체를 대상으로 하는 password spraying을 Brute Force의 하위 기법으로 분류한다."
+    "id": "password-spraying",
+    "name": "password-spraying",
+    "condition": "MITRE T1110 분류와 수준 10 이상에서 여러 계정 및 같은 비밀번호·규칙적 시도 증거가 있고 계정 집합 또는 상관 실패 수가 충분한 경우",
+    "basis": "MITRE ATT&CK T1110.003은 하나 또는 소수의 비밀번호를 여러 계정에 대입하는 password spraying을 무차별 대입 하위 기법으로 분류한다."
   }
 ]
