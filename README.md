@@ -1,4 +1,4 @@
-# BYTE BACK 방어전 · 5단계 저장점
+# BYTE BACK 방어전 · 5단계 + 보너스 XDR 저장점
 
 현재 단계는 **5단계 「자료 요청을 서버 한곳으로 모읍니다」**입니다. 4단계의 로그인·소유자 검사를 유지하면서, 브라우저의 메모 CRUD는 Vercel 서버 함수만 사용하고 Supabase Data API의 직접 테이블 권한은 회수했습니다.
 
@@ -9,6 +9,24 @@
 - 서버 함수는 시작 틀의 `src/verify-login.mjs`로 로그인 토큰을 확인하고, 검증된 userId와 `owner_id`를 비교합니다.
 - 새 메모의 `owner_id`도 서버가 검증한 userId로만 저장하며 URL·본문의 소유자 값은 신뢰하지 않습니다.
 - `public.notes`의 PUBLIC·anon·authenticated 직접 테이블 권한은 모두 회수했습니다.
+
+
+## 보너스 XDR-01 · 무차별 로그인 공격
+
+기존 5단계와 `src/decider.mjs`는 그대로 보존하고, `xdr/` 아래에 독립적인 무차별 로그인 공격 탐지 모듈을 추가했습니다. 시작 당시 저장소에 원래 `xdr/fixtures/brute-force.json`이 없어서 공개 제출용 합성 Wazuh 형태 fixture를 만들었으며 TEST-NET 주소와 가상 계정만 사용합니다.
+
+- `read-alerts.mjs`: 시각·출발 주소·계정·규칙 수준·설명만 추출하고 비밀값처럼 보이는 실제 값은 출력하지 않습니다.
+- `patterns.json`: MITRE ATT&CK T1110/T1110.003 근거의 같은 주소 실패 연속과 여러 계정 대상 password spraying 신호만 정의합니다.
+- `decide.mjs`: 확신도 0.85 이상 block, 0.5 이상 alert, 그 아래 record입니다. 애매한 경우에만 Jev를 확인하고 응답이 없으면 자동 차단하지 않고 alert로 처리합니다.
+- `ztna-bridge.mjs`: block 후보만 15분 만료의 거부 규칙으로 만들고 근거 경보 번호를 붙입니다. 현재 ZTNA 요청 계약에는 출발 IP가 없으므로 임의 필드를 `src/decider.mjs`에 추가하지 않고 바깥 집행 단계용 규칙 피드로 분리했습니다.
+
+다시 실행:
+
+```powershell
+npm run xdr:run -- brute-force
+```
+
+실제 Node 22 격리 환경 검증 결과는 `alerts=13 extracted=13`, `block=8 alert=3 record=2 normalEventBlocks=0`, `ZTNA_BRIDGE attack=true normal=false`였습니다. 기존 `npm run test:r5`도 2/2 통과했고 이번 변경 diff의 개인키/JWT/일반 토큰 형태 검사도 CLEAN이었습니다.
 
 ## 서버 API와 원본 자료 주소
 
