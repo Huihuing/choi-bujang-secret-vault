@@ -25,5 +25,7 @@ jobs:
       - run: npm ci
       - run: npm run xdr:run -- brute-force
       - run: npm run test:r5
-      - name: Generated XDR files are current
-        run: git diff --exit-code -- xdr/brute-force/result.json xdr/brute-force/deny-rules.json xdr/alerts.log
+      - name: Deterministic generated files are current
+        run: git diff --exit-code -- xdr/brute-force/result.json xdr/alerts.log
+      - name: Deny rule has a future expiry
+        run: node -e "const d=require('./xdr/brute-force/deny-rules.json'); if(!d.rules.length || d.rules.some(r => Date.parse(r.expiresAt) <= Date.now())) process.exit(1)"
