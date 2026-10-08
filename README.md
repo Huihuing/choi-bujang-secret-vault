@@ -1,4 +1,4 @@
-# BYTE BACK 방어전 · 5단계 + 보너스 XDR 저장점
+# BYTE BACK 방어전 · 5단계 + 보너스 XDR-01/XDR-02 저장점
 
 현재 단계는 **5단계 「자료 요청을 서버 한곳으로 모읍니다」**입니다. 4단계의 로그인·소유자 검사를 유지하면서, 브라우저의 메모 CRUD는 Vercel 서버 함수만 사용하고 Supabase Data API의 직접 테이블 권한은 회수했습니다.
 
@@ -31,6 +31,24 @@ npm run xdr:run -- brute-force
 ### X01_CLEAR_NOT_BLOCKED 보완
 
 심판의 `X01_CLEAR_NOT_BLOCKED` 피드백에 따라 `decide(alert)`가 raw Wazuh의 `rule.mitre`, `rule.level`, `data.count`, `data.accounts`를 직접 읽도록 수정했습니다. 명확한 T1110 상관 경보는 문구 하나에 의존하지 않고 block하며, 낮은 수준·횟수의 T1110은 alert, 일반 이벤트는 record로 유지합니다. 심판 격리 실행에서 형제 파일이 없어도 동작하도록 `decide.mjs`의 파일 읽기/import-time 의존성도 제거했습니다. 공개 기준 fixture 28건에서 정답 분포 `block 10 / alert 9 / record 9`를 재현했습니다.
+
+
+## 보너스 XDR-02 · 웹 주입 공격
+
+기존 5단계와 `src/decider.mjs`, XDR-01 규칙은 수정하지 않고 `xdr/web-injection/` 모듈을 추가했습니다. 공개 Wazuh 형태 fixture 26건에서 MITRE ATT&CK T1190 기반의 SQL 주입, 스크립트 주입, 경로 이탈, 명령 주입 신호를 판정합니다.
+
+- `read-alerts.mjs`: 시각·출발 주소·계정·규칙 수준·설명만 추출하며 비밀값처럼 보이는 설명은 가립니다.
+- `decide.mjs`: 반복된 고수준 T1190 경보만 자동 block 합니다. 단발·애매한 시도는 Jev 어댑터가 없거나 실패하면 alert, 정상 요청은 record입니다.
+- URL은 판정 중에만 최대 2048자로 제한하고 최대 두 번만 디코딩해 이중 인코딩 경로 이탈을 확인하며 로그에는 URL을 남기지 않습니다.
+- `connect.mjs`: block 후보만 15분 만료 규칙으로 만들고 각 규칙에 근거 경보 번호를 붙입니다. `src/xdr-decider.mjs`는 신뢰된 게이트웨이의 sourceIp를 별도 인자로 받아 기존 판정기 앞에 확인 단계를 추가합니다. 브라우저 요청 본문의 sourceIp는 신뢰하지 않습니다.
+
+다시 실행:
+
+```powershell
+npm run xdr:run -- web-injection
+```
+
+Node 22 격리 환경에서 `alerts=26 extracted=26`, `block=8 alert=9 record=9 normalEventBlocks=0`을 확인했습니다. `npm run xdr:test`는 XDR-01과 XDR-02 합계 7/7, 기존 `npm run test:r5`는 2/2 통과했습니다. encoded traversal, Jev 실패 fallback, 단발 고확신 모델 응답이 자동 block으로 승격되지 않는지, 명확한 공격만 거부 규칙이 되고 정상 baseline 요청은 통과하는지도 회귀 테스트로 확인했습니다.
 
 ## 서버 API와 원본 자료 주소
 
