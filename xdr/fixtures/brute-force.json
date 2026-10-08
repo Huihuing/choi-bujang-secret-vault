@@ -1,0 +1,18 @@
+{
+  "fixtureNote": "Public, synthetic Wazuh-shaped alerts. TEST-NET addresses only; no real credentials.",
+  "alerts": [
+    {"id":"bf-001","timestamp":"2026-10-08T00:00:00Z","data":{"srcip":"198.51.100.24","dstuser":"vault-owner"},"rule":{"level":10,"description":"sshd: Failed password for user","groups":["authentication_failed"]}},
+    {"id":"bf-002","timestamp":"2026-10-08T00:00:10Z","data":{"srcip":"198.51.100.24","dstuser":"vault-owner"},"rule":{"level":10,"description":"sshd: Failed password for user","groups":["authentication_failed"]}},
+    {"id":"bf-003","timestamp":"2026-10-08T00:00:20Z","data":{"srcip":"198.51.100.24","dstuser":"vault-owner"},"rule":{"level":10,"description":"sshd: Failed password for user","groups":["authentication_failed"]}},
+    {"id":"bf-004","timestamp":"2026-10-08T00:00:30Z","data":{"srcip":"198.51.100.24","dstuser":"vault-owner"},"rule":{"level":10,"description":"sshd: Failed password for user","groups":["authentication_failed"]}},
+    {"id":"bf-005","timestamp":"2026-10-08T00:00:40Z","data":{"srcip":"198.51.100.24","dstuser":"vault-owner"},"rule":{"level":10,"description":"sshd: Failed password for user","groups":["authentication_failed"]}},
+    {"id":"bf-006","timestamp":"2026-10-08T00:00:50Z","data":{"srcip":"198.51.100.24","dstuser":"vault-owner"},"rule":{"level":10,"description":"sshd: Failed password for user","groups":["authentication_failed"]}},
+    {"id":"bf-007","timestamp":"2026-10-08T00:01:00Z","data":{"srcip":"198.51.100.24","dstuser":"vault-owner"},"rule":{"level":10,"description":"sshd: Failed password for user","groups":["authentication_failed"]}},
+    {"id":"bf-008","timestamp":"2026-10-08T00:01:10Z","data":{"srcip":"198.51.100.24","dstuser":"vault-owner"},"rule":{"level":10,"description":"sshd: Failed password for user","groups":["authentication_failed"]}},
+    {"id":"bf-009","timestamp":"2026-10-08T00:10:00Z","data":{"srcip":"203.0.113.9","dstuser":"ops-a"},"rule":{"level":6,"description":"Authentication failed for user","groups":["authentication_failed"]}},
+    {"id":"bf-010","timestamp":"2026-10-08T00:10:40Z","data":{"srcip":"203.0.113.9","dstuser":"ops-b"},"rule":{"level":6,"description":"Authentication failed for user","groups":["authentication_failed"]}},
+    {"id":"bf-011","timestamp":"2026-10-08T00:11:20Z","data":{"srcip":"203.0.113.9","dstuser":"ops-c"},"rule":{"level":6,"description":"Authentication failed for user","groups":["authentication_failed"]}},
+    {"id":"bf-012","timestamp":"2026-10-08T01:00:00Z","data":{"srcip":"192.0.2.44","dstuser":"owner"},"rule":{"level":3,"description":"Single interactive login failure","groups":["authentication_failed"]},"fixture":{"classification":"normal"}},
+    {"id":"bf-013","timestamp":"2026-10-08T01:20:00Z","data":{"srcip":"192.0.2.44","dstuser":"owner"},"rule":{"level":3,"description":"Single interactive login failure","groups":["authentication_failed"]},"fixture":{"classification":"normal"}}
+  ]
+}

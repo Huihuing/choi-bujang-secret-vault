@@ -1,0 +1,29 @@
+name: XDR check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'xdr/**'
+      - 'scripts/xdr-run.mjs'
+      - 'package.json'
+      - '.github/workflows/xdr-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  brute-force:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run xdr:run -- brute-force
+      - run: npm run test:r5
+      - name: Generated XDR files are current
+        run: git diff --exit-code -- xdr/brute-force/result.json xdr/brute-force/deny-rules.json xdr/alerts.log

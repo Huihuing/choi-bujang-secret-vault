@@ -1,0 +1,23 @@
+{
+  "rules": [
+    {
+      "id": "xdr-brute-force-198-51-100-24",
+      "effect": "deny",
+      "match": {
+        "sourceIp": "198.51.100.24"
+      },
+      "expiresAt": "2026-10-08T00:16:10.000Z",
+      "evidenceAlertIds": [
+        "bf-001",
+        "bf-002",
+        "bf-003",
+        "bf-004",
+        "bf-005",
+        "bf-006",
+        "bf-007",
+        "bf-008"
+      ],
+      "reason": "짧은 시간 같은 주소의 로그인 실패 연속"
+    }
+  ]
+}

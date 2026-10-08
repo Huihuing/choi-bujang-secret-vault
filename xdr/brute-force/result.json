@@ -1,0 +1,27 @@
+{
+  "module": "brute-force",
+  "fixture": "xdr/fixtures/brute-force.json",
+  "evaluatedThrough": "2026-10-08T01:20:00.000Z",
+  "counts": {
+    "block": 8,
+    "alert": 3,
+    "record": 2
+  },
+  "normalEventBlocks": 0,
+  "rulesWritten": 1,
+  "decisions": [
+    {"alertId":"bf-001","action":"block","confidence":0.95,"reason":"짧은 시간 같은 주소의 로그인 실패 연속"},
+    {"alertId":"bf-002","action":"block","confidence":0.95,"reason":"짧은 시간 같은 주소의 로그인 실패 연속"},
+    {"alertId":"bf-003","action":"block","confidence":0.95,"reason":"짧은 시간 같은 주소의 로그인 실패 연속"},
+    {"alertId":"bf-004","action":"block","confidence":0.95,"reason":"짧은 시간 같은 주소의 로그인 실패 연속"},
+    {"alertId":"bf-005","action":"block","confidence":0.95,"reason":"짧은 시간 같은 주소의 로그인 실패 연속"},
+    {"alertId":"bf-006","action":"block","confidence":0.95,"reason":"짧은 시간 같은 주소의 로그인 실패 연속"},
+    {"alertId":"bf-007","action":"block","confidence":0.95,"reason":"짧은 시간 같은 주소의 로그인 실패 연속"},
+    {"alertId":"bf-008","action":"block","confidence":0.95,"reason":"짧은 시간 같은 주소의 로그인 실패 연속"},
+    {"alertId":"bf-009","action":"alert","confidence":0.5,"reason":"여러 계정 대상 비밀번호 스프레이"},
+    {"alertId":"bf-010","action":"alert","confidence":0.5,"reason":"여러 계정 대상 비밀번호 스프레이"},
+    {"alertId":"bf-011","action":"alert","confidence":0.5,"reason":"여러 계정 대상 비밀번호 스프레이"},
+    {"alertId":"bf-012","action":"record","confidence":0.2,"reason":"일치 패턴 없음"},
+    {"alertId":"bf-013","action":"record","confidence":0.2,"reason":"일치 패턴 없음"}
+  ]
+}
