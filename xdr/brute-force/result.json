@@ -1,92 +1,181 @@
 {
-  "module": "brute-force",
-  "fixture": "xdr/fixtures/brute-force.json",
-  "evaluatedThrough": "2026-10-08T01:20:00.000Z",
+  "schema": "aleph.xdr.result.v1",
+  "moduleKey": "brute-force",
   "counts": {
-    "block": 8,
-    "alert": 3,
-    "record": 2
+    "block": 10,
+    "alert": 9,
+    "record": 9
   },
   "normalEventBlocks": 0,
-  "rulesWritten": 1,
+  "rulesWritten": 9,
   "decisions": [
     {
-      "alertId": "bf-001",
+      "alertId": "bf-01",
       "action": "block",
       "confidence": 0.95,
-      "reason": "짧은 시간 같은 주소의 로그인 실패 연속"
+      "reason": "password-guessing"
     },
     {
-      "alertId": "bf-002",
+      "alertId": "bf-02",
+      "action": "block",
+      "confidence": 0.96,
+      "reason": "password-spraying"
+    },
+    {
+      "alertId": "bf-03",
       "action": "block",
       "confidence": 0.95,
-      "reason": "짧은 시간 같은 주소의 로그인 실패 연속"
+      "reason": "password-spraying"
     },
     {
-      "alertId": "bf-003",
+      "alertId": "bf-04",
       "action": "block",
       "confidence": 0.95,
-      "reason": "짧은 시간 같은 주소의 로그인 실패 연속"
+      "reason": "password-guessing"
     },
     {
-      "alertId": "bf-004",
+      "alertId": "bf-05",
       "action": "block",
       "confidence": 0.95,
-      "reason": "짧은 시간 같은 주소의 로그인 실패 연속"
+      "reason": "password-spraying"
     },
     {
-      "alertId": "bf-005",
+      "alertId": "bf-06",
       "action": "block",
       "confidence": 0.95,
-      "reason": "짧은 시간 같은 주소의 로그인 실패 연속"
+      "reason": "password-guessing"
     },
     {
-      "alertId": "bf-006",
+      "alertId": "bf-07",
       "action": "block",
       "confidence": 0.95,
-      "reason": "짧은 시간 같은 주소의 로그인 실패 연속"
+      "reason": "password-guessing"
     },
     {
-      "alertId": "bf-007",
+      "alertId": "bf-08",
       "action": "block",
       "confidence": 0.95,
-      "reason": "짧은 시간 같은 주소의 로그인 실패 연속"
+      "reason": "password-guessing"
     },
     {
-      "alertId": "bf-008",
+      "alertId": "bf-09",
+      "action": "block",
+      "confidence": 0.96,
+      "reason": "password-spraying"
+    },
+    {
+      "alertId": "bf-10",
       "action": "block",
       "confidence": 0.95,
-      "reason": "짧은 시간 같은 주소의 로그인 실패 연속"
+      "reason": "password-guessing"
     },
     {
-      "alertId": "bf-009",
+      "alertId": "bf-11",
       "action": "alert",
       "confidence": 0.5,
-      "reason": "여러 계정 대상 비밀번호 스프레이"
+      "reason": "password-guessing"
     },
     {
-      "alertId": "bf-010",
+      "alertId": "bf-12",
       "action": "alert",
       "confidence": 0.5,
-      "reason": "여러 계정 대상 비밀번호 스프레이"
+      "reason": "password-guessing"
     },
     {
-      "alertId": "bf-011",
+      "alertId": "bf-13",
       "action": "alert",
       "confidence": 0.5,
-      "reason": "여러 계정 대상 비밀번호 스프레이"
+      "reason": "password-guessing"
     },
     {
-      "alertId": "bf-012",
+      "alertId": "bf-14",
+      "action": "alert",
+      "confidence": 0.5,
+      "reason": "password-guessing"
+    },
+    {
+      "alertId": "bf-15",
+      "action": "alert",
+      "confidence": 0.5,
+      "reason": "password-guessing"
+    },
+    {
+      "alertId": "bf-16",
+      "action": "alert",
+      "confidence": 0.5,
+      "reason": "password-guessing"
+    },
+    {
+      "alertId": "bf-17",
+      "action": "alert",
+      "confidence": 0.5,
+      "reason": "password-guessing"
+    },
+    {
+      "alertId": "bf-18",
+      "action": "alert",
+      "confidence": 0.5,
+      "reason": "password-guessing"
+    },
+    {
+      "alertId": "bf-19",
+      "action": "alert",
+      "confidence": 0.5,
+      "reason": "password-guessing"
+    },
+    {
+      "alertId": "bf-20",
       "action": "record",
-      "confidence": 0.2,
-      "reason": "일치 패턴 없음"
+      "confidence": 0.05,
+      "reason": "normal-event"
     },
     {
-      "alertId": "bf-013",
+      "alertId": "bf-21",
       "action": "record",
-      "confidence": 0.2,
-      "reason": "일치 패턴 없음"
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "bf-22",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "bf-23",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "bf-24",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "bf-25",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "bf-26",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "bf-27",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "bf-28",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
     }
   ]
 }
