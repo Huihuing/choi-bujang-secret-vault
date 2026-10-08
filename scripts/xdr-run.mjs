@@ -17,8 +17,8 @@ const source = JSON.parse(await readFile(fixtureUrl, 'utf8'));
 const rawAlerts = Array.isArray(source) ? source : source.alerts;
 if (!Array.isArray(rawAlerts)) throw new TypeError('Fixture must be an array or { alerts: [...] }');
 
-const alerts = parseAlerts(source);
-if (alerts.length !== rawAlerts.length) throw new Error('Alert count does not match extracted line count');
+const extracted = parseAlerts(source);
+if (extracted.length !== rawAlerts.length) throw new Error('Alert count does not match extracted line count');
 
 function alertId(raw, index) {
   const value = raw?.id ?? raw?._id ?? raw?.alert_id;
@@ -27,54 +27,25 @@ function alertId(raw, index) {
     : `fixture-${String(index + 1).padStart(3, '0')}`;
 }
 
-function isFixtureNormal(raw) {
-  return raw?.fixture?.classification === 'normal' || raw?.expected === 'normal';
+function mitreIds(raw) {
+  const mitre = raw?.rule?.mitre;
+  if (Array.isArray(mitre)) return mitre;
+  if (Array.isArray(mitre?.id)) return mitre.id;
+  if (typeof mitre?.id === 'string') return [mitre.id];
+  return [];
 }
 
-function contextFor(index) {
-  const alert = alerts[index];
-  const at = Date.parse(alert.time ?? '');
-  if (!alert.sourceIp || !Number.isFinite(at)) {
-    return { sameSourceFailures2m: 0, distinctAccounts5m: 0, upstreamPasswordSpray: false };
-  }
-
-  const sameSource2m = alerts.filter((candidate) => {
-    const candidateAt = Date.parse(candidate.time ?? '');
-    return candidate.sourceIp === alert.sourceIp
-      && Number.isFinite(candidateAt)
-      && Math.abs(candidateAt - at) <= 120_000;
-  });
-
-  const sameSource5m = alerts.filter((candidate) => {
-    const candidateAt = Date.parse(candidate.time ?? '');
-    return candidate.sourceIp === alert.sourceIp
-      && Number.isFinite(candidateAt)
-      && Math.abs(candidateAt - at) <= 300_000;
-  });
-
-  const distinctAccounts = new Set(
-    sameSource5m.map((candidate) => candidate.account).filter((value) => value && value !== '[redacted]')
-  ).size;
-
-  const raw = rawAlerts[index];
-  const groups = Array.isArray(raw?.rule?.groups) ? raw.rule.groups : [];
-  const upstreamPasswordSpray = groups.some((value) => /password[-_ ]?spray/i.test(String(value)))
-    || /password[-_ ]?spray/i.test(String(raw?.rule?.description ?? ''));
-
-  return {
-    sameSourceFailures2m: sameSource2m.length,
-    distinctAccounts5m: distinctAccounts,
-    upstreamPasswordSpray,
-  };
+function isFixtureNormal(raw) {
+  if (raw?.fixture?.classification === 'normal' || raw?.expected === 'normal') return true;
+  return mitreIds(raw).length === 0 && Number(raw?.rule?.level ?? 0) <= 3;
 }
 
 const entries = [];
-for (let index = 0; index < alerts.length; index += 1) {
-  const alert = alerts[index];
-  const decision = await decide({ ...alert, context: contextFor(index) });
+for (let index = 0; index < rawAlerts.length; index += 1) {
+  const decision = await decide(rawAlerts[index]);
   entries.push({
     alertId: alertId(rawAlerts[index], index),
-    alert,
+    alert: extracted[index],
     decision,
     fixtureNormal: isFixtureNormal(rawAlerts[index]),
   });
@@ -92,20 +63,11 @@ const noteworthy = entries
     `${entry.alert.time} action=${entry.decision.action} source=${entry.alert.sourceIp ?? 'unknown'} confidence=${entry.decision.confidence.toFixed(2)} reason=${entry.decision.reason} alert=${entry.alertId}`
   );
 
-let existing = '';
-try { existing = await readFile(logUrl, 'utf8'); } catch {}
-const merged = [...new Set([...existing.split(/\r?\n/).filter(Boolean), ...noteworthy])];
-await writeFile(logUrl, merged.length ? `${merged.join('\n')}\n` : '', 'utf8');
-
-const evaluatedThrough = alerts
-  .map((alert) => Date.parse(alert.time ?? ''))
-  .filter(Number.isFinite)
-  .sort((a, b) => b - a)[0];
+await writeFile(logUrl, noteworthy.length ? `${noteworthy.join('\n')}\n` : '', 'utf8');
 
 const result = {
-  module: 'brute-force',
-  fixture: 'xdr/fixtures/brute-force.json',
-  evaluatedThrough: Number.isFinite(evaluatedThrough) ? new Date(evaluatedThrough).toISOString() : null,
+  schema: 'aleph.xdr.result.v1',
+  moduleKey: 'brute-force',
   counts,
   normalEventBlocks: normalEventBlocks.length,
   rulesWritten: rules.length,
