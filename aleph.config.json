@@ -19,7 +19,8 @@
     "/api/device",
     "/api/app-request",
     "/api/war-room",
-    "/api/war-room-check"
+    "/api/war-room-check",
+    "/api/war-room-summary"
   ],
   "originalApiUrl": "https://sckjbblzivbcoofabhqd.supabase.co/rest/v1/notes",
   "restoreRoute": "/api/restore"

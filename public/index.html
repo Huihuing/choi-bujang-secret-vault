@@ -62,7 +62,7 @@
 <main>
  <header><div class="logo" aria-hidden="true">B</div><div>
   <div class="brand">BYTE BACK</div>
-  <div class="edition">SECURE PERSONAL ARCHIVE · STEP 11</div>
+  <div class="edition">SECURE PERSONAL ARCHIVE · STEP 12</div>
  </div></header>
  <div class="label">설치형 보호 자료실</div>
  <h1>내 자료실, 승인된 접속만.</h1>
@@ -106,9 +106,19 @@
    <button type="submit">승인된 기기로 서명하고 추가</button>
   </form>
  </section>
+  <section id="war-public" class="card wide" aria-labelledby="war-public-title">
+    <div class="label">서버 실측 운영 요약 · 비민감 집계</div>
+    <h2 id="war-public-title">04. 탈환 작전실 — 운영 기록 대조</h2>
+    <p class="meta">서버의 읽기 전용 집계 API를 실제 호출합니다. 메모 본문, 계정 식별자, 인증기 정보는 표시하지 않습니다. DB 운영 기록과 제공 ALEPH 엔진의 공식 공격 기록을 혼동하지 않습니다.</p>
+    <div class="actions"><button id="war-public-refresh" type="button" class="secondary">서버 집계 다시 확인</button></div>
+    <p id="war-public-status" class="meta" aria-live="polite">서버의 실제 응답을 확인하는 중입니다.</p>
+    <p class="meta">실측 커밋 <code id="war-public-commit">미확인</code> · 서버 관측 시각 <span id="war-public-time">미확인</span></p>
+    <div id="war-public-metrics" class="war-metrics"></div>
+    <p class="warning">실제 HTTP 기록이 없으면 '미확인'으로 표시합니다. 코드 선언 규칙 수는 실전 엔진 판정 수가 아니며, 공식 41종 결과도 집계에 포함되지 않습니다.</p>
+  </section>
   <section id="war-room" class="card wide" hidden aria-labelledby="war-title">
   <div class="label">실측 결과와 미확인 항목 분리</div>
-  <h2 id="war-title">04. 탈환 작전실</h2>
+  <h2 id="war-title">05. 계정별 검사 기록</h2>
   <p class="meta">서버가 직접 읽은 규칙·기기 승인·복구 감사 상태와 본인이 실행한 HTTP 검사를 비교합니다. 41종 공식 심판 점수와 자동 검사는 서로 다른 기록입니다. 메모 본문은 표시하지 않습니다.</p>
   <div class="actions"><button type="button" class="secondary" id="war-refresh">운영 상태 다시 읽기</button></div>
   <p id="war-room-status" class="meta" aria-live="polite">로그인 후 상태를 읽습니다.</p>
@@ -122,8 +132,8 @@
    <tbody id="war-check-rows"></tbody>
   </table></div>
   <details class="war-official">
-   <summary>41종 공식 총공세 · 평가 결과 미연동 (41개 항목 펼치기)</summary>
-   <p class="meta">개별 공격의 심판 고유 ID·기대 상태·공식 판정은 제공받지 않았습니다. 아래는 공식 결과 미연동을 나타내는 41개 자리이며 자동으로 통과 처리하지 않습니다.</p>
+   <summary>41종 공식 총공세 · 평가 결과 미연동 (출처 설명 펼치기)</summary>
+   <p class="meta">개별 공격의 심판 고유 ID·기대 상태·공식 판정은 제공받지 않았습니다. 개별 항목별 실제 기록이 없어서 미확인 안내 한 행만 표시하며 자동으로 통과 처리하지 않습니다.</p>
    <div class="war-table"><table><thead><tr><th>번호</th><th>사건</th><th>기대</th><th>공식 실측</th><th>증거</th></tr></thead>
     <tbody id="war-official-rows"></tbody>
    </table></div>
@@ -131,6 +141,7 @@
  </section>
  <footer>BYTE BACK · 이 앱은 별도 실행 프로그램이 없는 PWA입니다. 설치 여부는 신원을 보증하지 않습니다.</footer>
 </main>
+<script type="module" src="/war-summary.js"></script>
 <script type="module" src="/app.js"></script>
 </body>
 </html>
