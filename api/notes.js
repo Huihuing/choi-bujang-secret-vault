@@ -111,5 +111,6 @@ export default async function handler(request, response) {
     .insert({ id, owner_id: ctx.login.userId, title, content: noteBody });
 
   if (error) return sendJson(response, 500, { error: 'note_create_failed' });
+  response.setHeader('X-Resource-Id','notes:'+id);
   return sendJson(response, 201, { id });
 }
