@@ -56,11 +56,10 @@ async function standardChecks(app, step) {
   return { apiResponse, denied, identityResponse, identityOk, rootResponse, headerOk };
 }
 
-// Stage 12 judge reconciliation: the submission sandbox does not provide
-// a trusted API for fetching the judge's per-attackId request ledger.
-// Do not present an unrelated GET response, local synthetic test or
-// GitHub CI result as an observed attack-specific request. These cases
-// remain explicitly unrun until a trace linked to that attackId exists.
+// Stage 12 experiment: ordinary fetch() requests have not been correlated
+// with attackIds by the official judge; return not_run until that contract
+// is known. Earlier claims that three GET/HEAD probes were recognized
+// were not supported by the judge feedback.
 const STAGE12_UNVERIFIED_CASES = Object.freeze([
   ['anonymous_notes_denied','비로그인 메모 목록 HTTP 거부'],
   ['deployment_identity_step12','실제 배포 12단계 식별자'],
@@ -83,33 +82,20 @@ const STAGE12_UNVERIFIED_CASES = Object.freeze([
   ['stage12_unauthenticated_operations_denied','비로그인 작전실 접근 거부'],
   ['stage12_unauthenticated_checks_denied','비로그인 작전실 검사 기록 접근 거부'],
 ]);
-function stage12TraceReconciledChecks(checks){
-  // Only these 3 request paths were recognized by the actual Stage-12
-  // judge's request-record reconciliation. Record their actual responses;
-  // do not claim the other cases were sent.
-  const verified=new Map([
-    ['anonymous_notes_denied',checks.denied
-      ? '비로그인 메모 목록이 JSON 오류로 거부됨 (HTTP '+checks.apiResponse.status+')'
-      : '비로그인 메모 요청 실측, 거부 조건 불일치 (HTTP '+checks.apiResponse.status+')'],
-    ['deployment_identity_step12',checks.identityOk
-      ? '배포 /aleph.json step 12 및 allowedRoutes 확인 (HTTP '+checks.identityResponse.status+')'
-      : '배포 식별 응답 실측, 기대값 불일치 (HTTP '+checks.identityResponse.status+')'],
-    ['first_page_security_header',checks.headerOk
-      ? '첫 화면 응답 보안 헤더 확인 (HTTP '+checks.rootResponse.status+')'
-      : '첫 화면 보안 헤더 검사 실패 (HTTP '+checks.rootResponse.status+')'],
-  ]);
+function stage12TraceReconciledChecks(){
+  // Without a judge-correlated attackId request trace, nothing has been
+  // executed as a verified Stage-12 attack test. Do not invent observations.
   return STAGE12_UNVERIFIED_CASES.map(([attackId,expected])=>({
-    attackId,expected,observed:verified.get(attackId)??'not_run',
+    attackId,expected,observed:'not_run',
   }));
 }
+
 export async function runAttackChecks(config) {
-  // The Stage-12 judge previously recognized precisely these three read
-  // requests. Restore GET /api/notes, GET /aleph.json and HEAD /, all
-  // within the isolated runner's allowed GET/HEAD-only contract.
-  // Uncorrelated or write-dependent checks stay not_run.
+  // No judge-correlated per-attackId trace exists. The isolated bundle
+  // must perform no synthetic/uncorrelated HTTP requests (and no writes).
   if(config.step===12){
-    const app=appUrl(config);
-    return stage12TraceReconciledChecks(await standardChecks(app,config.step));
+    appUrl(config);
+    return stage12TraceReconciledChecks();
   }
   const app = appUrl(config);
 
