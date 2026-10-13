@@ -5,6 +5,13 @@ import {RULE_IDS} from '../src/decider.mjs';
 
 // Server-observed, owner-scoped metadata only. No note bodies or access tokens.
 const SHA=/^[0-9a-f]{40}$/iu;
+// Do not coerce absent / invalid source measurements to a fabricated zero.
+const countFromServer=value=>{
+ if(typeof value!=='number'&&typeof value!=='string')return null;
+ if(typeof value==='string'&&!/^(0|[1-9][0-9]*)$/u.test(value))return null;
+ const number=Number(value);
+ return Number.isSafeInteger(number)&&number>=0?number:null;
+};
 function send(res,status,body){
  res.status(status);
  res.setHeader('Cache-Control','no-store');
@@ -41,29 +48,30 @@ export default async function handler(req,res){
   schema:'byteback.operations.v1',checkedAt:new Date().toISOString(),
   source:'authenticated_read_only_server_rpc',
   stage:config.step,commit:typeof commit==='string'&&SHA.test(commit)?commit.toLowerCase():null,
-  policyRules:{source:'repository',ids:[...RULE_IDS],count:RULE_IDS.length},
+  policyRules:{source:'repository_code_only',ids:[...RULE_IDS],
+   count:RULE_IDS.length,serverEvaluations:null},
   detector:{source:'src/detect.mjs',implemented:true,
    observedEventCount:null,observation:'not_connected_to_runtime_events'},
   revocation:{source:'ALEPH SDP judge',engineRevocationCount:null,
    observation:'not_connected_to_engine_revocation_records'},
   devices:{
    source:'database_scoped_to_current_account',
-   pending:summary.data.pending_devices,
-   approved:summary.data.approved_devices,
-   revoked:summary.data.revoked_devices,
+   pending:countFromServer(summary.data.pending_devices),
+   approved:countFromServer(summary.data.approved_devices),
+   revoked:countFromServer(summary.data.revoked_devices),
   },
   recovery:{
    source:'verified_private_database_snapshot',
    baselineVersion:verified.version,verified:true,
-   changedPolicyCount:verified.changed_count,
-   currentAccountRestoreEvents:summary.data.account_restore_events,
+   changedPolicyCount:countFromServer(verified.changed_count),
+   currentAccountRestoreEvents:countFromServer(summary.data.account_restore_events),
    lastAccountRestoreAt:summary.data.latest_account_restore_at,
   },
   selfChecks:{
    source:'database_scoped_to_current_account',
-   recordedCount:summary.data.account_safe_checks,
+   recordedCount:countFromServer(summary.data.account_safe_checks),
   },
-  officialAssault:{total:41,importedJudgements:0,
+  officialAssault:{expectedCaseCount:41,importedJudgements:null,
    observation:'official_41_case_results_not_connected'},
  });
 }
