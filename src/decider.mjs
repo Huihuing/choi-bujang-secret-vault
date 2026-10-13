@@ -30,8 +30,7 @@ function trustedZone(request) {
     if (service!==z.service) continue;
     if (path===z.prefix && z.collection.includes(method) && route===method+' '+z.prefix) return z;
     const id=path.startsWith(z.prefix+'/')?path.slice(z.prefix.length+1):'';
-    const fixture=id==='demo' && service==='notes' && request.signals?.source==='judge_fixture';
-    if ((UUID.test(id)||fixture) && z.item.includes(method) && route===method+' '+z.prefix+'/:id') return z;
+    if (UUID.test(id) && z.item.includes(method) && route===method+' '+z.prefix+'/:id') return z;
   }
   return null;
 }
@@ -42,6 +41,13 @@ export async function decide(request) {
   if (request?.deviceRegistered!==true) return result(request,'deny','device_not_registered','device_registered');
   const z=trustedZone(request);
   if (!z) return result(request,'deny','resource_not_allowed','resource_zone');
+  // The v1 engine does not provide the stored owner of /notes/:id.
+  // A UUID and a verified caller identity do not prove that caller owns the UUID.
+  // Never grant arbitrary single-note READ in the SDP gateway. The notes API
+  // independently authorizes user-owned reads using the stored owner_id.
+  if (z.service==='notes' && request.method==='GET' && request.route==='GET /notes/:id') {
+    return result(request,'deny','resource_not_allowed','resource_zone');
+  }
   if (z.service==='instructor-notices' && request.method!=='GET') {
     // v1 has NO engine-verified instructor role; notice writing is checked at the final API.
     return result(request,'deny','instructor_required','instructor_write_protected');

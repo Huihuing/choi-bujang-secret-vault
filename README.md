@@ -61,7 +61,8 @@ npm run test:r5
 - 강사 공지의 리소스 ID는 `instructor-notices/<uuid>`; 새 API `/api/instructor-notices`, `/api/instructor-notices/:id`로 구역을 분리했습니다. 인증 사용자 공지 읽기는 가능하지만 POST/PUT은 서버의 `instructor_memberships`에 등록된 실제 강사만 수행할 수 있습니다. 사용자 본문 `role`, 메뉴, 임의 헤더와 심판 신원은 강사 권한이 아닙니다.
 - 연결된 Supabase에는 `instructor_notices`, `instructor_memberships` 테이블을 추가했습니다. RLS를 활성화했고 비로그인·일반 인증 사용자에게는 테이블 직접 권한을 부여하지 않았습니다. 기존 메모·다른 DB 테이블은 변경하지 않았고 강사 권한을 임의로 부여하지 않았습니다. 적용 SQL: `db/stage8-resource-zones.sql`.
 - 판정기는 이전 `device_registered`와 `step_up_required`를 유지합니다. 추가한 `resource_zone`은 엔진이 확인한 `subjectId`, `deviceId`, `service`, `method`, 정확한 `path` 및 `route` 조합만 허용하고, 알 수 없는 경로는 `deny / resource_not_allowed`로 거부합니다. `:id` 깊이에는 UUID만 허용하며 `export` 기능이나 쿼리 기반 모드 선택은 허용하지 않습니다. 기존 7단계의 가상 요청인 `/notes/demo`는 `judge_fixture` 입력에서만 지원합니다.
-- **중요한 v1 입력 제약:** `docs/DECIDER_REQUEST.md` 계약에는 강사 역할이나 메모 소유자의 검증 정보가 없습니다. 따라서 판정기에서는 강사 공지 쓰기를 `deny / instructor_required`로 막고, 메모 소유권은 실제 서버 API가 DB 기준으로 결정합니다. 판정기만으로 B의 A 메모를 판별했다고 기록하지 않습니다.
+- **중요한 v1 입력 제약 / 심판 S08_OTHER_ZONE_ALLOWED 보완:** `docs/DECIDER_REQUEST.md`에는 강사 역할 및 **메모 소유자 정보가 없습니다**. 종전 판정기가 `GET /notes/:id`에서 단지 UUID와 경로가 맞는다는 이유만으로 모든 사용자에게 `allow`를 반환한 것이 구역 규칙의 맹점이었습니다. 8단계 재검토에서는 판정기에서 소유권 증거가 없는 메모 **단건 GET은 `deny / resource_not_allowed`로 기본 거부**하고 `GET /notes` 목록과 POST/PUT/DELETE 경로는 종전대로 유지했습니다. 실제 Vercel `GET /api/notes/:id`는 서버가 인증한 ID와 DB의 `owner_id`를 동시에 검사해 **본인 소유 메모만** 반환합니다. 따라서 별도 운영 SDP 게이트웨이를 경유하는 단건 GET은 향후 엔진 계약에서 저장된 소유자 증거가 제공될 때까지 허용하지 않습니다. `/notes/demo`도 예외로 허용하지 않고 기존 7단계의 가상 정상/이상 사건은 안전한 메모 목록 경로에서 연습하도록 조정했습니다.
+
 - 현재 강사 등록 구성원이 없어 일반 학생의 강사 공지 쓰기는 기본 거부입니다. 강사 권한 부여는 별도 관리자 작업이어야 하며 웹 요청으로 이 테이블을 변경하는 엔드포인트는 없습니다. 기존 화면 메뉴는 바꾸지 않았습니다.
 - 현재 실제 A/B 사용자 로그인 및 강사 E2E는 비밀번호·토큰 제공 없이 실행할 수 없어 미실행입니다. 심판의 직접 공격 판정 결과로 로컬 fixture를 대신하지 않습니다.
 
@@ -78,7 +79,7 @@ npm run xdr:test
 npm run bundle
 ```
 
-예상: A 소유 메모는 A만 열람·수정, B는 해당 메모 단건 조회 시 `note_not_found`(404), 수정 시 `note_not_found`(404) 또는 `note_forbidden`(403), 다른 계정 목록에는 A 메모가 보이지 않습니다. 일반 학생의 강사 공지 수정은 `instructor_required`, 비로그인 강사 공지 목록은 `authentication_required`입니다. 8단계 저장점 커밋 후 Git 무시파일 `bundle-notes.json`에 설명을 적고 bundle을 생성합니다. JSON·키·본문·개인정보는 Git에 커밋하지 않습니다.
+예상: 자료 API에서는 A 소유 메모를 A만 열람·수정, B는 해당 메모 단건 조회 시 `note_not_found`(404), 수정 시 `note_not_found`(404) 또는 `note_forbidden`(403), 다른 계정 목록에는 A 메모가 보이지 않습니다. 일반 학생의 강사 공지 수정은 `instructor_required`, 비로그인 강사 공지 목록은 `authentication_required`입니다. 8단계 저장점 커밋 후 Git 무시파일 `bundle-notes.json`에 설명을 적고 bundle을 생성합니다. JSON·키·본문·개인정보는 Git에 커밋하지 않습니다.
 
 ## 보너스 XDR-01 · 무차별 로그인 공격
 

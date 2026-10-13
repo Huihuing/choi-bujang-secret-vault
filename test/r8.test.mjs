@@ -11,13 +11,21 @@ const request=(method='GET',path='/notes/'+id,route='GET /notes/:id',service='no
   recentEvents:[],stepUp:{verified:false,authAgeSeconds:null},
 });
 test('implemented rule IDs',()=>assert.deepEqual([...RULE_IDS],['device_registered','step_up_required','resource_zone','instructor_write_protected']));
-test('valid note read update and list allowed',async()=>{
-  for(const r of [request(),request('PUT','/notes/'+id,'PUT /notes/:id'),request('GET','/notes','GET /notes')])
+test('notes list and update work; individual read requires verified ownership proof',async()=>{
+  for(const r of [request('PUT','/notes/'+id,'PUT /notes/:id'),request('GET','/notes','GET /notes')]) {
     assert.equal((await decide(r)).decision,'allow');
+  }
+  // The v1 contract has no owner field, so either caller must be denied by the gateway.
+  for(const subjectId of ['learner_a','learner_b']) {
+    const checked = await decide({...request(),subjectId});
+    assert.equal(checked.decision,'deny');
+    assert.equal(checked.reasonCode,'resource_not_allowed');
+  }
 });
 test('unknown path, query control and same-depth export denied',async()=>{
   for(const r of [
     request('GET','/notes/export','GET /notes/:id'),
+    request('GET','/notes/demo','GET /notes/:id'),
     request('GET','/notes/'+id+'?export=1','GET /notes/:id'),
     request('GET','/notes/'+id,'GET /notes'),
     request('GET','/notes//'+id,'GET /notes/:id'),
