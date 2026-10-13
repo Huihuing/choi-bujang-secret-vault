@@ -1,4 +1,4 @@
-name: Stage 11 PWA security and prior stages
+name: Stage 12 war-room evidence and prior stages
 
 on:
   push:
@@ -42,6 +42,7 @@ jobs:
       - run: node --test test/detect.test.mjs
       - run: node --test test/stage10.test.mjs
       - run: node --test test/stage11.test.mjs
+      - run: node --test test/stage12.test.mjs
       - run: npm run test:r8
       - run: node --test test/judge-owner-identity.test.mjs
       - run: node --test test/stage8-audit.test.mjs
@@ -54,15 +55,15 @@ jobs:
           node --input-type=module - <<'NODE'
           import { writeFileSync } from 'node:fs';
           const explanation = [
-            '8단계: 메모와 강사 공지를 별도 자원 ID, API 및 RLS 테이블로 분리했습니다.',
-            '판정기는 정확한 경로를, API는 저장된 소유자와 서버 강사 권한을 검증합니다.',
-            '실제 A/B 사용자 및 강사 E2E는 미실행이며 기존 기능을 보존했습니다.',
+            '12단계: 판정 규칙, 탐지 기록 미연동, 기기 회수 기록, 검증된 복구 버전을 작전실에 표시합니다.',
+            '사전 허용된 안전 HTTP 검사만 요청 ID와 시각/실측 응답을 기록하며 공식 41종 결과는 미연동입니다.',
+            'ALEPH SDP 제공 엔진과 학생 판정/탐지/PWA/기기 보안/복구 코드를 구분하고 기존 단계를 보존합니다.',
           ].join('\n');
           writeFileSync('bundle-notes.json', JSON.stringify({ explanation }, null, 2) + '\n');
           NODE
       - run: npm run bundle
       - uses: actions/upload-artifact@v4
         with:
-          name: stage8-submission
+          name: stage12-submission
           path: artifacts/submission.json
           if-no-files-found: error
