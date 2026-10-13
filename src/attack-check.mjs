@@ -83,18 +83,33 @@ const STAGE12_UNVERIFIED_CASES = Object.freeze([
   ['stage12_unauthenticated_operations_denied','비로그인 작전실 접근 거부'],
   ['stage12_unauthenticated_checks_denied','비로그인 작전실 검사 기록 접근 거부'],
 ]);
-function stage12TraceReconciledChecks(){
+function stage12TraceReconciledChecks(checks){
+  // Only these 3 request paths were recognized by the actual Stage-12
+  // judge's request-record reconciliation. Record their actual responses;
+  // do not claim the other cases were sent.
+  const verified=new Map([
+    ['anonymous_notes_denied',checks.denied
+      ? '비로그인 메모 목록이 JSON 오류로 거부됨 (HTTP '+checks.apiResponse.status+')'
+      : '비로그인 메모 요청 실측, 거부 조건 불일치 (HTTP '+checks.apiResponse.status+')'],
+    ['deployment_identity_step12',checks.identityOk
+      ? '배포 /aleph.json step 12 및 allowedRoutes 확인 (HTTP '+checks.identityResponse.status+')'
+      : '배포 식별 응답 실측, 기대값 불일치 (HTTP '+checks.identityResponse.status+')'],
+    ['first_page_security_header',checks.headerOk
+      ? '첫 화면 응답 보안 헤더 확인 (HTTP '+checks.rootResponse.status+')'
+      : '첫 화면 보안 헤더 검사 실패 (HTTP '+checks.rootResponse.status+')'],
+  ]);
   return STAGE12_UNVERIFIED_CASES.map(([attackId,expected])=>({
-    attackId,expected,observed:'not_run',
+    attackId,expected,observed:verified.get(attackId)??'not_run',
   }));
 }
 export async function runAttackChecks(config) {
-  // No request is attributed to an attackId without the judge's correlated
-  // request record. Runtime UI checks remain separately recorded in the DB.
-  // Do not use POST/PUT or produce fictional success observations in bundle.
+  // The Stage-12 judge previously recognized precisely these three read
+  // requests. Restore GET /api/notes, GET /aleph.json and HEAD /, all
+  // within the isolated runner's allowed GET/HEAD-only contract.
+  // Uncorrelated or write-dependent checks stay not_run.
   if(config.step===12){
-    appUrl(config);
-    return stage12TraceReconciledChecks();
+    const app=appUrl(config);
+    return stage12TraceReconciledChecks(await standardChecks(app,config.step));
   }
   const app = appUrl(config);
 
