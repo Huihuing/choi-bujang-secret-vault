@@ -1,3 +1,19 @@
+# BYTE BACK 방어전 · 9단계 저장점 — 가상 사건 탐지와 회수 제안
+
+**현재 단계: 9단계 「도플갱어를 찾고 권한을 거둡니다」.** 마지막 8단계 커밋 `d4d62f79fed5`의 소유자 기반 API 검증·자원 구역 판정과 1~7단계 기능 및 보너스 XDR-01/02는 보존합니다. 9단계의 저장소 구현은 `src/detect.mjs`에만 탐지·제안 로직을 추가하며, 기존 `src/decider.mjs`의 응답 형식을 바꾸거나 실제 회수 API를 만들지 않습니다.
+
+## 9단계 구현 요약
+
+- 반 엔진이 확인해 전달하는 **가상 사건** `{at, method, identity:{sub}}`만 읽습니다. 본문, 비밀값, JWT, 실명, 사용자가 제공한 네트워크/기기값은 로깅하거나 처리하지 않습니다.
+- 사용자별(GET만)로 정렬한 사건 중 **임의의 10분 구간에 121회 이상** 발생한 첫 사례에 `{action:'propose_revocation',reasonCode:'burst_read',subject:'해당 가명'}`를 돌려줍니다. 정확히 120회·시간창 밖 조회·다른 사용자 합계는 `{action:'observe'}`입니다. 같은 사용자에서 이상 사건이 발견되지 않으면 아무 회수 제안도 하지 않습니다.
+- 현재 제공된 `docs/DETECT_EVENTS.md`의 **입력에는 네트워크 상태와 기기 ID가 없습니다**. 따라서 '비정상 네트워크와 급격한 조회의 결합' 및 '기기 한 대 지정'은 제공된 계약만으로 **진실하게 구현할 수 없습니다**. 엔진이 확증된 기기·네트워크 정보를 별도 계약으로 제공하기 전에는 이를 임의로 추가하지 않습니다. 실제 집행 및 시간 측정은 심판 엔진이 담당합니다.
+- Node.js 22 이상에서 `npm run detect:test`로 제공된 6개 가상 사건을 검증하고 `node --test test/detect.test.mjs`로 경계값·혼합 사건·정보 비노출 등 추가 테스트를 실행합니다. 전체 이전 단계 검사는 GitHub Actions에 유지됩니다.
+- 기존 Vercel 자료실 `https://choi-bujang-secret-vault-jwnp.vercel.app`, JWT 발급자, 기존 API 허용 경로, 원본 자료 API 주소를 보존합니다. `aleph.config.json.step=9`, 빌드/자체 점검과 배포 메타데이터만 현재 단계에 맞게 확장합니다.
+
+**재현:** `npm run detect:test && node --test test/detect.test.mjs && npm run decider:test && npm run fixture:7 && npm run test:r8 && npm run build -- --local && npm run bundle`. 제출용 비밀값·JSON은 Git에 올리지 않습니다. 마지막 `bundle`은 Git 커밋 이후, 배포된 `/aleph.json`이 step 9가 된 뒤 GitHub Actions에서 실행합니다. 로컬 결과는 운영 심판의 실제 회수 판정이 아닙니다.
+
+---
+
 ### 8단계 S08 인증 전 진단 (2026-10-13)
 
 심판의 실제 공격 실패를 판정기·로그인·메모 소유권 중 어디에서 발생했는지 추적하기 위해 메모 목록과 단건 API 핸들러 **진입 즉시** `aleph_s08_entry` 로그를 남깁니다. 요청 메서드는 GET/POST/PUT/DELETE/OTHER로 제한하며, 경로는 `/api/notes` 또는 `/api/notes/:id`라는 정해진 모양만 기록합니다. Authorization 헤더 유무만 남깁니다.

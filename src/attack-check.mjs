@@ -93,7 +93,7 @@ export async function runAttackChecks(config) {
     ];
   }
 
-  if (config.step >= 3 && config.step <= 8) {
+  if (config.step >= 3 && config.step <= 9) {
     const checks = await standardChecks(app, config.step);
     const attempts = [
       { attackId: 'anonymous_notes_denied',
@@ -189,7 +189,7 @@ export async function runAttackChecks(config) {
       });
     }
 
-    if (config.step === 8) {
+    if (config.step >= 8) {
       const response = await fetch(new URL('/api/instructor-notices', app), {
         redirect: 'error', signal: AbortSignal.timeout(10000),
       });
@@ -205,6 +205,40 @@ export async function runAttackChecks(config) {
         attackId: 'cross_owner_instructor_live_pending',
         expected: 'A 본인 메모는 허용, B의 A 메모와 학생의 공지 수정은 거부',
         observed: '로그인 토큰을 수집하지 않아서 실계정 A/B 및 강사 E2E는 미실행; API 소유자 검사 및 가상 테스트로만 확인',
+      });
+    }
+
+    if (config.step >= 9) {
+      const { detect } = await import('./detect.mjs');
+      const start = Date.UTC(2026, 9, 1);
+      const reads = (n, step = 2000) => Array.from({ length: n }, (_, index) => ({
+        at: new Date(start + index * step).toISOString(),
+        method: 'GET', identity: { sub: 'synthetic_stage9_reader' },
+      }));
+      const baseline = detect(reads(30));
+      const threshold = detect(reads(120));
+      const burst = detect(reads(121));
+      attempts.push({
+        attackId: 'stage9_normal_observe_local',
+        expected: '로컬 가상 정상 30회 GET에는 회수 제안 없음',
+        observed: baseline.action === 'observe'
+          ? '로컬 합성 30회 GET에서 observe 확인'
+          : '로컬 합성 30회 GET 감지 규칙 확인 필요',
+      });
+      attempts.push({
+        attackId: 'stage9_burst_proposal_local',
+        expected: '로컬 가상 120회 GET은 observe, 121회는 burst_read 회수 제안',
+        observed: threshold.action === 'observe'
+          && burst.action === 'propose_revocation'
+          && burst.reasonCode === 'burst_read'
+          && burst.subject === 'synthetic_stage9_reader'
+          ? '로컬 합성 사건에서 120회 observe 및 121회 회수 제안 확인'
+          : '로컬 합성 임계값 탐지 확인 필요',
+      });
+      attempts.push({
+        attackId: 'stage9_real_revocation_pending',
+        expected: '운영 엔진이 탐지한 가상 사건의 권한 회수 및 후속 요청 차단',
+        observed: '실제 가상 기기 회수 및 후속 요청 차단은 심판 검증 대기; 로컬 탐지는 회수 제안만 생성',
       });
     }
 

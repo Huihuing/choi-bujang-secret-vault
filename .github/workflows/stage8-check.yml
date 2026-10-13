@@ -1,4 +1,4 @@
-name: Stage 8 resource zones
+name: Stage 9 detection and prior stages
 
 on:
   push:
@@ -38,6 +38,8 @@ jobs:
       - run: npm run decider:test
       - run: npm run fixture:7
       - run: node --test test/r7.test.mjs
+      - run: npm run detect:test
+      - run: node --test test/detect.test.mjs
       - run: npm run test:r8
       - run: node --test test/judge-owner-identity.test.mjs
       - run: node --test test/stage8-audit.test.mjs
