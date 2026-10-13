@@ -1,6 +1,6 @@
-# BYTE BACK 방어전 · 6단계 + 보너스 XDR-01/XDR-02 저장점
+# BYTE BACK 방어전 · 7단계 + 보너스 XDR-01/XDR-02 저장점
 
-현재 단계는 **6단계 「등록한 기기만 자료실에 들어옵니다」**입니다. 기존 5단계의 로그인·소유자 검사, 브라우저 메모 CRUD와 서버 함수 및 직접 테이블 권한 회수는 그대로 유지합니다. 6단계는 운영 엔진에서 검증해 전달한 기기 등록 여부를 학생 판정기가 판단하는 규칙을 추가합니다.
+현재 단계는 **7단계 「평소와 다른 접속은 다시 확인합니다」**입니다. 기존 1~6단계의 로그인·소유자 검사, 등록 기기 판정, 브라우저 메모 CRUD, 서버 함수 및 직접 테이블 권한 회수를 유지하면서 운영 엔진이 검증한 복합 이상 신호에만 추가 본인 확인을 요구합니다.
 
 ## 현재 동작
 
@@ -31,6 +31,29 @@ npm run test:r5
 
 제출할 때는 변경 사항을 `6단계 저장점`으로 커밋한 뒤, Git에 포함되지 않는 `bundle-notes.json`에 이번 단계 설명을 작성하고 `npm run bundle`을 실행합니다. 생성되는 `artifacts/submission.json`도 Git에 올리지 않습니다. 비밀값은 넣지 않습니다.
 
+
+## 7단계 · 복합 이상 신호와 추가 확인
+
+- 입력 계약은 `docs/DECIDER_REQUEST.md`의 `aleph.decision.v1`이며 신원·기기·경로·접속 정보는 **운영 엔진이 검증해 전달한 값만** 판정합니다. 클라이언트 헤더의 위치, 기기 정보, 가공한 시각을 신뢰하지 않습니다.
+- `signals.source === 'judge_fixture'`인 **가상 사건**에서만 복합 위험을 판단합니다. 운영 실요청은 `source: 'none'`, 지역·네트워크 `unknown`으로 오므로 누락 정보나 출처 불명확 신호를 정상값이나 위험값으로 꾸며내지 않습니다.
+- `step_up_required` 규칙은 심판 가상 사건에서 **0~5시의 시각**, `network: unusual`, 최근 300초 이내의 `risk_signal` 10건 이상이 *모두* 충족할 때 `step_up / step_up_required`를 반환합니다. `risk_signal`은 제공 fixture의 반복 위험 행동 지표이며 실제 메모 열람 횟수나 내용을 의미하지 않습니다. 지역 하나만으로는 차단하지 않습니다.
+- 검증된 기기(`deviceRegistered === true`)가 아니면 위험 신호나 추가 인증에 관계없이 `deny / device_not_registered`입니다. 나머지 등록 기기 요청은 `allow / approved`입니다.
+- 위험 조합에서는 운영 엔진에서 검증해 전달한 `stepUp.verified === true`와 정수 `authAgeSeconds`가 **0~120초**일 때만 새 요청을 `allow`합니다. 값이 누락되거나 오래되거나 문자열이면 계속 `step_up`을 요구합니다. 이 값은 브라우저가 설정하는 필드가 아니며 토큰 원문을 기록하지 않습니다.
+- 제공 계약에 `stepUp` 판정 입력은 존재하지만 현재 저장소만으로 **운영 엔진이 같은 주체의 실제 새 로그인 시각을 검증한다는 사실을 실측하지는 못했습니다**. 따라서 실제 추가 로그인 전 자료 거부와 재로그인 후 허용은 미실행으로 기록하고, 로컬/CI의 가상 요청 통과를 실제 심판 결과로 표시하지 않습니다.
+
+확인 명령(Node.js 22 이상, 별도 접속 프로그램 설치 불필요):
+
+```powershell
+npm run decider:test
+npm run fixture:7
+node --test test/r7.test.mjs
+npm run build -- --local
+npm run test:r5
+```
+
+기대: 정상 등록 기기 `allow`, 미등록 기기 `deny / device_not_registered`, 출처가 확인된 복합 가상 사건 `step_up / step_up_required`, 엔진의 최신 추가 확인 표시(60초)가 반영된 **새 가상 요청** `allow`. 테스트는 브라우저 헤더를 신뢰하지 않는 경우와 지역 하나만 다른 경우도 확인합니다. 기존 화면·자료실 HTTPS 주소·서버 API·XDR 코드는 변경하지 않습니다.
+
+제출은 `7단계 저장점`을 커밋한 다음, 무시 파일 `bundle-notes.json`에 설명을 작성하고 `npm run bundle`로 생성합니다. `bundle-notes.json`, `artifacts/submission.json`, 토큰·기기 개인키는 Git에 올리지 않습니다.
 
 ## 보너스 XDR-01 · 무차별 로그인 공격
 
@@ -114,7 +137,7 @@ https://sckjbblzivbcoofabhqd.supabase.co/rest/v1/notes
 
 - 로그인 없는 `GET /api/notes`는 401/403 JSON 오류여야 합니다.
 - 원본 `originalApiUrl`을 공개 Publishable Key로 직접 호출하면 메모 자료 없이 거부되어야 합니다.
-- `/aleph.json`은 배포 갱신 후 step 6이며 `allowedRoutes`가 하나 이상 포함되어야 합니다.
+- `/aleph.json`은 배포 갱신 후 step 7이며 `allowedRoutes`가 하나 이상 포함되어야 합니다.
 - 첫 화면에는 `X-Content-Type-Options: nosniff` 또는 CSP가 있어야 합니다.
 - 첫 화면 HTML 소스에는 `sb_publishable_...` 또는 anon JWT 키 문자열을 직접 넣지 않습니다.
 

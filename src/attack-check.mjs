@@ -93,7 +93,7 @@ export async function runAttackChecks(config) {
     ];
   }
 
-  if (config.step >= 3 && config.step <= 6) {
+  if (config.step >= 3 && config.step <= 7) {
     const checks = await standardChecks(app, config.step);
     const attempts = [
       { attackId: 'anonymous_notes_denied',
@@ -173,11 +173,19 @@ export async function runAttackChecks(config) {
       });
     }
 
-    if (config.step === 6) {
+    if (config.step >= 6) {
       attempts.push({
         attackId: 'unregistered_device_judge_pending',
         expected: '미등록 기기 자료 요청은 운영 심판이 거부해야 함',
         observed: '실제 미등록 기기 공격은 심판 담당으로 미실행; 로컬 가상 요청만 별도 확인',
+      });
+    }
+
+    if (config.step === 7) {
+      attempts.push({
+        attackId: 'step_up_live_judge_pending',
+        expected: '검증된 복합 이상 접속은 추가 로그인 전 자료 접근 거부, 새 로그인 검증 후 재판정',
+        observed: '실제 엔진의 새 로그인 시각 검증·자료 차단 실측은 미실행; 로컬 심판 가상 사건만 검증',
       });
     }
 
