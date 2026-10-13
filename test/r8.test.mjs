@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {decide,RULE_IDS} from '../src/decider.mjs';
 import {exactResourcePath,ownsNote,hasStoredInstructorAccess} from '../src/resource-zones.mjs';
+import {loadNote} from '../api/notes/[id].js';
 const a='11111111-1111-4111-8111-111111111111',b='22222222-2222-4222-8222-222222222222';
 const id='33333333-3333-4333-8333-333333333333';
 const request=(method='GET',path='/notes/'+id,route='GET /notes/:id',service='notes')=>({
@@ -63,4 +64,29 @@ test('stage7 composite risk and step-up remain',async()=>{
  recentEvents:[{kind:'risk_signal',ageSeconds:60,count:20}]};
  assert.equal((await decide(r)).decision,'step_up');
  assert.equal((await decide({...r,stepUp:{verified:true,authAgeSeconds:60}})).decision,'allow');
+});
+
+test('single-note SQL constrains owner before fetching any title or content', async()=>{
+  const foreignOwner='99999999-9999-4999-8999-999999999999';
+  const path=[];
+  const query={
+    select(columns){path.push(['select',columns]);return this;},
+    eq(column,value){path.push(['eq',column,value]);return this;},
+    async maybeSingle(){
+      const noteId=path.find(x=>x[0]==='eq'&&x[1]==='id')?.[2];
+      const owner=path.find(x=>x[0]==='eq'&&x[1]==='owner_id')?.[2];
+      if (noteId===id && owner===foreignOwner) {
+        throw new Error('Attempted to fetch foreign-owner content');
+      }
+      return {data:noteId===id && owner===a?{id,owner_id:a,title:'owned',content:'owned'}:null,error:null};
+    },
+  };
+  const db={from(table){assert.equal(table,'notes');return query;}};
+  const owner=await loadNote(db,id,a);
+  assert.equal(owner.data.owner_id,a);
+  assert.deepEqual(path.filter(x=>x[0]==='eq'),[['eq','id',id],['eq','owner_id',a]]);
+  path.length=0;
+  const denied=await loadNote(db,id,b);
+  assert.equal(denied.data,null);
+  assert.deepEqual(path.filter(x=>x[0]==='eq'),[['eq','id',id],['eq','owner_id',b]]);
 });

@@ -63,11 +63,12 @@ async function context(request, response) {
   return { supabase, login };
 }
 
-async function loadNote(supabase, id) {
+export async function loadNote(supabase, id, verifiedUserId) {
   const { data, error } = await supabase
     .from('notes')
     .select('id,owner_id,title,content')
     .eq('id', id)
+    .eq('owner_id', verifiedUserId)
     .maybeSingle();
 
   return { data, error };
@@ -89,7 +90,7 @@ export default async function handler(request, response) {
   const ctx = await context(request, response);
   if (!ctx) return;
 
-  const current = await loadNote(ctx.supabase, id);
+  const current = await loadNote(ctx.supabase, id, ctx.login.userId);
   if (current.error) return sendJson(response, 500, { error: 'notes_unavailable' });
   if (!current.data) return sendJson(response, 404, { error: 'note_not_found' });
   if (!ownsNote(current.data, ctx.login.userId)) return denyOtherOwner(response);

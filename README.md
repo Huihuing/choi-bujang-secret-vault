@@ -57,7 +57,7 @@ npm run test:r5
 
 ## 8단계 · 자원 구역 분리와 API 소유자 검증
 
-- 개인 메모의 리소스 ID는 `notes/<uuid>`이며 기존 `/api/notes`, `/api/notes/:id`를 유지합니다. GET 목록은 검증된 사용자 `owner_id`만 조회하고 단건 GET/PUT/DELETE는 DB에 저장된 `owner_id`와 서명 검증된 로그인 주체를 비교합니다. PUT/DELETE에는 `owner_id` 조건을 한 번 더 적용합니다.
+- 개인 메모의 리소스 ID는 `notes/<uuid>`이며 기존 `/api/notes`, `/api/notes/:id`를 유지합니다. GET 목록은 검증된 사용자 `owner_id`만 조회하고 단건 GET은 **쿼리 자체에 `id`와 검증된 사용자 `owner_id`를 함께 넣어** 다른 사용자의 제목·본문이 서버로 조회되지 않도록 합니다. 단건 GET/PUT/DELETE는 DB에 저장된 `owner_id`와 서명 검증된 로그인 주체를 비교합니다. PUT/DELETE에는 `owner_id` 조건을 한 번 더 적용합니다.
 - 강사 공지의 리소스 ID는 `instructor-notices/<uuid>`; 새 API `/api/instructor-notices`, `/api/instructor-notices/:id`로 구역을 분리했습니다. 인증 사용자 공지 읽기는 가능하지만 POST/PUT은 서버의 `instructor_memberships`에 등록된 실제 강사만 수행할 수 있습니다. 사용자 본문 `role`, 메뉴, 임의 헤더와 심판 신원은 강사 권한이 아닙니다.
 - 연결된 Supabase에는 `instructor_notices`, `instructor_memberships` 테이블을 추가했습니다. RLS를 활성화했고 비로그인·일반 인증 사용자에게는 테이블 직접 권한을 부여하지 않았습니다. 기존 메모·다른 DB 테이블은 변경하지 않았고 강사 권한을 임의로 부여하지 않았습니다. 적용 SQL: `db/stage8-resource-zones.sql`.
 - 판정기는 이전 `device_registered`와 `step_up_required`를 유지합니다. 추가한 `resource_zone`은 엔진이 확인한 `subjectId`, `deviceId`, `service`, `method`, 정확한 `path` 및 `route` 조합만 허용하고, 알 수 없는 경로는 `deny / resource_not_allowed`로 거부합니다. `:id` 깊이에는 UUID만 허용하며 `export` 기능이나 쿼리 기반 모드 선택은 허용하지 않습니다. 기존 7단계의 가상 요청인 `/notes/demo`는 `judge_fixture` 입력에서만 지원합니다.
@@ -78,7 +78,7 @@ npm run xdr:test
 npm run bundle
 ```
 
-예상: A 소유 메모는 A만 열람·수정, B는 해당 메모 단건 조회·수정 시 `note_forbidden`, 다른 계정 목록에는 A 메모가 보이지 않습니다. 일반 학생의 강사 공지 수정은 `instructor_required`, 비로그인 강사 공지 목록은 `authentication_required`입니다. 8단계 저장점 커밋 후 Git 무시파일 `bundle-notes.json`에 설명을 적고 bundle을 생성합니다. JSON·키·본문·개인정보는 Git에 커밋하지 않습니다.
+예상: A 소유 메모는 A만 열람·수정, B는 해당 메모 단건 조회 시 `note_not_found`(404), 수정 시 `note_not_found`(404) 또는 `note_forbidden`(403), 다른 계정 목록에는 A 메모가 보이지 않습니다. 일반 학생의 강사 공지 수정은 `instructor_required`, 비로그인 강사 공지 목록은 `authentication_required`입니다. 8단계 저장점 커밋 후 Git 무시파일 `bundle-notes.json`에 설명을 적고 bundle을 생성합니다. JSON·키·본문·개인정보는 Git에 커밋하지 않습니다.
 
 ## 보너스 XDR-01 · 무차별 로그인 공격
 
