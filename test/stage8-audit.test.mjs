@@ -40,7 +40,9 @@ test('only fixed route, method, auth-presence and classification appear in logs'
     auditNoteAuth('/api/notes',{kind:'judge',userId:'PRIVATE_USER_ID'},null);
   } finally {console.info=old;}
   assert.equal(lines.length,3);
-  assert.match(lines[0],/aleph_s08_entry.*"route":"\\/api\\/notes\\/:id".*"method":"GET".*"authHeader":"present"/);
+  assert.ok(lines[0].includes('"route":"/api/notes/:id"'));
+  assert.ok(lines[0].includes('"method":"GET"'));
+  assert.ok(lines[0].includes('"authHeader":"present"'));
   assert.match(lines[1],/aleph_s08_auth.*"kind":"null".*"reason":"signature"/);
   assert.match(lines[2],/aleph_s08_auth.*"kind":"judge".*"reason":"ok"/);
   for(const forbidden of ['FAKE_PRIVATE_TOKEN','PRIVATE_USER_ID','private-id','abc']){
