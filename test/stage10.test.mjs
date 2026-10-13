@@ -62,3 +62,18 @@ test('RESTORE endpoint must only return 405 on unsupported verbs without touchin
  assert.equal(headers.Allow,'POST');
  assert.deepEqual(body,{error:'method_not_allowed'});
 });
+
+
+test('stage10 restore must re-read verified backup before any restoration call',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const code=await readFile(new URL('../api/restore.js',import.meta.url),'utf8');
+ const before=code.indexOf("supabase.rpc('stage10_note_preview'");
+ const after=code.indexOf("supabase.rpc('stage10_restore_verified'");
+ assert.ok(before>=0 && after>before,'backup must be checked before restoring');
+ assert.ok(code.includes("preview?.backup_verified===true"));
+ assert.ok(code.includes("preview.record_sha256"));
+ assert.ok(code.includes("preview.policy_sha256"));
+ assert.ok(code.includes("preview.snapshot_version"));
+ assert.ok(code.includes("error.code==='22000'"));
+ assert.ok(!code.includes("supabase.rpc('stage10_restore_one'"));
+});
