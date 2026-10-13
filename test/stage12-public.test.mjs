@@ -48,7 +48,7 @@ test('PWA shows actual aggregate dashboard before sign in with correct stage',as
  assert.ok(page.includes('id="war-public" class="card wide" aria-labelledby'));
  assert.ok(page.includes('src="/war-summary.js"'));
  assert.ok(page.includes('id="war-room" class="card wide" hidden'));
- assert.ok(page.includes('결과 미연동 (출처 설명 펼치기)'));
+ assert.ok(page.includes('앱 검증 기록 미실행 (출처 설명 펼치기)'));
  assert.ok(shell.includes("perform('/api/war-room-summary'"));
  assert.ok(shell.includes("cache:'no-store'"));
  assert.ok(shell.includes('미확인'));
@@ -60,6 +60,8 @@ test('public screen displays observed GET/HEAD status, never pre-fills success',
  const code=await readFile(new URL('../public/war-summary.js',import.meta.url),'utf8');
  assert.ok(page.includes('id="war-public-evidence"'));
  assert.ok(code.includes('readPublicHttpEvidence'));
+ assert.ok(code.includes('not official attackId-correlated judge evidence'));
+ assert.ok(code.includes('확인된 막음 0건'));
  for(const id of ['anonymous_notes_denied','deployment_identity_step12',
                   'first_page_security_header'])assert.ok(code.includes(id));
  assert.ok(code.includes("method:'GET'"));
