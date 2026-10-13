@@ -91,9 +91,19 @@ export default async function handler(request, response) {
   if (!ctx) return;
 
   const current = await loadNote(ctx.supabase, id, ctx.login.userId);
+  // Stage 8 operational audit: signed judge A/B label and outcome only.
+  // Never log a token, user UUID, resource ID, title or body.
+  if (request.method === 'GET' && ctx.login.kind === 'judge') {
+    console.info('aleph_stage8_note_get', JSON.stringify({
+      actor: ctx.login.identity,
+      outcome: current.error ? 'db_error' : current.data ? 'owned' : 'not_found',
+    }));
+  }
   if (current.error) return sendJson(response, 500, { error: 'notes_unavailable' });
   if (!current.data) return sendJson(response, 404, { error: 'note_not_found' });
   if (!ownsNote(current.data, ctx.login.userId)) return denyOtherOwner(response);
+  // Only disclose the canonical zone ID after successful owner verification.
+  response.setHeader('X-Resource-Id', 'notes:' + id);
 
   if (request.method === 'GET') {
     return sendJson(response, 200, {
