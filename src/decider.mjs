@@ -19,6 +19,17 @@ function isAssignedNote(request) {
     && request.path===PRACTICE_NOTE.path
     && PRACTICE_NOTE.methods.includes(request.method);
 }
+// Collection paths can leak other zones if allowed based on route alone.
+// Only the explicitly assigned, verified subject/device/class/project may
+// exercise this locally registered practice collection.
+function isAssignedCollection(request) {
+  return request.classId===PRACTICE_NOTE.classId
+    && request.projectId===PRACTICE_NOTE.projectId
+    && request.subjectId===PRACTICE_NOTE.subjectId
+    && request.deviceId===PRACTICE_NOTE.deviceId
+    && request.service==='notes' && request.path==='/notes'
+    && ['GET','POST'].includes(request.method);
+}
 function hasVerifiedCompositeRisk(request) {
   const signals=request?.signals;
   if (!signals || signals.source!=='judge_fixture') return false;
@@ -63,9 +74,13 @@ export async function decide(request) {
   // For a single note, fail closed unless the engine's verified subject,
   // device, class, project, method and exact path match a server-assigned resource.
   // This static fixture is NOT a binding for real Supabase users.
-  if (z.service==='notes' && request.route.endsWith(' /notes/:id')
-      && !isAssignedNote(request)) {
-    return result(request,'deny','resource_not_allowed','resource_zone');
+  if (z.service==='notes') {
+    const assigned = request.path==='/notes'
+      ? isAssignedCollection(request)
+      : isAssignedNote(request);
+    if (!assigned) {
+      return result(request,'deny','resource_not_allowed','resource_zone');
+    }
   }
   if (z.service==='instructor-notices' && request.method!=='GET') {
     // v1 has NO engine-verified instructor role; notice writing is checked at the final API.

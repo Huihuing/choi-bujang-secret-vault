@@ -33,7 +33,13 @@ test('assigned practice memo read/write preserved; other subject and unassigned 
   const stranger=await decide(request());
   assert.equal(stranger.decision,'deny');
   assert.equal((await decide(request('PUT','/notes/'+id,'PUT /notes/:id'))).decision,'deny');
-  assert.equal((await decide(request('GET','/notes','GET /notes'))).decision,'allow');
+  assert.equal((await decide(request('GET','/notes','GET /notes'))).decision,'deny');
+  assert.equal((await decide({...normal,path:'/notes',route:'GET /notes'})).decision,'allow');
+  assert.equal((await decide({...normal,path:'/notes',route:'GET /notes',subjectId:'another_learner'})).decision,'deny');
+  assert.equal((await decide({...normal,path:'/notes',route:'GET /notes',deviceId:'bbbbbbbbbbbbbbbb'})).decision,'deny');
+  assert.equal((await decide({...normal,path:'/notes',route:'GET /notes',projectId:'other_project'})).decision,'deny');
+  assert.equal((await decide({...normal,path:'/notes',route:'POST /notes',method:'POST'})).decision,'allow');
+  assert.equal((await decide({...normal,path:'/notes',route:'POST /notes',method:'POST',subjectId:'another_learner'})).decision,'deny');
 });
 test('unknown path, query control and same-depth export denied',async()=>{
   for(const r of [
@@ -122,4 +128,15 @@ test('isolated judge-style decider preserves owner and denies cross-zone request
  assert.equal((await isolated({...normal,path:'/notes/'+id})).decision,'deny');
  assert.equal((await isolated({...normal,deviceId:'bbbbbbbbbbbbbbbb'})).decision,'deny');
  assert.equal((await isolated({...normal,method:'PUT',route:'PUT /notes/:id'})).decision,'allow');
+});
+
+test('verified source does not turn cross-zone collection into a granted resource',async()=>{
+ const {normal}=fixtureRequests();
+ for(const changes of [
+   {subjectId:'another_learner'}, {classId:'another_class'}, {projectId:'another_project'},
+   {deviceId:'bbbbbbbbbbbbbbbb'}, {service:'instructor-notices'},
+ ]) {
+   const r={...normal,path:'/notes',route:'GET /notes',...changes};
+   assert.equal((await decide(r)).decision,'deny');
+ }
 });

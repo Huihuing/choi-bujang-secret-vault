@@ -62,6 +62,7 @@ npm run test:r5
 - 연결된 Supabase에는 `instructor_notices`, `instructor_memberships` 테이블을 추가했습니다. RLS를 활성화했고 비로그인·일반 인증 사용자에게는 테이블 직접 권한을 부여하지 않았습니다. 기존 메모·다른 DB 테이블은 변경하지 않았고 강사 권한을 임의로 부여하지 않았습니다. 적용 SQL: `db/stage8-resource-zones.sql`.
 - 판정기는 기존 `device_registered` 및 `step_up_required` 규칙을 유지하면서 정확한 `service`, `method`, `route`, `path`와 검증된 `subjectId`, `deviceId`, `classId`, `projectId`를 확인합니다. 쿼리로 기능을 바꾸거나 `:id`와 동일 깊이의 `export` 경로는 거부합니다.
 - **8단계 심판의 S08_OWN_BROKEN / S08_OTHER_ZONE_ALLOWED 대응:** `scripts/fixture-7.mjs`에 이미 정의된 가상 본인 자원 `/notes/demo`는 오직 서버 코드에 고정된 `class_fixture / project_fixture / learner_fixture / aaaaaaaaaaaaaaaa` 조합에만 배정했습니다. 해당 주체의 `GET /notes/:id` 및 `PUT /notes/:id`는 허용하며, 다른 주체·기기·반·프로젝트나 임의 메모 UUID/다른 경로는 거부합니다. 7단계 위험 시각·네트워크 판정도 다시 원래 단건 가상 자원으로 검증합니다.
+- **S08_OTHER_ZONE_ALLOWED 추가 보강:** 앞선 수정은 `/notes/demo` 단건만 배정하고 `GET /notes` / `POST /notes` 목록 자원은 임의의 확인된 `subjectId`에도 `allow`를 반환하는 맹점이 있었습니다. 이번에는 **단건과 컬렉션 모두** 신원·기기·반·프로젝트의 서버 배정을 검사합니다. 검증된 가상 본인의 `GET /notes` 및 `POST /notes`는 허용, 다른 주체·기기의 같은 경로는 거부합니다. 메모와 강사 공지는 별개 서비스로 유지합니다.
 - **실제 사용자 권한은 별도:** 가상 사용자 명칭은 Supabase 사용자 UUID가 아니므로 실제 메모에 적용하지 않습니다. 실계정의 메모 단건 조회는 서버 API가 저장된 `owner_id`와 검증된 사용자 UUID를 함께 DB 조회 조건으로 사용합니다. 판정기 v1 계약에 실제 메모별 소유자 연결 정보가 없기 때문에 운영 단건 자원 접근을 확장하려면 엔진이 제공하는 별도 소유자 바인딩이 필요합니다. 실계정 A/B 심판 재채점 전에는 성공을 주장하지 않습니다.
 - 현재 강사 등록 구성원이 없어 일반 학생의 강사 공지 쓰기는 기본 거부입니다. 강사 권한 부여는 별도 관리자 작업이어야 하며 웹 요청으로 이 테이블을 변경하는 엔드포인트는 없습니다. 기존 화면 메뉴는 바꾸지 않았습니다.
 - 현재 실제 A/B 사용자 로그인 및 강사 E2E는 비밀번호·토큰 제공 없이 실행할 수 없어 미실행입니다. 심판의 직접 공격 판정 결과로 로컬 fixture를 대신하지 않습니다.
