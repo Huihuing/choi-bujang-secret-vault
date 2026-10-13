@@ -55,6 +55,20 @@ test('PWA shows actual aggregate dashboard before sign in with correct stage',as
  assert.ok(sw.includes("url.pathname.startsWith('/api/')"));
  assert.ok(!sw.includes("'/api/war-room-summary'"));
 });
+test('public screen displays observed GET/HEAD status, never pre-fills success',async()=>{
+ const page=await readFile(new URL('../public/index.html',import.meta.url),'utf8');
+ const code=await readFile(new URL('../public/war-summary.js',import.meta.url),'utf8');
+ assert.ok(page.includes('id="war-public-evidence"'));
+ assert.ok(code.includes('readPublicHttpEvidence'));
+ for(const id of ['anonymous_notes_denied','deployment_identity_step12',
+                  'first_page_security_header'])assert.ok(code.includes(id));
+ assert.ok(code.includes("method:'GET'"));
+ assert.ok(code.includes("method:'HEAD'"));
+ assert.ok(code.includes('actual=\'미실행 · 네트워크 실패\''));
+ assert.ok(code.includes('new Date().toISOString()'));
+ assert.ok(code.includes('실측 불일치'));
+ assert.ok(code.includes('showHttpEvidence(await readPublicHttpEvidence(perform))'));
+});
 test('public aggregate RPC is service-role-only and does not select private note rows',async()=>{
  const sql=await readFile(new URL('../db/stage12-public-operational-snapshot.sql',import.meta.url),'utf8');
  assert.match(sql,/REVOKE ALL ON FUNCTION public.stage12_public_operational_snapshot\(\) FROM PUBLIC,anon,authenticated/);
