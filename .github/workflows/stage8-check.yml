@@ -1,4 +1,4 @@
-name: Stage 10 recovery and prior stages
+name: Stage 11 PWA security and prior stages
 
 on:
   push:
@@ -41,6 +41,7 @@ jobs:
       - run: npm run detect:test
       - run: node --test test/detect.test.mjs
       - run: node --test test/stage10.test.mjs
+      - run: node --test test/stage11.test.mjs
       - run: npm run test:r8
       - run: node --test test/judge-owner-identity.test.mjs
       - run: node --test test/stage8-audit.test.mjs
