@@ -87,7 +87,8 @@ test('only a stored, verified student instructor membership passes',async()=>{
   assert.equal(await hasStoredInstructorAccess(db,{kind:'student',userId:b,role:'instructor'}),false);
 });
 test('stage7 composite risk and step-up remain',async()=>{
- const r={...request('GET','/notes','GET /notes'),signals:{source:'judge_fixture',region:'foreign',network:'unusual',hour:3},
+ const {normal}=fixtureRequests();
+ const r={...normal,signals:{source:'judge_fixture',region:'foreign',network:'unusual',hour:3},
  recentEvents:[{kind:'risk_signal',ageSeconds:60,count:20}]};
  assert.equal((await decide(r)).decision,'step_up');
  assert.equal((await decide({...r,stepUp:{verified:true,authAgeSeconds:60}})).decision,'allow');
