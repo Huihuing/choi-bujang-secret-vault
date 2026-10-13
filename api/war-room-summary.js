@@ -43,7 +43,10 @@ function respond(res,status,body){
  return res.json(body);
 }
 export default async function handler(req,res){
- if(req.method!=='GET'||req.url!=='/api/war-room-summary')
+ // Vercel's protected deployment links may append routing/query metadata.
+ // This function is already bound to /api/war-room-summary by file routing.
+ // Do not authorize based on user-controlled query strings.
+ if(req.method!=='GET')
   return respond(res,405,{error:'method_not_allowed'});
  const url=process.env.SUPABASE_URL,key=process.env.SUPABASE_SECRET_KEY;
  if(!url||!key)return respond(res,503,{error:'operations_evidence_unavailable'});
