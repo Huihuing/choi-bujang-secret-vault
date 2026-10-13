@@ -28,6 +28,19 @@ export function recoveryNoteId(body) {
     && typeof value.id==='string' && UUID.test(value.id)
     ? value.id.toLowerCase() : null;
 }
+// Legacy POST {id} remains unchanged. Only {id,dryRun:true} adds a
+// read-only preview. All other fields, false flags and aliases are rejected.
+export function recoveryNoteOperation(body) {
+  const value=parseBody(body);
+  if (!value || typeof value.id!=='string' || !UUID.test(value.id)) return null;
+  const keys=Object.keys(value).sort();
+  if (keys.length===1 && keys[0]==='id') {
+    return {id:value.id.toLowerCase(),dryRun:false};
+  }
+  if (keys.length===2 && keys[0]==='dryRun' && keys[1]==='id'
+    && value.dryRun===true) return {id:value.id.toLowerCase(),dryRun:true};
+  return null;
+}
 export function recoveryPolicyHash(body) {
   const value=parseBody(body);
   return value && Object.keys(value).join(',')==='expectedSha256'
