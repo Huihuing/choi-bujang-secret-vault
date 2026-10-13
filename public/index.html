@@ -114,6 +114,11 @@
     <p id="war-public-status" class="meta" aria-live="polite">서버의 실제 응답을 확인하는 중입니다.</p>
     <p class="meta">실측 커밋 <code id="war-public-commit">미확인</code> · 서버 관측 시각 <span id="war-public-time">미확인</span></p>
     <div id="war-public-metrics" class="war-metrics"></div>
+    <h3>제출 단계와 연결되는 공개 GET·HEAD 실측</h3>
+    <p class="meta">다음 세 항목은 실시간 요청의 HTTP 상태와 확인 시각을 보여 줍니다. 오류나 미실행은 그대로 표시하며, 심판 내부의 41종 공격 판정으로 계산하지 않습니다.</p>
+    <div class="war-table"><table><thead><tr><th>검사 ID</th><th>실제 요청</th><th>기대 결과</th><th>실측 HTTP</th><th>대조</th><th>시각</th></tr></thead>
+     <tbody id="war-public-evidence"><tr><td colspan="6">실제 HTTP 응답 확인 전 · 미실행</td></tr></tbody>
+    </table></div>
     <p class="warning">실제 HTTP 기록이 없으면 '미확인'으로 표시합니다. 코드 선언 규칙 수는 실전 엔진 판정 수가 아니며, 공식 41종 결과도 집계에 포함되지 않습니다.</p>
   </section>
   <section id="war-room" class="card wide" hidden aria-labelledby="war-title">
