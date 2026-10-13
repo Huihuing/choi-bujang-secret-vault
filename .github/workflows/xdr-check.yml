@@ -10,6 +10,7 @@ on:
       - 'test/*injection*.test.mjs'
       - 'test/brute-force.test.mjs'
       - 'test/known-cve.test.mjs'
+      - 'README.md'
       - 'package.json'
       - '.github/workflows/xdr-check.yml'
   workflow_dispatch:

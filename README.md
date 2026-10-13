@@ -1,5 +1,22 @@
 # BYTE BACK · 12단계 저장점 — 탈환 작전실
 
+## 보너스 xdr-03 저장점 · 알려진 CVE 악용 탐지
+
+이 모듈은 기존 ZTNA 규칙을 **대체하지 않고 추가 확인 단계**로 연결됩니다. `src/decider.mjs`의 판정 규칙은 변경하지 않았으며, `src/xdr-decider.mjs`가 기존 brute-force·web-injection 임시 거부 규칙에 `known-cve` 규칙을 추가로 읽어 옵니다.
+
+- **독립 판정:** `xdr/known-cve/decide.mjs`의 `decide(alert)`는 import·파일 접근·외부 API 없이 단독 실행됩니다. 입력 HTTP 경로·인자·헤더의 구체적인 JNDI 조회 신호는 `block`(0.97), CVE/T1190 점검 흔적만 있는 경우 `alert`(0.6~0.75), 정상 로그는 `record`(0.05)입니다. 임계값은 0.85/0.5입니다. 패턴은 `xdr/known-cve/patterns.json`에 근거와 함께 있습니다.
+- **읽기 전용 추출:** `xdr/known-cve/read-alerts.mjs`는 Wazuh의 시간·출발 IP·계정·규칙 수준·설명만 추출하고 비밀값처럼 보이는 문자열을 가립니다. `decide.mjs`에서 이 모듈을 import하지 않습니다.
+- **제공 fixture 상태:** 기존 저장소에 `xdr/fixtures/known-cve.json`이 **없어서 새로 만든 교육용 가상 경보 18건**으로 시험했습니다. 원본 교육용 경보를 확보한 것은 아니며, 향후 제공되는 실제 강의 fixture로 교체해 다시 확인해야 합니다. 가상 경보에는 문서용 TEST-NET 주소와 `.invalid` 예시만 사용했습니다.
+- **응답·연결:** `xdr/known-cve/respond.mjs`는 실제 입력 경보에서도 다시 명확한 신호를 확인한 `block`에만 출발 주소별 15분 임시 거부 규칙·근거 경보 ID를 붙입니다. 같은 처리 묶음에 정상 활동이 확인된 공유 주소는 차단 후보에서 제외합니다. `alert`/ `record`는 거부 규칙으로 만들지 않습니다. `xdr/alerts.log`에는 본문이나 토큰 대신 비민감 경보 ID·분류·패턴만 저장합니다. 기한이 지난 규칙은 ZTNA 연결부에서 적용하지 않습니다.
+- **실행:** `npm ci` → `npm run xdr:test` → `npm run xdr:run -- known-cve`. 산출물은 `xdr/known-cve/result.json`, `xdr/known-cve/deny-rules.json`, `xdr/alerts.log`입니다. 강의용 가상 경보 18건 결과는 **block 6 · alert 6 · record 6 · 정상 차단 0**입니다.
+- **중지·복구:** 신규 경보 입력을 중지하고 15분이 경과하면 임시 규칙이 만료됩니다. `src/xdr-decider.mjs`에서 모듈 등록 한 줄을 빼거나 `xdr/known-cve/deny-rules.json`을 `[]`로 만들면 이 모듈의 추가 차단만 중지할 수 있습니다. 기존 판정 규칙·이전 XDR 모듈은 보존해야 합니다.
+- **범위:** 이번 결과는 오프라인 합성 경보와 GitHub Actions에서 검증한 것이며, 실제 악용 차단이나 운영 ALEPH 심판 합격은 확인하지 않았습니다. 이 탐지는 취약한 Log4j 버전의 **업데이트를 대체하지 않습니다**.
+
+패턴 출처: [NVD CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228) · [MITRE ATT&CK T1190](https://attack.mitre.org/techniques/T1190/).
+
+---
+
+
 ## 최신 검증 실험 · 전체 not_run 및 앱 기준 확인 건수
 
 마지막 판정 `S12_SCREEN_MISMATCH`의 원인은 아직 심판 내부 원장으로 확정하지 못했습니다. 이전 수정에서 ‘세 GET/HEAD 요청은 심판이 인식했다’고 서술했지만, 판정 문구는 오히려 그 `attackId`들의 요청 기록이 없다고 지적했습니다. 따라서 **이전 서술을 검증된 사실로 취급하지 않습니다.**
