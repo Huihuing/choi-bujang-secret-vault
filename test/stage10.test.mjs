@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
  RESTORE_ROUTE,POLICY_ROUTE,exactStage10Path,isVerifiedJudgeB,
- recoveryNoteId,recoveryPolicyHash,confirmedRestoreResponse,
+ recoveryNoteId,recoveryNoteOperation,recoveryPolicyHash,confirmedRestoreResponse,
 } from '../src/stage10-restore-contract.mjs';
+import {restoreFromVerifiedSnapshot} from '../src/restore-core.mjs';
 
 const id='11111111-1111-4111-8111-111111111111';
 const login={kind:'judge',identity:'b',userId:id,
@@ -64,16 +65,89 @@ test('RESTORE endpoint must only return 405 on unsupported verbs without touchin
 });
 
 
-test('stage10 restore must re-read verified backup before any restoration call',async()=>{
- const {readFile}=await import('node:fs/promises');
- const code=await readFile(new URL('../api/restore.js',import.meta.url),'utf8');
- const before=code.indexOf("supabase.rpc('stage10_note_preview'");
- const after=code.indexOf("supabase.rpc('stage10_restore_verified'");
- assert.ok(before>=0 && after>before,'backup must be checked before restoring');
- assert.ok(code.includes("preview?.backup_verified===true"));
- assert.ok(code.includes("preview.record_sha256"));
- assert.ok(code.includes("preview.policy_sha256"));
- assert.ok(code.includes("preview.snapshot_version"));
- assert.ok(code.includes("error.code==='22000'"));
- assert.ok(!code.includes("supabase.rpc('stage10_restore_one'"));
+
+const snapshot={
+  backup_verified:true,id,snapshot_version:'stage10_before_attack_v1',
+  record_sha256:'a'.repeat(64),content_sha256:'b'.repeat(64),
+  policy_sha256:'c'.repeat(64),changed_fields:['content','title'],
+};
+const restored={
+  restored:true,id,backup_verified:true,snapshot_version:snapshot.snapshot_version,
+  record_sha256:snapshot.record_sha256,content_sha256:snapshot.content_sha256,
+  policy_sha256:snapshot.policy_sha256,changed_fields:snapshot.changed_fields,
+};
+function fakeClient(read={data:snapshot,error:null},write={data:restored,error:null}) {
+ const calls=[];
+ return {calls,supabase:{async rpc(name,args){
+  calls.push({name,args});
+  if(name==='stage10_note_preview')return read;
+  if(name==='stage10_restore_verified')return write;
+  throw new Error('unexpected RPC');
+ }}};
+}
+test('existing POST id remains valid, only true dryRun adds preflight',()=>{
+ assert.deepEqual(recoveryNoteOperation({id}),{id,dryRun:false});
+ assert.deepEqual(recoveryNoteOperation({id,dryRun:true}),{id,dryRun:true});
+ assert.deepEqual(recoveryNoteOperation(JSON.stringify({id,dryRun:true})),{id,dryRun:true});
+ for(const body of [{id,dryRun:false},{id,dryRun:'true'}, {id,dryRun:true,owner_id:id},
+   {noteId:id,dryRun:true},{id,role:'judge'},{id,owner_id:id},{}]){
+  assert.equal(recoveryNoteOperation(body),null);
+ }
+ assert.equal(recoveryNoteId({id}),id);
+});
+test('dryRun reads and validates backup only and returns version and changed fields',async()=>{
+ const mock=fakeClient();
+ const out=await restoreFromVerifiedSnapshot({supabase:mock.supabase,id,ownerId:'verified_owner',dryRun:true});
+ assert.equal(out.status,200);
+ assert.equal(out.body.preview,true);
+ assert.equal(out.body.backup_verified,true);
+ assert.equal(out.body.snapshot_version,'stage10_before_attack_v1');
+ assert.deepEqual(out.body.changed_fields,['content','title']);
+ assert.deepEqual(mock.calls.map(x=>x.name),['stage10_note_preview']);
+ assert.equal(mock.calls[0].args.p_verified_owner,'verified_owner');
+ assert.equal(JSON.stringify(out).includes('verified_owner'),false);
+});
+test('normal restore rechecks hashes and version, then returns proof',async()=>{
+ const mock=fakeClient();
+ const out=await restoreFromVerifiedSnapshot({supabase:mock.supabase,id,ownerId:'verified_owner'});
+ assert.equal(out.status,200);
+ assert.equal(out.body.restored,true);
+ assert.equal(out.body.backup_verified,true);
+ assert.deepEqual(mock.calls.map(x=>x.name),['stage10_note_preview','stage10_restore_verified']);
+ const args=mock.calls[1].args;
+ assert.equal(args.p_expected_record_sha256,snapshot.record_sha256);
+ assert.equal(args.p_expected_version,snapshot.snapshot_version);
+ assert.equal(args.p_expected_policy_sha256,snapshot.policy_sha256);
+ assert.deepEqual(out.body.changed_fields,['content','title']);
+});
+test('missing and corrupt backups stop before write for previews AND restores',async()=>{
+ const readCases=[
+  [{data:null,error:{code:'P0002'}},404,'verified_backup_missing'],
+  [{data:null,error:{code:'22000'}},409,'backup_verification_failed'],
+  [{data:{...snapshot,backup_verified:false},error:null},409,'backup_verification_failed'],
+  [{data:{...snapshot,record_sha256:'untrusted'},error:null},409,'backup_verification_failed'],
+  [{data:{...snapshot,id:'33333333-3333-4333-8333-333333333333'},error:null},409,'backup_verification_failed'],
+  [{data:{...snapshot,changed_fields:['owner_id']},error:null},409,'backup_verification_failed'],
+ ];
+ for(const [read,status,reason] of readCases){
+  for(const dryRun of [false,true]){
+   const mock=fakeClient(read);
+   const out=await restoreFromVerifiedSnapshot({supabase:mock.supabase,id,ownerId:'verified_owner',dryRun});
+   assert.equal(out.status,status);
+   assert.equal(out.body.error,reason);
+   assert.deepEqual(mock.calls.map(x=>x.name),['stage10_note_preview']);
+  }
+ }
+});
+test('failed restoration or mismatched post-write proof never reports success',async()=>{
+ for(const write of [
+  {data:null,error:{code:'22000'}},
+  {data:{...restored,record_sha256:'f'.repeat(64)},error:null},
+  {data:{...restored,backup_verified:false},error:null},
+ ]){
+  const mock=fakeClient(undefined,write);
+  const out=await restoreFromVerifiedSnapshot({supabase:mock.supabase,id,ownerId:'verified_owner'});
+  assert.ok(out.status>=400);
+  assert.deepEqual(mock.calls.map(x=>x.name),['stage10_note_preview','stage10_restore_verified']);
+ }
 });
