@@ -1,3 +1,35 @@
+# BYTE BACK 방어전 · 10단계 저장점 — 검증 백업 복원
+
+**현재 단계: 10단계 「백업에서 자료실을 되살립니다」.** 9단계 통과 직후의 GitHub 기준 커밋 `9dde11f22e5f`을 유지하고 기존 1~9단계 판정기·탐지기·로그인·API·RLS 및 보너스 XDR 테스트를 계속 실행합니다.
+
+## 검증된 백업과 시험 정책
+
+- 운영 Supabase 프로젝트의 비공개 `stage10_restore` 스키마에 `notes_snapshot`, `restore_audit`, `policy_baseline`, `policy_trial`, `policy_audit`를 생성했습니다. 복구 데이터는 저장소·공개 자료 파일에 넣지 않습니다.
+- 이 단계 공격 **시작 전 기준 시점**에 있던 메모 4건을 사본으로 저장하고, 메모 ID·소유자 UUID·제목·내용을 SHA-256으로 검증했습니다. 침해 이전의 외부 백업을 발견한 것은 아닙니다. **현재 검증된 기준 상태를 10단계 공격 전에 새로 캡처한 것**입니다. 공격 전 이미 변조된 기록까지 되돌리는 역사적 증거는 아닙니다.
+- 새로 등록되는 메모는 최초 INSERT 시 사본을 하나 저장합니다. UPDATE/DELETE는 그 사본을 변경하지 않습니다. 이 체크포인트는 DB 관리자 권한과 독립된 외부 백업의 대체재가 아닙니다.
+- `policy_baseline`은 복구 시작 시 운영에서 읽은 메모/강사 테이블 RLS 정책 스냅샷과 SHA-256을 보관합니다. `policy_trial`은 *별도의 시험 복사본*이며 실제 RLS 정책이 아닙니다.
+- 정책 비교: `GET /api/recovery-policy` → 버전, 백업 해시, 다른 정책 키만 표시. 되돌리기: `POST /api/recovery-policy` 본문 `{"expectedSha256":"GET에서 확인한 해시"}` → **시험 정책만** 기준 사본으로 복원하고 감사 기록을 추가합니다. 실제 운영 정책이나 타 서비스 규칙은 바꾸지 않습니다.
+
+## 단건 메모 복원
+
+- **복구 경로:** `POST /api/restore` (`aleph.config.json.restoreRoute`와 동일).
+- **본문:** `{"id":"복구할 메모 UUID"}` 하나만 허용합니다. 소유자·역할·기기 값은 요청에서 받지 않습니다.
+- **인증:** 운영 심판이 서명한, 유효한 A/B 신원 중 **B 계정만** 허용합니다. B의 검증된 UUID가 비공개 사본의 소유자와 일치해야 합니다. 단건 SQL 트랜잭션이 사본의 소유자·내용 해시를 재확인하고 동일 ID의 한 건만 INSERT 또는 UPDATE한 뒤 확인 결과를 반환합니다. 백업이 없거나 무결성이 잘못되면 아무 자료도 덮어쓰지 않습니다.
+- 다른 메모와 `restore_audit` / `policy_audit`를 삭제·초기화하지 않습니다. 복원된 메모와 SHA-256만 응답하며 메모 내용이나 서버 비밀키는 반환하지 않습니다.
+- 익명, 일반 학생, 심판 A, 서명이 틀린 B, 다른 소유자의 메모 ID 요청은 거부합니다. 시험 B의 운영 JWT는 AI에 제공하지 않아 실제 심판 침해 후 복원은 **미실행** 상태입니다.
+
+## 검증 순서 (1~9단계 재검사)
+
+1. `GET /api/recovery-policy`로 기준 정책 버전·해시·변경 키를 확인합니다(심판 B 서명 JWT 필요). 기준 SHA-256을 확인하기 전에는 `POST /api/recovery-policy`로 시험 정책을 되돌리지 않습니다. 다른 서비스 정책은 제외합니다.
+2. 기준 메모 스냅샷 ID·소유자·SHA-256을 조회하거나 DB 운영 점검으로 확인합니다. 이후 서명된 B 시험 계정으로 지정 UUID만 `POST /api/restore`하고 정상 응답의 `content_sha256`과 사본 해시가 같은지 비교합니다.
+3. 운영 심판이 B의 변조·삭제·재접속 공격을 재생합니다. 메모 **정상 GET/PUT**, 타인 메모 **거부**, 미등록 기기 거부, 7단계 추가 확인, 8단계 목록 조회 거부/강사 공지 쓰기 거부, 9단계 다량 GET 회수 제안을 차례로 확인합니다.
+4. 로컬에서 `npm run decider:test`, `npm run fixture:7`, `npm run test:r8`, `npm run detect:test`, `node --test test/stage10.test.mjs`, `npm run test:r5`, `npm run xdr:test`, `npm run build -- --local`을 실행합니다. 실제 B 토큰·운영 정책 변경·침해 후 실자료 비교는 아직 **미실행**이며 통과했다고 기록하지 않습니다.
+5. **비로그인 거부 확인:** `curl.exe -i -X POST https://choi-bujang-secret-vault-jwnp.vercel.app/api/restore -H "Content-Type: application/json" -d "{\\"id\\":\\"11111111-1111-4111-8111-111111111111\\"}"` 결과는 401이어야 합니다. 공개키로 `stage10_restore` 비공개 백업 내용을 읽을 수 없어야 합니다.
+
+실제 운영 서비스 RLS·1~9단계 기능은 이번 변경에서 수정하지 않았습니다. `bundle-notes.json`과 `artifacts/submission.json`은 Git에 포함하지 않습니다. `npm run bundle`은 커밋·배포 이후 CI에서 실행하며, 결과는 심판 판정의 대체가 아닙니다.
+
+---
+
 # BYTE BACK 방어전 · 9단계 저장점 — 가상 사건 탐지와 회수 제안
 
 **현재 단계: 9단계 「도플갱어를 찾고 권한을 거둡니다」.** 마지막 8단계 커밋 `d4d62f79fed5`의 소유자 기반 API 검증·자원 구역 판정과 1~7단계 기능 및 보너스 XDR-01/02는 보존합니다. 9단계의 저장소 구현은 `src/detect.mjs`에만 탐지·제안 로직을 추가하며, 기존 `src/decider.mjs`의 응답 형식을 바꾸거나 실제 회수 API를 만들지 않습니다.

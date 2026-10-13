@@ -93,7 +93,7 @@ export async function runAttackChecks(config) {
     ];
   }
 
-  if (config.step >= 3 && config.step <= 9) {
+  if (config.step >= 3 && config.step <= 10) {
     const checks = await standardChecks(app, config.step);
     const attempts = [
       { attackId: 'anonymous_notes_denied',
@@ -239,6 +239,36 @@ export async function runAttackChecks(config) {
         attackId: 'stage9_real_revocation_pending',
         expected: '운영 엔진이 탐지한 가상 사건의 권한 회수 및 후속 요청 차단',
         observed: '실제 가상 기기 회수 및 후속 요청 차단은 심판 검증 대기; 로컬 탐지는 회수 제안만 생성',
+      });
+    }
+
+    if (config.step >= 10) {
+      const restore = await fetch(new URL('/api/restore',app), {
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({id:'11111111-1111-4111-8111-111111111111'}),
+        redirect:'error',signal:AbortSignal.timeout(10000),
+      });
+      attempts.push({
+        attackId:'stage10_anonymous_restore_denied',
+        expected:'로그인 없이 특정 메모 POST 복원은 거부되어야 함',
+        observed:[401,403].includes(restore.status)
+          ? '비로그인 메모 복원이 거부됨 (HTTP '+restore.status+')'
+          : '복구 경로 거부 확인 필요 (HTTP '+restore.status+')',
+      });
+      const policy = await fetch(new URL('/api/recovery-policy',app), {
+        method:'GET',redirect:'error',signal:AbortSignal.timeout(10000),
+      });
+      attempts.push({
+        attackId:'stage10_anonymous_policy_denied',
+        expected:'비로그인 시험 정책 차이 조회는 거부',
+        observed:[401,403].includes(policy.status)
+          ? '비로그인 정책 복구 조회 거부 확인 (HTTP '+policy.status+')'
+          : '시험 정책 접근 확인 필요 (HTTP '+policy.status+')',
+      });
+      attempts.push({
+        attackId:'stage10_signed_b_restore_pending',
+        expected:'서명 검증된 B가 지정한 자기 메모 한 건만 백업으로 복원',
+        observed:'B의 심판용 인증 토큰과 실제 침해 사건은 학생에게 없어 운영 복원 시험 미실행; 백업 해시와 격리 시험은 별도 검증',
       });
     }
 
