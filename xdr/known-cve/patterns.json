@@ -13,5 +13,10 @@
     "name": "log4shell-scan-indicator",
     "condition": "Wazuh T1190/CVE-2021-44228 및 Log4Shell 검사기 또는 탐색 문자열 흔적, 실제 악용 문자열은 불확실",
     "basis": "MITRE ATT&CK T1190: 공개 서비스 취약점 악용 탐색 및 NVD CVE-2021-44228"
+  },
+  {
+    "name": "log4shell-repeated-exploit",
+    "condition": "Wazuh T1190, rule.level >= 10, data.count >= 5, Log4j/JNDI/원격 조회·악용 근거가 동시에 있고 단순 스캔·점검 표식만은 아님",
+    "basis": "NVD CVE-2021-44228 및 MITRE ATT&CK T1190: 로그 기반 원격 조회 취약점의 반복 악용 징후"
   }
 ]
