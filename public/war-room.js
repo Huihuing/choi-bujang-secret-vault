@@ -23,14 +23,14 @@ function cell(row,value){
 function renderOfficialSlots(){
  const body=byId('war-official-rows');
  body.replaceChildren();
- // 41 is the assignment's expected number, NOT 41 fetched judge events.
- // One explicit missing-evidence row avoids inventing official event IDs.
+ // App-local verified evidence only; does not contradict the
+ // independent judge verdict where some attacks have been defeated.
  const row=document.createElement('tr');
- cell(row,'공식 41종 (과제 기준)');
- cell(row,'실제 사건별 서버 기록 미연결');
- cell(row,'심판 기록을 제공받지 못함');
- cell(row,'미확인 · 실측 0건이라는 뜻 아님');
- cell(row,'—');
+ cell(row,'공식 전체 41종 (과제 기준)');
+ cell(row,'이 앱의 공식 사건별 검증 기록: 모두 미실행');
+ cell(row,'심판 원장 미연결');
+ cell(row,'확인된 막음 0건 · 확인된 통과 0건 (앱 증거 기준)');
+ cell(row,'실제 공식 판정과 별개');
  body.append(row);
 }
 export function mountWarRoom(getAccessToken){
@@ -85,7 +85,7 @@ export function mountWarRoom(getAccessToken){
       :'미확인 · 검증된 서버 수치 없음'],
    ['내 계정 복구 감사 기록',measured(summary.recovery?.currentAccountRestoreEvents)],
    ['내 계정 안전 HTTP 검사 기록',measured(summary.selfChecks?.recordedCount)],
-   ['공식 총공세 결과','41종 과제 기준 · 실제 심판 결과 미연결 / 미확인'],
+   ['공식 총공세 확인 기록','41건 미실행 · 막음 0건 · 통과 0건 (이 앱의 공식 증거 확인 기준; 실제 판정 아님)'],
   ];
   metrics.replaceChildren(...cells.map(([name,value])=>{
    const item=document.createElement('div');item.className='war-metric';
