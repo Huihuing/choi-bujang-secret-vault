@@ -93,7 +93,7 @@ export async function runAttackChecks(config) {
     ];
   }
 
-  if (config.step >= 3 && config.step <= 5) {
+  if (config.step >= 3 && config.step <= 6) {
     const checks = await standardChecks(app, config.step);
     const attempts = [
       { attackId: 'anonymous_notes_denied',
@@ -136,7 +136,7 @@ export async function runAttackChecks(config) {
       });
     }
 
-    if (config.step === 5) {
+    if (config.step >= 5) {
       const publicConfigResponse = await fetch(new URL('/api/public-config', app), {
         redirect: 'error', signal: AbortSignal.timeout(10000),
       });
@@ -170,6 +170,14 @@ export async function runAttackChecks(config) {
         observed: sourceSafe
           ? '첫 화면 HTML 소스에서 Supabase 공개 키 문자열이 발견되지 않음'
           : `첫 화면 공개 키 문자열 확인 필요 (HTTP ${sourceResponse.status})`,
+      });
+    }
+
+    if (config.step === 6) {
+      attempts.push({
+        attackId: 'unregistered_device_judge_pending',
+        expected: '미등록 기기 자료 요청은 운영 심판이 거부해야 함',
+        observed: '실제 미등록 기기 공격은 심판 담당으로 미실행; 로컬 가상 요청만 별도 확인',
       });
     }
 

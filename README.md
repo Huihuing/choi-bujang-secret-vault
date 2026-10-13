@@ -1,6 +1,6 @@
-# BYTE BACK 방어전 · 5단계 + 보너스 XDR-01/XDR-02 저장점
+# BYTE BACK 방어전 · 6단계 + 보너스 XDR-01/XDR-02 저장점
 
-현재 단계는 **5단계 「자료 요청을 서버 한곳으로 모읍니다」**입니다. 4단계의 로그인·소유자 검사를 유지하면서, 브라우저의 메모 CRUD는 Vercel 서버 함수만 사용하고 Supabase Data API의 직접 테이블 권한은 회수했습니다.
+현재 단계는 **6단계 「등록한 기기만 자료실에 들어옵니다」**입니다. 기존 5단계의 로그인·소유자 검사, 브라우저 메모 CRUD와 서버 함수 및 직접 테이블 권한 회수는 그대로 유지합니다. 6단계는 운영 엔진에서 검증해 전달한 기기 등록 여부를 학생 판정기가 판단하는 규칙을 추가합니다.
 
 ## 현재 동작
 
@@ -9,6 +9,27 @@
 - 서버 함수는 시작 틀의 `src/verify-login.mjs`로 로그인 토큰을 확인하고, 검증된 userId와 `owner_id`를 비교합니다.
 - 새 메모의 `owner_id`도 서버가 검증한 userId로만 저장하며 URL·본문의 소유자 값은 신뢰하지 않습니다.
 - `public.notes`의 PUBLIC·anon·authenticated 직접 테이블 권한은 모두 회수했습니다.
+
+
+## 6단계 · 등록 기기 판정
+
+- `docs/DECIDER_REQUEST.md`의 `aleph.decision.v1` 계약만 사용합니다. 엔진이 검증한 가명 사용자 `subjectId`, 기기 `deviceId`, 기기 등록 여부 `deviceRegistered`가 전달됩니다.
+- `src/decider.mjs`의 `RULE_IDS`에 `device_registered`만 등록했습니다. `deviceRegistered === true`일 때만 `allow / approved`를 반환합니다.
+- 값이 `false`이거나 누락되거나 실제 불리언 `true`가 아니면 `deny / device_not_registered`로 거부합니다. 응답은 기존 계약의 다섯 항목을 유지합니다.
+- 별도 기기 등록 프로그램, 인증서·CA·서명 키·개인키를 만들지 않았습니다. 실제 릴레이의 등록 확인은 운영 엔진이 담당하며 `npm run decider:test`는 가상 요청 연습입니다.
+- 기존 브라우저 화면, Vercel 자료실 주소, 서버 메모 CRUD, XDR-01/XDR-02는 변경하지 않았습니다. `aleph.config.json`의 `step`을 6으로 올리고 배포 빌드 및 제출 자기점검의 지원 범위를 6단계로 확장했습니다.
+
+6단계 로컬 확인 순서 (Node.js 22 이상):
+
+```powershell
+npm run decider:test
+npm run build -- --local
+npm run test:r5
+```
+
+판정기 연습에서는 `통과 · 등록 기기의 정상 요청`과 `통과 · 미등록 기기의 가상 요청`이 모두 출력되어야 합니다. 미등록 기기 응답은 `deny / device_not_registered`이며 누락 값도 같은 이유 코드로 거부합니다. 배포 이후에는 기존 자료실 URL에서 등록 기기 화면을 직접 확인하세요. 실제 미등록 기기 공격과 심판 판정은 운영 측에서 수행하므로 확인하지 않은 결과를 통과로 기록하지 않습니다.
+
+제출할 때는 변경 사항을 `6단계 저장점`으로 커밋한 뒤, Git에 포함되지 않는 `bundle-notes.json`에 이번 단계 설명을 작성하고 `npm run bundle`을 실행합니다. 생성되는 `artifacts/submission.json`도 Git에 올리지 않습니다. 비밀값은 넣지 않습니다.
 
 
 ## 보너스 XDR-01 · 무차별 로그인 공격
@@ -93,7 +114,7 @@ https://sckjbblzivbcoofabhqd.supabase.co/rest/v1/notes
 
 - 로그인 없는 `GET /api/notes`는 401/403 JSON 오류여야 합니다.
 - 원본 `originalApiUrl`을 공개 Publishable Key로 직접 호출하면 메모 자료 없이 거부되어야 합니다.
-- `/aleph.json`은 step 5이며 `allowedRoutes`가 하나 이상 포함되어야 합니다.
+- `/aleph.json`은 배포 갱신 후 step 6이며 `allowedRoutes`가 하나 이상 포함되어야 합니다.
 - 첫 화면에는 `X-Content-Type-Options: nosniff` 또는 CSP가 있어야 합니다.
 - 첫 화면 HTML 소스에는 `sb_publishable_...` 또는 anon JWT 키 문자열을 직접 넣지 않습니다.
 

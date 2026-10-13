@@ -1,0 +1,47 @@
+name: Stage 6 device decision
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/decider.mjs'
+      - 'src/attack-check.mjs'
+      - 'scripts/build-public.mjs'
+      - 'aleph.config.json'
+      - 'README.md'
+      - '.github/workflows/stage6-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage6:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run decider:test
+      - run: npm run build -- --local
+      - run: npm run test:r5
+      - name: Prepare ignored submission explanation
+        run: |
+          node --input-type=module - <<'NODE'
+          import { writeFileSync } from 'node:fs';
+          const explanation = [
+            '6단계: 등록된 기기만 자료실 판정에서 허용합니다.',
+            '미등록·누락 요청은 device_not_registered로 거부합니다.',
+            '기존 5단계 API와 XDR 기능을 보존하고 가상 요청 테스트를 수행했습니다.',
+          ].join('\n');
+          writeFileSync('bundle-notes.json', JSON.stringify({ explanation }, null, 2) + '\n');
+          NODE
+      - run: npm run bundle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stage6-submission
+          path: artifacts/submission.json
+          if-no-files-found: error
