@@ -36,12 +36,11 @@ export function publicMetrics(data){
   ['DB 복원 감사',formatCount(rec.verifiedRestoreEvents)],
   ['안전 HTTP 검사의 실측 기록',
     formatCount(probes.recorded)+' · 기대 상태 일치 '+formatCount(probes.expectedStatusMatched)],
-  ['공식 41종 공격 (제공 심판)','미확인 · 사건별 공식 기록 미연결'],
+  ['공식 41종 확인 기록','41건 미실행 · 확인된 막음 0건 · 확인된 통과 0건 (앱 수집 기준, 심판 판정 아님)'],
  ];
 }
-// These three GET/HEAD checks correspond to requests the stage-12 judge
-// previously recognized. Each observation is a fresh HTTP result, not a
-// fabricated pass or a protected-record query.
+// These three browser-side GET/HEAD checks are independent observations.
+// They are not official attackId-correlated judge evidence.
 export async function readPublicHttpEvidence(perform=fetch){
  const cases=[
   {id:'anonymous_notes_denied',method:'GET',path:'/api/notes',
