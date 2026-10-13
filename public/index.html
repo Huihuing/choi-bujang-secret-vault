@@ -2,253 +2,99 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BYTE BACK | 서버 자료실</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0c1626">
+  <meta name="description" content="서버 승인과 WebAuthn 서명으로 보호하는 BYTE BACK 자료실">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <title>BYTE BACK | 승인형 자료실</title>
   <style>
-    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
-    body { margin: 0; min-height: 100vh; background: #101a28; color: #ecf4ff; }
-    main { max-width: 760px; margin: 0 auto; padding: 44px 22px 64px; }
-    .eyebrow { color: #8ad8df; font-size: 14px; font-weight: 700; letter-spacing: .08em; }
-    h1 { margin: 16px 0; font-size: clamp(30px, 7vw, 48px); line-height: 1.2; }
-    h2 { margin-top: 0; }
-    p { font-size: 17px; line-height: 1.7; color: #bfd0e5; }
-    .notice { margin: 26px 0; padding: 18px; border: 1px solid #d7a65a; border-radius: 14px; color: #fff0cf; background: #66461344; }
-    .panel { margin: 26px 0; padding: 20px; border: 1px solid #51667c; border-radius: 14px; background: #162438; }
-    .grid { display: grid; gap: 12px; }
-    label { display: grid; gap: 6px; color: #dce9f7; font-weight: 650; }
-    input, textarea, button { font: inherit; }
-    input, textarea { width: 100%; box-sizing: border-box; padding: 11px 12px; border: 1px solid #657a91; border-radius: 9px; background: #0e1826; color: #ecf4ff; }
-    textarea { min-height: 92px; resize: vertical; }
-    button { padding: 10px 13px; border: 0; border-radius: 9px; font-weight: 750; cursor: pointer; background: #8ad8df; color: #0c1b25; }
-    button.secondary { background: #d9e4ef; }
-    button.danger { background: #ffc9c9; }
-    button[hidden], section[hidden] { display: none; }
-    button:disabled { opacity: .6; cursor: wait; }
-    .auth-status { margin: 12px 0 0; min-height: 1.5em; font-size: 15px; color: #bfd0e5; }
-    .auth-status.error { color: #ffb4b4; }
-    ul { list-style: none; display: grid; gap: 12px; padding: 0; }
-    li { border: 1px solid #51667c; border-radius: 14px; padding: 17px 19px; background: #1a2a3d; }
-    strong { display: block; font-size: 18px; margin-bottom: 5px; }
-    li span { color: #bfd0e5; white-space: pre-wrap; }
-    .actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 15% 0%,#1d3c53 0%,#0c1626 48%,#070d17 100%);color:#edf5fc}
+    main{max-width:930px;margin:auto;padding:45px 22px 90px}
+    header{display:flex;align-items:center;gap:14px;margin-bottom:42px}
+    .logo{display:grid;place-items:center;width:48px;height:48px;border-radius:13px;background:#92eee6;color:#08282b;font-weight:900;font-size:25px}
+    .brand{font-size:15px;letter-spacing:.12em;font-weight:800;color:#9bdce1}
+    .edition{color:#9db7cb;font-size:13px;margin-top:4px}
+    h1{font-size:clamp(34px,7vw,60px);letter-spacing:-.04em;line-height:1.15;margin:12px 0}
+    h2{font-size:19px;margin:0 0 13px;letter-spacing:-.02em}
+    p{color:#b0c4d7;line-height:1.7}
+    .intro{max-width:670px;margin-bottom:34px;font-size:17px}
+    .label{font-size:12px;font-weight:800;letter-spacing:.13em;color:#85dcd6;text-transform:uppercase}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:17px}
+    .card{background:#14253a;border:1px solid #344b63;border-radius:19px;padding:24px;box-shadow:0 18px 50px #050b154a}
+    .wide{margin-top:18px}.grid{display:grid;gap:13px}
+    label{display:grid;gap:7px;font-size:14px;color:#ccdaed;font-weight:650}
+    input,textarea{display:block;width:100%;min-width:0;border:1px solid #5a728d;color:#fff;background:#0b1624;border-radius:10px;padding:12px 14px;font:inherit}
+    textarea{min-height:95px;resize:vertical}
+    button{border:0;border-radius:10px;padding:12px 15px;font:inherit;font-weight:750;cursor:pointer;background:#91eee5;color:#072a2e}
+    button.secondary{background:#31485f;color:#f4faff}
+    button.danger{background:#81404e;color:#fff3f4}
+    button:disabled{opacity:.55;cursor:wait}
+    [hidden]{display:none!important}
+    .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+    .meta{font-size:13px;line-height:1.7;color:#acc3d4;margin:8px 0 0}
+    .meta.error{color:#ffb5be}.status{display:flex;gap:8px;align-items:center;line-height:1.5}
+    .dot{width:8px;height:8px;border-radius:50%;background:#8defe2;flex-shrink:0}
+    .warning{border-left:3px solid #f2c77a;padding:12px 16px;background:#76552c23;border-radius:5px;color:#f7ddb4;font-size:14px;line-height:1.65}
+    ul{list-style:none;padding:0;display:grid;gap:12px}
+    li{padding:19px;background:#101e30;border:1px solid #344b63;border-radius:13px;overflow-wrap:anywhere}
+    li strong{display:block;margin-bottom:8px}li span{white-space:pre-wrap;color:#b8ccdf}
+    footer{margin-top:35px;color:#879caf;font-size:13px}
+    @media(max-width:530px){main{padding:24px 15px 65px}.card{padding:19px}header{margin-bottom:26px}}
   </style>
 </head>
 <body>
-  <main>
-    <div class="eyebrow">BYTE BACK · 5단계 서버 한곳으로</div>
-    <h1>서버 자료실</h1>
-    <p>로그인한 사용자는 서버 API를 통해 가상 메모를 읽고 추가·수정·삭제할 수 있습니다.</p>
-
-    <section class="panel" aria-labelledby="auth-title">
-      <h2 id="auth-title">로그인</h2>
-      <form id="login-form" class="grid">
-        <label>이메일<input id="email" type="email" autocomplete="username" required></label>
-        <label>비밀번호<input id="password" type="password" autocomplete="current-password" required></label>
-        <button id="login-button" type="submit">로그인</button>
-      </form>
-      <button id="logout-button" class="secondary" type="button" hidden>로그아웃</button>
-      <p id="auth-status" class="auth-status" aria-live="polite">로그인 설정을 불러오는 중입니다.</p>
-    </section>
-
-    <section id="create-panel" class="panel" hidden>
-      <h2>가상 메모 추가</h2>
-      <form id="create-form" class="grid">
-        <label>제목<input id="new-title" maxlength="120" required></label>
-        <label>내용<textarea id="new-body" maxlength="4000" required></textarea></label>
-        <button type="submit">추가</button>
-      </form>
-    </section>
-
-    <div class="notice">현재 5단계는 메모 읽기·추가·수정·삭제를 Vercel 서버 함수로만 보내고, 저장소의 직접 자료 권한은 회수합니다.</div>
-    <ul id="notes" aria-live="polite"><li>로그인 상태를 확인하는 중입니다.</li></ul>
-  </main>
-
-  <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.117.2';
-
-    const configResponse = await fetch('/api/public-config', { cache: 'no-store' });
-    if (!configResponse.ok) throw new Error('로그인 공개 설정을 불러올 수 없습니다.');
-    const publicConfig = await configResponse.json();
-    const supabase = createClient(publicConfig.url, publicConfig.publishableKey);
-
-    const form = document.querySelector('#login-form');
-    const emailInput = document.querySelector('#email');
-    const passwordInput = document.querySelector('#password');
-    const loginButton = document.querySelector('#login-button');
-    const logoutButton = document.querySelector('#logout-button');
-    const authStatus = document.querySelector('#auth-status');
-    const createPanel = document.querySelector('#create-panel');
-    const createForm = document.querySelector('#create-form');
-    const newTitle = document.querySelector('#new-title');
-    const newBody = document.querySelector('#new-body');
-    const list = document.querySelector('#notes');
-    let currentSession = null;
-
-    function renderAuth(session, message = '') {
-      const signedIn = Boolean(session?.user);
-      currentSession = session ?? null;
-      form.hidden = signedIn;
-      logoutButton.hidden = !signedIn;
-      createPanel.hidden = !signedIn;
-      authStatus.classList.remove('error');
-      authStatus.textContent = message || (signedIn ? '로그인됨' : '로그인하지 않음');
-    }
-
-    function renderAuthError(message) {
-      authStatus.classList.add('error');
-      authStatus.textContent = message;
-    }
-
-    function signedOutNotes() {
-      const item = document.createElement('li');
-      item.textContent = '로그인하면 가상 자료를 볼 수 있습니다.';
-      list.replaceChildren(item);
-    }
-
-    async function api(path, options = {}) {
-      if (!currentSession?.access_token) throw new Error('로그인이 필요합니다.');
-      const response = await fetch(path, {
-        ...options,
-        cache: 'no-store',
-        headers: {
-          ...(options.body ? { 'Content-Type': 'application/json' } : {}),
-          ...options.headers,
-          Authorization: `Bearer ${currentSession.access_token}`,
-        },
-      });
-      let payload = null;
-      try { payload = await response.json(); } catch { /* 상태 코드로 처리 */ }
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) throw new Error('로그인 확인에 실패했습니다. 다시 로그인해 주세요.');
-        if (response.status === 404) throw new Error('메모를 찾을 수 없습니다.');
-        throw new Error(payload?.error || '서버 요청에 실패했습니다.');
-      }
-      return payload;
-    }
-
-    function noteItem(note) {
-      const item = document.createElement('li');
-      const title = document.createElement('strong');
-      const body = document.createElement('span');
-      const actions = document.createElement('div');
-      const edit = document.createElement('button');
-      const remove = document.createElement('button');
-
-      title.textContent = note.title;
-      body.textContent = note.body;
-      actions.className = 'actions';
-      edit.type = 'button';
-      edit.className = 'secondary';
-      edit.textContent = '수정';
-      remove.type = 'button';
-      remove.className = 'danger';
-      remove.textContent = '삭제';
-
-      edit.addEventListener('click', async () => {
-        const nextTitle = window.prompt('새 제목', note.title);
-        if (nextTitle === null) return;
-        const nextBody = window.prompt('새 내용', note.body);
-        if (nextBody === null) return;
-        try {
-          await api(`/api/notes/${encodeURIComponent(note.id)}`, {
-            method: 'PUT',
-            body: JSON.stringify({ title: nextTitle, body: nextBody }),
-          });
-          await loadNotes();
-        } catch (error) {
-          window.alert(error.message);
-        }
-      });
-
-      remove.addEventListener('click', async () => {
-        if (!window.confirm('이 가상 메모를 삭제할까요?')) return;
-        try {
-          await api(`/api/notes/${encodeURIComponent(note.id)}`, { method: 'DELETE' });
-          await loadNotes();
-        } catch (error) {
-          window.alert(error.message);
-        }
-      });
-
-      actions.append(edit, remove);
-      item.append(title, body, actions);
-      return item;
-    }
-
-    async function loadNotes() {
-      if (!currentSession) {
-        signedOutNotes();
-        return;
-      }
-      const data = await api('/api/notes');
-      if (!Array.isArray(data?.notes)) throw new Error('자료 형식이 맞지 않습니다.');
-      if (!data.notes.length) {
-        const item = document.createElement('li');
-        item.textContent = '가상 메모가 없습니다.';
-        list.replaceChildren(item);
-        return;
-      }
-      list.replaceChildren(...data.notes.map(noteItem));
-    }
-
-    async function applySession(session) {
-      renderAuth(session);
-      try { await loadNotes(); }
-      catch (error) {
-        const item = document.createElement('li');
-        item.textContent = error.message;
-        list.replaceChildren(item);
-      }
-    }
-
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) {
-      renderAuthError(`로그인 상태 확인 실패: ${sessionError.message}`);
-      signedOutNotes();
-    } else {
-      await applySession(sessionData.session);
-    }
-
-    supabase.auth.onAuthStateChange((_event, session) => {
-      queueMicrotask(() => { void applySession(session); });
-    });
-
-    form.addEventListener('submit', async event => {
-      event.preventDefault();
-      loginButton.disabled = true;
-      authStatus.classList.remove('error');
-      authStatus.textContent = '로그인 중입니다.';
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailInput.value.trim(),
-        password: passwordInput.value,
-      });
-      passwordInput.value = '';
-      loginButton.disabled = false;
-      if (error) return renderAuthError(`로그인 실패: ${error.message}`);
-      await applySession(data.session);
-    });
-
-    logoutButton.addEventListener('click', async () => {
-      logoutButton.disabled = true;
-      const { error } = await supabase.auth.signOut();
-      logoutButton.disabled = false;
-      if (error) return renderAuthError(`로그아웃 실패: ${error.message}`);
-      await applySession(null);
-    });
-
-    createForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      try {
-        await api('/api/notes', {
-          method: 'POST',
-          body: JSON.stringify({ title: newTitle.value, body: newBody.value }),
-        });
-        createForm.reset();
-        await loadNotes();
-      } catch (error) {
-        window.alert(error.message);
-      }
-    });
-  </script>
+<main>
+ <header><div class="logo" aria-hidden="true">B</div><div>
+  <div class="brand">BYTE BACK</div>
+  <div class="edition">SECURE PERSONAL ARCHIVE · STEP 11</div>
+ </div></header>
+ <div class="label">설치형 보호 자료실</div>
+ <h1>내 자료실, 승인된 접속만.</h1>
+ <p class="intro">로그인만으로 자료를 열지 않습니다. 서버가 등록 기기를 승인하고, 보안 인증기가 각 보호 요청에 서명한 뒤에만 메모가 표시됩니다.</p>
+ <div class="cards">
+  <section class="card" aria-labelledby="auth-title">
+   <h2 id="auth-title">01. 계정 확인</h2>
+   <form class="grid" id="login-form">
+    <label>이메일<input id="email" type="email" autocomplete="username" required></label>
+    <label>비밀번호<input id="password" type="password" autocomplete="current-password" required></label>
+    <button id="login-button" type="submit">로그인</button>
+   </form>
+   <button id="logout-button" class="secondary" type="button" hidden>로그아웃</button>
+   <p class="meta" id="auth-status" aria-live="polite">로그인 설정을 확인하는 중입니다.</p>
+  </section>
+  <section class="card" aria-labelledby="device-title">
+   <h2 id="device-title">02. 기기 등록과 승인</h2>
+   <div class="warning">설치는 승인과 다릅니다. 등록 요청 뒤 서버 관리자의 승인이 필요하며, 보안 인증기에서 생성한 개인키는 이 화면이나 브라우저 저장소로 가져오지 않습니다.</div>
+   <section id="device-panel" hidden>
+    <p id="device-status" class="meta" aria-live="polite">승인 상태 확인 전</p>
+    <div class="actions">
+     <button id="device-request" type="button">기기 등록 요청</button>
+     <button id="device-refresh" class="secondary" type="button">승인 상태 새로고침</button>
+    </div>
+   </section>
+   <p id="install-status" class="meta">앱 설치 상태 확인 중</p>
+   <p id="connection-status" class="meta">연결 상태 확인 중</p>
+  </section>
+ </div>
+ <section class="card wide" aria-labelledby="archive-title">
+  <div class="label">승인된 서명 요청만</div>
+  <h2 id="archive-title">03. 보호 메모</h2>
+  <p class="meta">자료 내용은 오프라인 캐시에 저장하지 않습니다. 승인 전에 이전 메모가 화면에 남지 않도록 잠금 상태를 유지합니다.</p>
+  <ul id="notes" aria-live="polite"><li>기기 승인이 확인되기 전까지 보호 자료를 표시하지 않습니다.</li></ul>
+ </section>
+ <section id="create-panel" class="card wide" hidden aria-labelledby="create-title">
+  <h2 id="create-title">메모 추가</h2>
+  <form id="create-form" class="grid">
+   <label>제목<input id="new-title" maxlength="120" required></label>
+   <label>내용<textarea id="new-body" maxlength="4000" required></textarea></label>
+   <button type="submit">승인된 기기로 서명하고 추가</button>
+  </form>
+ </section>
+ <footer>BYTE BACK · 이 앱은 별도 실행 프로그램이 없는 PWA입니다. 설치 여부는 신원을 보증하지 않습니다.</footer>
+</main>
+<script type="module" src="/app.js"></script>
 </body>
 </html>

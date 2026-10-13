@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "BYTE BACK 승인형 자료실",
+  "short_name": "BYTE BACK",
+  "description": "WebAuthn 서버 승인형 개인 자료실",
+  "lang": "ko",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c1626",
+  "theme_color": "#0c1626",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
