@@ -4,6 +4,8 @@ import { decide, RULE_IDS } from '../src/decider.mjs';
 
 const baseline = () => ({
   requestId: 'fictional-req', deviceRegistered: true,
+  subjectId: 'learner_fixture', deviceId: 'a'.repeat(16),
+  service: 'notes', method: 'GET', path: '/notes/demo', route: 'GET /notes/:id',
   signals: { source: 'judge_fixture', region: 'local', network: 'usual', hour: 14 },
   recentEvents: [], stepUp: { verified: false, authAgeSeconds: null },
 });
@@ -14,7 +16,7 @@ const risky = () => ({ ...baseline(),
 
 function fiveKeys(res) { assert.deepEqual(Object.keys(res).sort(), ['decision','reasonCode','requestId','ruleIds','schema']); }
 
-test('rule IDs only implemented rules', () => assert.deepEqual(RULE_IDS, ['device_registered', 'step_up_required']));
+test('rule IDs only implemented rules', () => assert.deepEqual(RULE_IDS, ['device_registered', 'step_up_required', 'resource_zone', 'instructor_write_protected']));
 test('registered device normal request allowed', async () => {const r=await decide(baseline()); fiveKeys(r); assert.equal(r.decision,'allow');});
 test('unregistered/missing device denied regardless of risk or reauthentication', async () => {
   for (const value of [false, undefined, null, 'true', 1]) {const req={...risky(), deviceRegistered:value,stepUp:{verified:true,authAgeSeconds:0}};const r=await decide(req);fiveKeys(r);assert.equal(r.decision,'deny');assert.equal(r.reasonCode,'device_not_registered');}

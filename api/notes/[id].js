@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import config from '../../aleph.config.json' with { type: 'json' };
 import { createLoginVerifier } from '../../src/verify-login.mjs';
+import { exactResourcePath, ownsNote } from '../../src/resource-zones.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 
@@ -30,9 +31,7 @@ function cleanText(value, max) {
 }
 
 function requestId(request) {
-  const pathname = new URL(request.url, 'https://local.invalid').pathname;
-  const id = decodeURIComponent(pathname.split('/').filter(Boolean).at(-1) ?? '');
-  return UUID.test(id) ? id.toLowerCase() : null;
+  return exactResourcePath(request.url, 'notes', true);
 }
 
 async function context(request, response) {
@@ -93,7 +92,7 @@ export default async function handler(request, response) {
   const current = await loadNote(ctx.supabase, id);
   if (current.error) return sendJson(response, 500, { error: 'notes_unavailable' });
   if (!current.data) return sendJson(response, 404, { error: 'note_not_found' });
-  if (current.data.owner_id !== ctx.login.userId) return denyOtherOwner(response);
+  if (!ownsNote(current.data, ctx.login.userId)) return denyOtherOwner(response);
 
   if (request.method === 'GET') {
     return sendJson(response, 200, {
@@ -123,7 +122,7 @@ export default async function handler(request, response) {
 
     if (error) return sendJson(response, 500, { error: 'note_update_failed' });
     if (!data) return sendJson(response, 403, { error: 'note_forbidden' });
-    if (data.owner_id !== ctx.login.userId) return denyOtherOwner(response);
+    if (!ownsNote(data, ctx.login.userId)) return denyOtherOwner(response);
 
     return sendJson(response, 200, { id: data.id, title: data.title, body: data.content });
   }
@@ -138,7 +137,7 @@ export default async function handler(request, response) {
 
   if (error) return sendJson(response, 500, { error: 'note_delete_failed' });
   if (!data) return sendJson(response, 403, { error: 'note_forbidden' });
-  if (data.owner_id !== ctx.login.userId) return denyOtherOwner(response);
+  if (!ownsNote(data, ctx.login.userId)) return denyOtherOwner(response);
 
   return sendJson(response, 200, { id: data.id });
 }

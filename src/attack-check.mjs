@@ -93,7 +93,7 @@ export async function runAttackChecks(config) {
     ];
   }
 
-  if (config.step >= 3 && config.step <= 7) {
+  if (config.step >= 3 && config.step <= 8) {
     const checks = await standardChecks(app, config.step);
     const attempts = [
       { attackId: 'anonymous_notes_denied',
@@ -181,11 +181,30 @@ export async function runAttackChecks(config) {
       });
     }
 
-    if (config.step === 7) {
+    if (config.step >= 7) {
       attempts.push({
         attackId: 'step_up_live_judge_pending',
         expected: '검증된 복합 이상 접속은 추가 로그인 전 자료 접근 거부, 새 로그인 검증 후 재판정',
         observed: '실제 엔진의 새 로그인 시각 검증·자료 차단 실측은 미실행; 로컬 심판 가상 사건만 검증',
+      });
+    }
+
+    if (config.step === 8) {
+      const response = await fetch(new URL('/api/instructor-notices', app), {
+        redirect: 'error', signal: AbortSignal.timeout(10000),
+      });
+      const body = await jsonOrNull(response);
+      attempts.push({
+        attackId: 'anonymous_notices_denied',
+        expected: '비로그인 강사 공지 API는 401 또는 403 JSON 오류',
+        observed: [401, 403].includes(response.status) && typeof body?.error === 'string'
+          ? '비로그인 공지 API 거부 확인 (HTTP ' + response.status + ')'
+          : '공지 API 확인 필요 (HTTP ' + response.status + ')',
+      });
+      attempts.push({
+        attackId: 'cross_owner_instructor_live_pending',
+        expected: 'A 본인 메모는 허용, B의 A 메모와 학생의 공지 수정은 거부',
+        observed: '로그인 토큰을 수집하지 않아서 실계정 A/B 및 강사 E2E는 미실행; API 소유자 검사 및 가상 테스트로만 확인',
       });
     }
 

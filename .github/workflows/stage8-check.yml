@@ -1,23 +1,25 @@
-name: Stage 7 step-up decision
+name: Stage 8 resource zones
 
 on:
   push:
     branches: [main]
     paths:
-      - 'src/decider.mjs'
-      - 'src/attack-check.mjs'
+      - 'api/**'
+      - 'db/**'
+      - 'src/**'
+      - 'test/**'
       - 'scripts/build-public.mjs'
-      - 'test/r7.test.mjs'
+      - 'package.json'
       - 'aleph.config.json'
       - 'README.md'
-      - '.github/workflows/stage7-check.yml'
+      - '.github/workflows/stage8-check.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  stage7:
+  stage8:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +29,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Verify checkout and latest commit
+      - name: Check commit and status
         run: |
           git status --short
           git log -1 --oneline
@@ -36,6 +38,7 @@ jobs:
       - run: npm run decider:test
       - run: npm run fixture:7
       - run: node --test test/r7.test.mjs
+      - run: npm run test:r8
       - run: npm run build -- --local
       - run: npm run test:r5
       - run: npm run xdr:test
@@ -44,15 +47,15 @@ jobs:
           node --input-type=module - <<'NODE'
           import { writeFileSync } from 'node:fs';
           const explanation = [
-            '7단계: 검증된 복합 이상 접속에만 step_up_required 추가 확인을 요청합니다.',
-            '등록 기기 조건을 유지하고 지역 단독 및 미확인 클라이언트 출처를 위험 증거로 사용하지 않습니다.',
-            '실제 새 로그인 및 자료 접근 통제는 운영 엔진 심판 미실행이며 가상 판정 테스트만 확인했습니다.',
+            '8단계: 메모와 강사 공지를 별도 자원 ID, API 및 RLS 테이블로 분리했습니다.',
+            '판정기는 정확한 경로를, API는 저장된 소유자와 서버 강사 권한을 검증합니다.',
+            '실제 A/B 사용자 및 강사 E2E는 미실행이며 기존 기능을 보존했습니다.',
           ].join('\n');
           writeFileSync('bundle-notes.json', JSON.stringify({ explanation }, null, 2) + '\n');
           NODE
       - run: npm run bundle
       - uses: actions/upload-artifact@v4
         with:
-          name: stage7-submission
+          name: stage8-submission
           path: artifacts/submission.json
           if-no-files-found: error

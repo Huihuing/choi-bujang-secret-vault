@@ -1,6 +1,6 @@
-# BYTE BACK 방어전 · 7단계 + 보너스 XDR-01/XDR-02 저장점
+# BYTE BACK 방어전 · 8단계 + 보너스 XDR-01/XDR-02 저장점
 
-현재 단계는 **7단계 「평소와 다른 접속은 다시 확인합니다」**입니다. 기존 1~6단계의 로그인·소유자 검사, 등록 기기 판정, 브라우저 메모 CRUD, 서버 함수 및 직접 테이블 권한 회수를 유지하면서 운영 엔진이 검증한 복합 이상 신호에만 추가 본인 확인을 요구합니다.
+현재 단계는 **8단계 「자료마다 갈 수 있는 구역을 나눕니다」**입니다. 기존 1~7단계의 로그인·소유자 검사, 기기 판정, 추가 본인 확인, 메모 CRUD와 XDR 기능을 유지하고 메모와 강사 공지를 별도 자원 ID 및 서버 권한으로 분리했습니다.
 
 ## 현재 동작
 
@@ -54,6 +54,31 @@ npm run test:r5
 기대: 정상 등록 기기 `allow`, 미등록 기기 `deny / device_not_registered`, 출처가 확인된 복합 가상 사건 `step_up / step_up_required`, 엔진의 최신 추가 확인 표시(60초)가 반영된 **새 가상 요청** `allow`. 테스트는 브라우저 헤더를 신뢰하지 않는 경우와 지역 하나만 다른 경우도 확인합니다. 기존 화면·자료실 HTTPS 주소·서버 API·XDR 코드는 변경하지 않습니다.
 
 제출은 `7단계 저장점`을 커밋한 다음, 무시 파일 `bundle-notes.json`에 설명을 작성하고 `npm run bundle`로 생성합니다. `bundle-notes.json`, `artifacts/submission.json`, 토큰·기기 개인키는 Git에 올리지 않습니다.
+
+## 8단계 · 자원 구역 분리와 API 소유자 검증
+
+- 개인 메모의 리소스 ID는 `notes/<uuid>`이며 기존 `/api/notes`, `/api/notes/:id`를 유지합니다. GET 목록은 검증된 사용자 `owner_id`만 조회하고 단건 GET/PUT/DELETE는 DB에 저장된 `owner_id`와 서명 검증된 로그인 주체를 비교합니다. PUT/DELETE에는 `owner_id` 조건을 한 번 더 적용합니다.
+- 강사 공지의 리소스 ID는 `instructor-notices/<uuid>`; 새 API `/api/instructor-notices`, `/api/instructor-notices/:id`로 구역을 분리했습니다. 인증 사용자 공지 읽기는 가능하지만 POST/PUT은 서버의 `instructor_memberships`에 등록된 실제 강사만 수행할 수 있습니다. 사용자 본문 `role`, 메뉴, 임의 헤더와 심판 신원은 강사 권한이 아닙니다.
+- 연결된 Supabase에는 `instructor_notices`, `instructor_memberships` 테이블을 추가했습니다. RLS를 활성화했고 비로그인·일반 인증 사용자에게는 테이블 직접 권한을 부여하지 않았습니다. 기존 메모·다른 DB 테이블은 변경하지 않았고 강사 권한을 임의로 부여하지 않았습니다. 적용 SQL: `db/stage8-resource-zones.sql`.
+- 판정기는 이전 `device_registered`와 `step_up_required`를 유지합니다. 추가한 `resource_zone`은 엔진이 확인한 `subjectId`, `deviceId`, `service`, `method`, 정확한 `path` 및 `route` 조합만 허용하고, 알 수 없는 경로는 `deny / resource_not_allowed`로 거부합니다. `:id` 깊이에는 UUID만 허용하며 `export` 기능이나 쿼리 기반 모드 선택은 허용하지 않습니다. 기존 7단계의 가상 요청인 `/notes/demo`는 `judge_fixture` 입력에서만 지원합니다.
+- **중요한 v1 입력 제약:** `docs/DECIDER_REQUEST.md` 계약에는 강사 역할이나 메모 소유자의 검증 정보가 없습니다. 따라서 판정기에서는 강사 공지 쓰기를 `deny / instructor_required`로 막고, 메모 소유권은 실제 서버 API가 DB 기준으로 결정합니다. 판정기만으로 B의 A 메모를 판별했다고 기록하지 않습니다.
+- 현재 강사 등록 구성원이 없어 일반 학생의 강사 공지 쓰기는 기본 거부입니다. 강사 권한 부여는 별도 관리자 작업이어야 하며 웹 요청으로 이 테이블을 변경하는 엔드포인트는 없습니다. 기존 화면 메뉴는 바꾸지 않았습니다.
+- 현재 실제 A/B 사용자 로그인 및 강사 E2E는 비밀번호·토큰 제공 없이 실행할 수 없어 미실행입니다. 심판의 직접 공격 판정 결과로 로컬 fixture를 대신하지 않습니다.
+
+로컬 및 GitHub Actions 검사(Node.js 22 이상):
+
+```powershell
+npm run decider:test
+npm run fixture:7
+node --test test/r7.test.mjs
+npm run test:r8
+npm run build -- --local
+npm run test:r5
+npm run xdr:test
+npm run bundle
+```
+
+예상: A 소유 메모는 A만 열람·수정, B는 해당 메모 단건 조회·수정 시 `note_forbidden`, 다른 계정 목록에는 A 메모가 보이지 않습니다. 일반 학생의 강사 공지 수정은 `instructor_required`, 비로그인 강사 공지 목록은 `authentication_required`입니다. 8단계 저장점 커밋 후 Git 무시파일 `bundle-notes.json`에 설명을 적고 bundle을 생성합니다. JSON·키·본문·개인정보는 Git에 커밋하지 않습니다.
 
 ## 보너스 XDR-01 · 무차별 로그인 공격
 
@@ -137,7 +162,7 @@ https://sckjbblzivbcoofabhqd.supabase.co/rest/v1/notes
 
 - 로그인 없는 `GET /api/notes`는 401/403 JSON 오류여야 합니다.
 - 원본 `originalApiUrl`을 공개 Publishable Key로 직접 호출하면 메모 자료 없이 거부되어야 합니다.
-- `/aleph.json`은 배포 갱신 후 step 7이며 `allowedRoutes`가 하나 이상 포함되어야 합니다.
+- `/aleph.json`은 배포 갱신 후 step 8이며 `allowedRoutes`가 개인 메모와 강사 공지 경로를 포함해야 합니다.
 - 첫 화면에는 `X-Content-Type-Options: nosniff` 또는 CSP가 있어야 합니다.
 - 첫 화면 HTML 소스에는 `sb_publishable_...` 또는 anon JWT 키 문자열을 직접 넣지 않습니다.
 

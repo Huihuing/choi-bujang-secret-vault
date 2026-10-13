@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import config from '../aleph.config.json' with { type: 'json' };
 import { createLoginVerifier } from '../src/verify-login.mjs';
+import { exactResourcePath } from '../src/resource-zones.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 
@@ -71,6 +72,7 @@ export default async function handler(request, response) {
     return sendJson(response, 405, { error: 'method_not_allowed' });
   }
 
+  if (!exactResourcePath(request.url, 'notes')) return sendJson(response, 400, {error:'invalid_resource_path'});
   const ctx = await context(request, response);
   if (!ctx) return;
 

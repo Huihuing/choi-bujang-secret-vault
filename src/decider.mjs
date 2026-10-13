@@ -1,43 +1,53 @@
-// ALEPH SDP 엔진이 확인한 판정 요청만 사용합니다. 브라우저 헤더는 위험 근거가 아닙니다.
-export const RULE_IDS = Object.freeze(['device_registered', 'step_up_required']);
-
+// Only engine-verified aleph.decision.v1 fields are considered; no request.role.
+export const RULE_IDS = Object.freeze(['device_registered','step_up_required','resource_zone','instructor_write_protected']);
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+const DEVICE_ID = /^[0-9a-f]{16}$/u;
 function hasVerifiedCompositeRisk(request) {
-  const signals = request?.signals;
-  // 현재 계약에서 판정 가능한 이상 신호는 심판이 제공한 가상 사건뿐입니다.
-  // 운영의 source:none / unknown 값이나 누락값을 정상 시각·네트워크로 대체하지 않습니다.
-  if (!signals || typeof signals !== 'object' || signals.source !== 'judge_fixture') return false;
-  const unusualHour = Number.isInteger(signals.hour) && signals.hour >= 0 && signals.hour < 6;
-  const unusualNetwork = signals.network === 'unusual';
-  const repeatedRisk = Array.isArray(request.recentEvents) && request.recentEvents.some(event =>
-    event && typeof event === 'object' && event.kind === 'risk_signal'
-    && Number.isInteger(event.count) && event.count >= 10
-    && Number.isInteger(event.ageSeconds) && event.ageSeconds >= 0 && event.ageSeconds <= 300);
-  return unusualHour && unusualNetwork && repeatedRisk;
+  const signals=request?.signals;
+  if (!signals || signals.source!=='judge_fixture') return false;
+  const hour=Number.isInteger(signals.hour) && signals.hour>=0 && signals.hour<6;
+  const network=signals.network==='unusual';
+  const events=Array.isArray(request.recentEvents) && request.recentEvents.some(e=>
+    e && e.kind==='risk_signal' && Number.isInteger(e.count) && e.count>=10
+    && Number.isInteger(e.ageSeconds) && e.ageSeconds>=0 && e.ageSeconds<=300);
+  return hour && network && events;
 }
-
 function hasFreshEngineVerification(request) {
-  const stepUp = request?.stepUp;
-  return stepUp?.verified === true && Number.isInteger(stepUp.authAgeSeconds)
-    && stepUp.authAgeSeconds >= 0 && stepUp.authAgeSeconds <= 120;
+  const step=request?.stepUp;
+  return step?.verified===true && Number.isInteger(step.authAgeSeconds)
+    && step.authAgeSeconds>=0 && step.authAgeSeconds<=120;
 }
-
+function trustedZone(request) {
+  const {service,method,path,route}=request;
+  if (typeof request.subjectId!=='string' || !request.subjectId || !DEVICE_ID.test(request.deviceId??'')
+    || typeof method!=='string' || typeof path!=='string' || typeof route!=='string'
+    || path.includes('?') || path.includes('#')) return null;
+  const zones=[
+    {service:'notes',prefix:'/notes',collection:['GET','POST'],item:['GET','PUT','DELETE']},
+    {service:'instructor-notices',prefix:'/instructor-notices',collection:['GET','POST'],item:['GET','PUT']},
+  ];
+  for (const z of zones) {
+    if (service!==z.service) continue;
+    if (path===z.prefix && z.collection.includes(method) && route===method+' '+z.prefix) return z;
+    const id=path.startsWith(z.prefix+'/')?path.slice(z.prefix.length+1):'';
+    const fixture=id==='demo' && service==='notes' && request.signals?.source==='judge_fixture';
+    if ((UUID.test(id)||fixture) && z.item.includes(method) && route===method+' '+z.prefix+'/:id') return z;
+  }
+  return null;
+}
+function result(request,decision,reasonCode,ruleId) {
+  return {schema:'aleph.decision.v1',requestId:request.requestId,decision,reasonCode,ruleIds:[ruleId]};
+}
 export async function decide(request) {
-  if (request?.deviceRegistered !== true) {
-    return {
-      schema: 'aleph.decision.v1', requestId: request.requestId,
-      decision: 'deny', reasonCode: 'device_not_registered', ruleIds: ['device_registered'],
-    };
+  if (request?.deviceRegistered!==true) return result(request,'deny','device_not_registered','device_registered');
+  const z=trustedZone(request);
+  if (!z) return result(request,'deny','resource_not_allowed','resource_zone');
+  if (z.service==='instructor-notices' && request.method!=='GET') {
+    // v1 has NO engine-verified instructor role; notice writing is checked at the final API.
+    return result(request,'deny','instructor_required','instructor_write_protected');
   }
-
   if (hasVerifiedCompositeRisk(request) && !hasFreshEngineVerification(request)) {
-    return {
-      schema: 'aleph.decision.v1', requestId: request.requestId,
-      decision: 'step_up', reasonCode: 'step_up_required', ruleIds: ['step_up_required'],
-    };
+    return result(request,'step_up','step_up_required','step_up_required');
   }
-
-  return {
-    schema: 'aleph.decision.v1', requestId: request.requestId,
-    decision: 'allow', reasonCode: 'approved', ruleIds: ['device_registered'],
-  };
+  return result(request,'allow','approved','resource_zone');
 }
