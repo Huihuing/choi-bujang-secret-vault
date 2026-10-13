@@ -60,7 +60,10 @@ test('operations screens do not claim live engine event count or official 41/41 
  assert.ok(ops.includes('observedEventCount:null'));
  assert.ok(ops.includes('engineRevocationCount:null'));
  assert.ok(ops.includes('official_41_case_results_not_connected'));
- assert.ok(view.includes('공식 41종 (과제 기준)'));
+ assert.ok(view.includes('공식 전체 41종 (과제 기준)'));
+ assert.ok(view.includes('모두 미실행'));
+ assert.ok(view.includes('확인된 막음 0건'));
+ assert.ok(view.includes('확인된 통과 0건'));
  assert.ok(!view.includes('0/41건 연동'));
  assert.ok(!ops.includes('importedJudgements:0'));
  assert.ok(ops.includes('importedJudgements:null'));
