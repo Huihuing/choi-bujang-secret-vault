@@ -44,8 +44,9 @@ function bodyOf(req){
  return value&&typeof value==='object'&&!Array.isArray(value)?value:null;
 }
 export async function evaluateSafeProbe(id,perform=fetch,at=new Date().toISOString()){
+ if(typeof id!=='string'||!Object.hasOwn(PROBES,id))
+  throw new TypeError('unknown_probe');
  const spec=PROBES[id];
- if(!spec)throw new TypeError('unknown_probe');
  const requestId=randomUUID();
  const url=new URL(spec.path,config.publicAppUrl);
  const options={method:spec.method,redirect:'manual',
