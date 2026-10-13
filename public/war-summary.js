@@ -39,6 +39,57 @@ export function publicMetrics(data){
   ['공식 41종 공격 (제공 심판)','미확인 · 사건별 공식 기록 미연결'],
  ];
 }
+// These three GET/HEAD checks correspond to requests the stage-12 judge
+// previously recognized. Each observation is a fresh HTTP result, not a
+// fabricated pass or a protected-record query.
+export async function readPublicHttpEvidence(perform=fetch){
+ const cases=[
+  {id:'anonymous_notes_denied',method:'GET',path:'/api/notes',
+   expected:'HTTP 401/403, JSON 오류'},
+  {id:'deployment_identity_step12',method:'GET',path:'/aleph.json',
+   expected:'HTTP 200 · step 12'},
+  {id:'first_page_security_header',method:'HEAD',path:'/',
+   expected:'HTTP 200 · nosniff 또는 CSP'},
+ ];
+ const results=[];
+ for(const item of cases){
+  let actual='미실행 · 네트워크 실패',match=false;
+  try{
+   const response=await perform(item.path,{method:item.method,cache:'no-store'});
+   actual='HTTP '+response.status;
+   if(item.id==='anonymous_notes_denied'){
+    const data=await response.json().catch(()=>null);
+    match=[401,403].includes(response.status)
+      &&typeof data?.error==='string'&&data.error.length>0;
+   }else if(item.id==='deployment_identity_step12'){
+    const data=await response.json().catch(()=>null);
+    match=response.ok&&data?.step===12&&Array.isArray(data?.allowedRoutes)
+      &&data.allowedRoutes.length>0;
+   }else{
+    match=response.ok&&Boolean(response.headers.get('x-content-type-options')
+      ||response.headers.get('content-security-policy'));
+   }
+  }catch{/* Mark network errors as no result, never as success. */}
+  results.push({...item,actual,match,checkedAt:new Date().toISOString()});
+ }
+ return results;
+}
+function showHttpEvidence(results){
+ const target=$('war-public-evidence');
+ target.replaceChildren();
+ for(const record of results){
+  const row=document.createElement('tr');
+  for(const value of [
+   record.id,record.method+' '+record.path,record.expected,
+   record.actual,record.actual.startsWith('HTTP ')
+     ?(record.match?'실측 일치':'실측 불일치'):'미실행',
+   new Date(record.checkedAt).toLocaleString('ko-KR'),
+  ]){
+   const td=document.createElement('td');td.textContent=value;row.append(td);
+  }
+  target.append(row);
+ }
+}
 export async function refreshPublicOps(perform=fetch){
  button.disabled=true;
  status.textContent='읽기 전용 운영 집계 API를 확인 중입니다.';
@@ -57,6 +108,9 @@ export async function refreshPublicOps(perform=fetch){
   status.textContent='서버 집계 API 실측 확인 · 응답 상태 HTTP '+response.status+
     ' · 제공 ALEPH 엔진 및 공식 심판 기록은 별도입니다.';
   status.classList.remove('error');
+  // Run separately: these observations are live GET/HEAD responses, not
+  // fabricated database records or official ALEPH judge attack results.
+  showHttpEvidence(await readPublicHttpEvidence(perform));
   return data;
  }catch(err){
   panel.replaceChildren();
