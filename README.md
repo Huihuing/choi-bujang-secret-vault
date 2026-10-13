@@ -1,3 +1,49 @@
+# BYTE BACK · 12단계 저장점 — 탈환 작전실
+
+**현재 단계: 12단계 「탈환 작전실을 완성합니다」.** 마지막 11단계 저장점 `31bb1f7d9440`을 이어받아 서버 증거 기반 작전실과 안전 HTTP 검사 이력을 추가했습니다. 기존 단계의 판정·탐지·JWT 검증·WebAuthn·단건 복구 코드를 수정하거나 약화하지 않았습니다.
+
+## 출처 및 작업 구분
+
+- **제공 엔진:** `ALEPH SDP 엔진`. 가상 사용자·기기·신원·정확한 요청 경로 확인, 심판 사건 전송, 최종 공격 판정과 41종 채점은 **제공 엔진/공식 심판**의 역할입니다. 이 저장소는 엔진 소스가 아닙니다.
+- **학생 구현:** `src/decider.mjs` 판정 규칙, `src/detect.mjs` 9단계 조회 급증 탐지·회수 제안, `api/notes*.js` 및 `api/instructor-notices*.js` 자료실, `api/restore.js` + `db/stage10-*.sql` 검증 복구, `api/device.js`, `api/app-request.js`, `src/app-webauthn.mjs` 기기 등록/서명 검사, PWA 및 **12단계 작전실**입니다.
+- **12단계 새 기능:** `api/war-room.js`에서 로그인한 계정 범위의 기기 승인·회수 건수, 복원 감사 이벤트 수와 `stage10_policy_preview`가 다시 읽어 검증한 복구 버전을 집계합니다. `src/decider.mjs`의 실제 규칙 ID는 **코드에 등록된 규칙**이지 심판의 실측 통과 증거가 아닙니다. 엔진 탐지 사건·회수 집행 데이터는 이 저장소에 수집 경로가 없어 **미연결**이라고 표시합니다.
+- **기록 경로:** `GET /api/war-room` 및 `GET|POST /api/war-room-check`는 서명 검증된 학생 JWT가 필요하고, 계정별 메타데이터만 읽거나 고정된 안전 HTTP 검사를 실행합니다. `db/stage12-operations.sql`의 RLS 보호된 `app_ops_checks`에는 검사 ID, 고정 대상 이름, 기대 HTTP, 실제 HTTP 또는 null, 비교 결과, UTC 시간만 남습니다. **비밀번호·토큰·메모 본문·기기 개인키·실명은 저장하지 않습니다.**
+
+## 대시보드가 증명할 수 있는 것과 없는 것
+
+| 표시 항목 | 실제 근거 | 해석 |
+|---|---|---|
+| 등록 판정 규칙 | 저장소 `RULE_IDS` | 코드 구현 수, **실전 판정 수 아님** |
+| 탐지 사건 / 9단계 권한 회수 | 엔진 사건·회수 로그 **미연결** | 미확인; 0건 또는 통과라고 추정하지 않음 |
+| 기기 승인·회수 | `stage12_ops_summary` DB RPC | 로그인한 계정의 현재 기기 상태 실측 |
+| 복구 버전·정책 차이 | `stage10_policy_preview` DB RPC | 해시가 검증된 백업 버전·시험 정책 차이 |
+| 복구 이력 | `restore_audit` DB 조회 | 현재 로그인 계정의 실제 복원 감사 이벤트 수 |
+| 대표 정상/거부 HTTP | `/api/war-room-check`의 고정된 익명·공개 조회 | 실측 상태 코드 + 요청 ID + UTC 시각. 테스트의 HTTP 예상값과 비교한 결과에 한정 |
+| 41종 공식 총공세 | 공식 심판 사건별 결과 **미연동** | 41개 슬롯 **미확인**, 검사나 통과로 세지 않음 |
+
+### 1~11단계 회귀 시험 표 작성 절차
+
+1. [운영 작전실](https://choi-bujang-secret-vault-jwnp.vercel.app/)에서 로그인한 뒤 **‘운영 상태 다시 읽기’**를 선택합니다. 응답이 실패하면 값을 대체해 보여주지 않고 오류를 표시합니다.
+2. ‘안전 HTTP 재검사’에서 **한 검사씩** 실행합니다. 서버는 **고정된** 공개 정상·비인증 거부 경로만 호출하며, 임의의 URL·사용자 토큰·메모 본문을 전달하지 않습니다. 테스트당 기록되는 `requestId`, `observedAt`, 실제 상태 `observedStatus`, 기대 `expectedStatus`를 표에서 대조합니다. 네트워크 실패의 실제 HTTP 상태는 `null`, 판정은 실패입니다.
+3. **정상 허용**은 공개 페이지·manifest·배포 식별 정보의 HTTP 200을 직접 측정할 수 있습니다. **보호 메모 정상 허용**은 실제 서버 승인된 기기로 WebAuthn 서명을 완료해야 검증되므로 현재 자동 검사에서는 **미실행**으로 둡니다.
+4. **타인 메모 거부, 미등록 기기, 회수된 신원, 복원 직후 재공격, 서명 후 경로/본문 변조**는 공식 심판 또는 실제 등록 기기에서 별도로 실측해야 합니다. 가상 단위 테스트의 통과는 운영 E2E 결과로 옮겨 적지 않습니다.
+5. 심판 개별 항목의 공식 요청 ID·시각·기대·결과는 공식 판정 기록이 확보될 때만 별도 대응표에 추가합니다. 현재 공식 41종 공격 결과 API가 없어 화면은 모든 개별 슬롯을 **‘미확인’**으로 표시합니다. 사용자 화면 성공 문구는 심판 근거가 아닙니다.
+
+## 설치 · 실행 · 중지 · 복구 · 재현
+
+1. **소스 검사·설치:** `git clone https://github.com/Huihuing/choi-bujang-secret-vault.git`, `cd choi-bujang-secret-vault`, `git log -1 --oneline`, `git status --short`, `npm ci`. 실제 검사 커밋은 위 `git log -1`과 화면의 `/aleph.json` 커밋이 일치해야 합니다.
+2. **로컬 화면 빌드:** Node.js 22 이상에서 `npm run build -- --local`. 정적 UI를 미리보기하려면 `python -m http.server 8080 --directory public`을 실행해 `http://localhost:8080`에 접속합니다. **로컬 HTTP 서버에는 Vercel API가 없으며**, 공개 배포 호스트에 묶인 WebAuthn 등록/보호 API는 로컬 미리보기에서 동작한다고 가정하면 안 됩니다.
+3. **실제 실행·PWA 설치:** Vercel이 `main`을 배포하면 위 운영 HTTPS 주소에 접속합니다. Chrome/Edge의 **앱 설치** 메뉴를 사용해 PWA로 실행합니다. 설치 표시는 기기 승인이 아닙니다. Supabase의 환경변수는 운영 Vercel 비밀 설정에만 두고 `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_PUBLISHABLE_KEY` **값은 Git/제출 파일에 포함하지 않습니다**.
+4. **실행 확인:** 학생 계정으로 로그인하여 기기 등록 요청(기본 `pending`) → 별도 신원 확인된 관리자만 승인 → WebAuthn 서명으로 보호 메모 접근을 확인합니다. 별도 로그인으로 작전실의 안전 HTTP 검사를 하나씩 실행하여 실제 결과를 남깁니다.
+5. **중지:** 로컬 서버는 `Ctrl+C`로 중지합니다. PWA는 창을 닫거나 브라우저에서 제거합니다. **앱 종료·삭제는 승인 회수가 아닙니다.** 신뢰된 관리자만 `db/stage11-device-approval.sql`에 적힌 절차로 등록 기기를 `revoked`로 변경합니다.
+6. **복구:** `db/stage10-recovery.sql`, `db/stage10-backup-preflight.sql`의 기존 *검증된* 사본을 먼저 재검증하고, 심판용 서명 B 신원에서 `POST /api/restore`에 `{"id":"대상 메모 UUID","dryRun":true}`로 변경 범위를 확인한 다음, 같은 ID를 dryRun 없이 지정하여 **한 건만** 복원합니다. 감사 기록을 보존하고 1~11단계 정상·금지 사례를 다시 검사합니다. **사본 유실·해시 오류 시 복원 중단**, 실운영 자료를 임의로 덮어쓰지 않습니다.
+7. **회귀 테스트:** `npm run decider:test`, `npm run fixture:7`, `npm run detect:test`, `npm run test:r8`, `node --test test/stage10.test.mjs`, `node --test test/stage11.test.mjs`, `node --test test/stage12.test.mjs`, `npm run xdr:test`, `npm run build -- --local`. 저장소를 커밋한 뒤 CI가 `npm run bundle`을 실행하여 무시된 `artifacts/submission.json`을 생성합니다.
+8. **실행 기록 구분:** CI에서 통과한 단위/합성 검사, 배포 API의 실측 정상/거부, 실기기 승인 E2E, 심판 41종 최종 평가를 **서로 다른 결과**로 기록합니다. 미실행·미연동은 통과나 0건으로 변환하지 않습니다.
+
+**되돌리기:** 저장소의 `git status`와 `git diff`를 먼저 확인한 뒤 12단계 변경 파일만 골라 이전 정상 커밋 `31bb1f7d9440`과 대조합니다. DB 사본·감사 로그·다른 작업을 지우지 않고, 강제 초기화(`reset --hard`)를 사용하지 않습니다.
+
+---
+
 # BYTE BACK 방어전 · 11단계 저장점 — 나만의 접속 앱
 
 현재 단계 **11단계 「나만의 접속 앱을 완성합니다」**. 이전 1~10단계의 심판용 가상 판정기·JWT A/B 검증·메모 소유자 검사·복원 경로를 보존합니다. 기존 10단계 마지막 저장점 `2b8a8d3f509e` 위에 PWA와 별도 학생 기기 증명 경로를 추가했습니다.
