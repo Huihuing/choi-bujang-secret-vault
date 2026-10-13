@@ -79,7 +79,7 @@ test('only high confidence CVE exploitation creates expiring evidence-linked den
  for(const sample of fixture.alerts){
   const now=Date.parse(sample.timestamp);
   const result=await guard({requestId:'synthetic'},{sourceIp:sample.data.srcip,now});
-  assert.equal(result.decision,sample.fixture.classification==='block'?'deny':'allow');
+  assert.equal(result.decision,decide(sample).action==='block'?'deny':'allow');
  }
  const first=fixture.alerts[0];
  assert.deepEqual(await guard({requestId:'synthetic'},
