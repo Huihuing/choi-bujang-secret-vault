@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { decide as baseDecide } from './decider.mjs';
 import { createGuard, loadRules as loadWebInjection } from '../xdr/web-injection/connect.mjs';
+import {loadRules as loadKnownCve} from '../xdr/known-cve/respond.mjs';
 
 async function loadBruteForce() {
   try {
@@ -23,4 +24,5 @@ async function loadBruteForce() {
 export const decideWithXdr = createGuard(baseDecide, async () => [
   ...await loadBruteForce(),
   ...await loadWebInjection(),
+  ...await loadKnownCve(),
 ]);

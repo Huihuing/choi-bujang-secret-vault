@@ -134,9 +134,49 @@ async function runWebInjection() {
   if (normalEventBlocks > 0) process.exitCode = 1;
 }
 
+async function runKnownCve(){
+ const [{readAlerts},{decide},connection]=await Promise.all([
+  import('../xdr/known-cve/read-alerts.mjs'),
+  import('../xdr/known-cve/decide.mjs'),
+  import('../xdr/known-cve/respond.mjs'),
+ ]);
+ const fixtureUrl=new URL('../xdr/fixtures/known-cve.json',import.meta.url);
+ const source=JSON.parse(await readFile(fixtureUrl,'utf8'));
+ const rawAlerts=Array.isArray(source)?source:source?.alerts;
+ if(!Array.isArray(rawAlerts))throw new TypeError('Fixture must contain Wazuh alerts');
+ const extracted=await readAlerts(fixtureUrl);
+ if(rawAlerts.length!==extracted.length)
+  throw new Error('Alert count does not match extracted line count');
+ const counts={block:0,alert:0,record:0},rows=[],decisions=[];
+ let normalEventBlocks=0;
+ for(let i=0;i<rawAlerts.length;i++){
+  const alert=rawAlerts[i];
+  const output=decide(alert);
+  const fixtureNormal=isNormal(alert,'T1190');
+  if(fixtureNormal && output.action==='block')normalEventBlocks++;
+  counts[output.action]++;
+  rows.push({alert,decision:output,fixtureNormal});
+  decisions.push({alertId:alertId(alert,i),action:output.action,
+   confidence:output.confidence,reason:output.reason});
+ }
+ const rules=connection.rulesFromDecisions(rows);
+ await connection.persistRules(rules);
+ await connection.writeAlerts(decisions);
+ const result={
+  schema:'aleph.xdr.result.v1',moduleKey:'known-cve',counts,
+  normalEventBlocks,rulesWritten:rules.length,decisions,
+ };
+ await writeFile(new URL('../xdr/known-cve/result.json',import.meta.url),
+   JSON.stringify(result,null,2)+'\n','utf8');
+ console.log('block='+counts.block+' alert='+counts.alert+' record='+counts.record+
+   ' normalEventBlocks='+normalEventBlocks);
+ if(normalEventBlocks>0)process.exitCode=1;
+}
+
 if (moduleName === 'brute-force') await runBruteForce();
 else if (moduleName === 'web-injection') await runWebInjection();
+else if (moduleName === 'known-cve') await runKnownCve();
 else {
-  console.error('Usage: npm run xdr:run -- <brute-force|web-injection>');
+  console.error('Usage: npm run xdr:run -- <brute-force|web-injection|known-cve>');
   process.exitCode = 2;
 }
