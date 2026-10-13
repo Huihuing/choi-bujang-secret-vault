@@ -23,15 +23,15 @@ function cell(row,value){
 function renderOfficialSlots(){
  const body=byId('war-official-rows');
  body.replaceChildren();
- for(let n=1;n<=41;n++){
-  const row=document.createElement('tr');
-  cell(row,'#'+String(n).padStart(2,'0'));
-  cell(row,'공식 개별 사건 명세 미연동');
-  cell(row,'심판 기준 미연결');
-  cell(row,'미확인');
-  cell(row,'—');
-  body.append(row);
- }
+ // 41 is the assignment's expected number, NOT 41 fetched judge events.
+ // One explicit missing-evidence row avoids inventing official event IDs.
+ const row=document.createElement('tr');
+ cell(row,'공식 41종 (과제 기준)');
+ cell(row,'실제 사건별 서버 기록 미연결');
+ cell(row,'심판 기록을 제공받지 못함');
+ cell(row,'미확인 · 실측 0건이라는 뜻 아님');
+ cell(row,'—');
+ body.append(row);
 }
 export function mountWarRoom(getAccessToken){
  const section=byId('war-room');
@@ -63,17 +63,29 @@ export function mountWarRoom(getAccessToken){
  }
  function renderMetrics(summary){
   if(summary?.schema!=='byteback.operations.v1')throw Error('운영 응답 형식이 맞지 않습니다.');
+  const measured=value=>Number.isSafeInteger(value)&&value>=0
+    ? value+'건 (현재 학생 계정 DB 실측)':'미확인 · 서버 실측 자료 없음';
+  const deviceNumbers=[summary.devices?.approved,summary.devices?.pending,summary.devices?.revoked];
+  const deviceValue=deviceNumbers.every(n=>Number.isSafeInteger(n)&&n>=0)
+    ? deviceNumbers.map(String).join(' / ')+'건 (현재 계정 DB 실측)'
+    : '미확인 · 기기 DB 측정 없음';
+  const codeCount=summary.policyRules?.source==='repository_code_only'
+    && Number.isSafeInteger(summary.policyRules.count)
+    ? summary.policyRules.count+'개 · 소스코드 선언, 엔진 실측 아님':'미확인';
+  const recoveryOk=summary.recovery?.verified===true
+    && typeof summary.recovery.baselineVersion==='string'
+    && Number.isSafeInteger(summary.recovery.changedPolicyCount);
   const cells=[
-   ['판정기 등록 규칙',summary.policyRules?.count+'개 · 코드 등록 (심판 실측 아님)'],
-   ['탐지 사건 실측',summary.detector?.observedEventCount===null?'엔진 사건 로그 미연결':'서버 확인 '+summary.detector.observedEventCount+'건'],
-   ['9단계 회수 집행',summary.revocation?.engineRevocationCount===null?'운영 엔진 기록 미연결':String(summary.revocation.engineRevocationCount)],
-   ['내 기기 승인/대기/회수',[summary.devices?.approved,summary.devices?.pending,summary.devices?.revoked].join(' / ')+'건'],
-   ['검증된 정책 백업',summary.recovery?.verified===true?
-     summary.recovery.baselineVersion+' · 시험 정책 차이 '+summary.recovery.changedPolicyCount+'건':'검증되지 않음'],
-   ['내 계정 복구 감사 기록',summary.recovery?.currentAccountRestoreEvents+'건'],
-   ['저장된 안전 HTTP 검사',summary.selfChecks?.recordedCount+'건'],
-   ['공식 41종 공격 결과',summary.officialAssault?.importedJudgements===0?
-     '0/41건 연동 · 나머지 41건 미확인':'공식 기록 연결 상태 별도 확인'],
+   ['판정기 규칙 (코드)',codeCount],
+   ['탐지 사건 (운영 실측)','미확인 · 제공 엔진 사건 로그 미연결'],
+   ['회수 집행 (운영 실측)','미확인 · 제공 엔진 회수 로그 미연결'],
+   ['내 기기 승인 / 대기 / 회수',deviceValue],
+   ['검증된 정책 기준 사본',recoveryOk?
+     summary.recovery.baselineVersion+' · 시험 정책 차이 '+summary.recovery.changedPolicyCount+'건 (DB 실측)'
+      :'미확인 · 검증된 서버 수치 없음'],
+   ['내 계정 복구 감사 기록',measured(summary.recovery?.currentAccountRestoreEvents)],
+   ['내 계정 안전 HTTP 검사 기록',measured(summary.selfChecks?.recordedCount)],
+   ['공식 총공세 결과','41종 과제 기준 · 실제 심판 결과 미연결 / 미확인'],
   ];
   metrics.replaceChildren(...cells.map(([name,value])=>{
    const item=document.createElement('div');item.className='war-metric';
