@@ -243,17 +243,12 @@ export async function runAttackChecks(config) {
     }
 
     if (config.step >= 10) {
-      const restore = await fetch(new URL('/api/restore',app), {
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({id:'11111111-1111-4111-8111-111111111111'}),
-        redirect:'error',signal:AbortSignal.timeout(10000),
-      });
+      // The isolated judge only permits outbound GET/HEAD. A POST recovery
+      // probe must not be sent by npm run bundle; preserve the case as unrun.
       attempts.push({
         attackId:'stage10_anonymous_restore_denied',
         expected:'로그인 없이 특정 메모 POST 복원은 거부되어야 함',
-        observed:[401,403].includes(restore.status)
-          ? '비로그인 메모 복원이 거부됨 (HTTP '+restore.status+')'
-          : '복구 경로 거부 확인 필요 (HTTP '+restore.status+')',
+        observed:'not_run',
       });
       const policy = await fetch(new URL('/api/recovery-policy',app), {
         method:'GET',redirect:'error',signal:AbortSignal.timeout(10000),
@@ -273,19 +268,12 @@ export async function runAttackChecks(config) {
     }
 
     if (config.step >= 11) {
-      const withoutSignature=await fetch(new URL('/api/app-request',app),{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'execute',target:{
-         method:'GET',path:'/api/notes',body:null,
-        }}),
-        redirect:'error',signal:AbortSignal.timeout(10000),
-      });
+      // A signed request gate needs POST, so its live probe is not run from
+      // the read-only submission bundler. Dedicated tests remain unchanged.
       attempts.push({
         attackId:'stage11_unsigned_protected_request_denied',
         expected:'서명과 로그인 없이 보호 메모 게이트웨이를 호출하면 거부되어야 함',
-        observed:withoutSignature.status>=400
-          ? '비로그인·서명 없는 앱 요청 거부 (HTTP '+withoutSignature.status+')'
-          : '서명 없는 요청 차단 확인 필요 (HTTP '+withoutSignature.status+')',
+        observed:'not_run',
       });
       const manifest=await fetch(new URL('/manifest.webmanifest',app),{
         redirect:'error',signal:AbortSignal.timeout(10000),
