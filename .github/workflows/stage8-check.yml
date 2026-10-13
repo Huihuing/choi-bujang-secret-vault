@@ -45,6 +45,7 @@ jobs:
       - run: node --test test/stage10.test.mjs
       - run: node --test test/stage11.test.mjs
       - run: node --test test/stage12.test.mjs
+      - run: node --test test/stage12-public.test.mjs
       - run: npm run test:r8
       - run: node --test test/judge-owner-identity.test.mjs
       - run: node --test test/stage8-audit.test.mjs
