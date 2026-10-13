@@ -1,5 +1,16 @@
 # BYTE BACK · 12단계 저장점 — 탈환 작전실
 
+## S12_SCREEN_MISMATCH 후속: 로그인 전 운영 수치 실측 패널
+
+- **발견한 표시 오류:** 12단계 배포 첫 화면이 `STEP 11`로 보였고, 실제로는 한 행만 있는 공식 사건 안내를 `41개 항목`처럼 설명했습니다. 둘 다 12단계 표기와 미연결 안내로 바로잡았습니다.
+- **가린 서버 기록을 읽는 방법:** `GET /api/war-room-summary`가 공개 가능한 **비민감 운영 집계만** 읽습니다. Vercel 서버가 서비스 권한으로 `stage12_public_operational_snapshot()` DB RPC를 호출한 뒤 계정 ID·메모 본문·JWT·기기 자격 식별자 없이 판정 *코드 선언 수*, 기기 상태별 **합산 건수**, 복구 감사 건수, 안전 HTTP 검사 건수, 검증된 기준 백업 버전, **DB가 관측한 시각과 배포 커밋**만 반환합니다. 함수 실행 권한은 `service_role`에만 있고 DB 소유 정보는 이 JSON에 포함되지 않습니다. 동일 SQL은 `db/stage12-public-operational-snapshot.sql`에 기록했습니다.
+- **로그인 전에도 표시:** `public/war-summary.js`는 첫 화면에서 실제 공개 API를 GET 요청하여 받은 값만 표시합니다. HTTP 오류·불완전한 값은 `미확인`으로 두며, `0`은 서버가 실제로 0을 반환했을 때만 표시합니다. 9단계 **ALEPH SDP 엔진의** 탐지·회수 로그와 공식 41종 심판 기록은 여전히 미연동(`null`)입니다.
+- **보호 범위 유지:** `/api/notes`와 계정별 `/api/war-room`은 기존 인증/보호 정책을 계속 적용합니다. 공개 페이지는 개인별 사건·메모나 실제 공격 세부 내용을 노출하지 않습니다.
+- **실측 확인:** 2026-10-13 운영 `GET /api/war-room-summary`에서 **HTTP 200**, `schema:byteback.public-operations.v1`, `source:server_database_aggregate`, 단계 12, 데이터베이스 관측 시각과 실측 집계를 확인했습니다. 실제 비로그인 홈페이지도 **HTTP 200**, STEP 12 및 공개 집계 패널 노출을 확인했습니다. 심판의 최신 공식 통과 여부는 **미확인**입니다.
+- **재현:** `node --test test/stage12-public.test.mjs`로 스키마 숫자/누락·화면 표시·DB 권한 선언을 검사하고, 사이트에서 ‘서버 집계 다시 확인’ 버튼으로 값을 재조회합니다. `npm run bundle`은 격리 환경에서 POST/PUT을 보내지 않고 증거가 없는 공격 항목을 `not_run`으로 유지합니다.
+
+---
+
 ## 12단계 공식 재채점 S12_SCREEN_MISMATCH 수정 기록
 
 최초 12단계 격리 심판은 `S12_BUNDLE_UNSUPPORTED`(제출 단계의 POST 호출)을 보고했고, 이어진 재채점은 `S12_SCREEN_MISMATCH` 및 요청 기록 대조 실패(20개 제출 점검 중 18개에서 대응하는 `attackId`의 심판 요청 추적 없음)를 보고했습니다. 두 기록을 섞어 ‘41종 공격 통과’라고 주장하지 않습니다.
