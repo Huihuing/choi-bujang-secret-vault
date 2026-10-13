@@ -84,3 +84,42 @@ test('no API or protected memo content may be cached by PWA service worker',asyn
  assert.ok(sw.includes("url.pathname.startsWith('/api/')"));
  assert.ok(!sw.includes("caches.open('notes'"));
 });
+
+test('isolated bundler emits only GET and HEAD; POST-only probes are not_run',async()=>{
+ const {runAttackChecks}=await import('../src/attack-check.mjs');
+ const {default:config}=await import('../aleph.config.json',{with:{type:'json'}});
+ const prev=globalThis.fetch;
+ const methods=[];
+ globalThis.fetch=async(input,options={})=>{
+  const method=options.method??'GET';
+  methods.push(method);
+  if(!['GET','HEAD'].includes(method))throw new Error('isolated_judge_forbids_'+method);
+  const url=new URL(input);
+  let response={error:'authentication_required'};
+  let status=401;
+  if(url.pathname==='/aleph.json'){
+   status=200;response={step:config.step,allowedRoutes:config.allowedRoutes};
+  }else if(url.pathname==='/'||url.pathname==='/manifest.webmanifest'){
+   status=200;response={};
+  }else if(url.pathname==='/api/public-config'){
+   status=200;response={publishableKey:'test_key'};
+  }
+  return new Response(JSON.stringify(response),{
+   status,headers:{'Content-Type':'application/json','X-Content-Type-Options':'nosniff'},
+  });
+ };
+ try{
+  const checks=await runAttackChecks(config);
+  assert.equal(config.step,12);
+  assert.equal(checks.length,20);
+  assert.ok(methods.length>0 && methods.every(x=>x==='GET'||x==='HEAD'));
+  for(const id of ['stage10_anonymous_restore_denied',
+                   'stage11_unsigned_protected_request_denied']){
+   const entry=checks.find(x=>x.attackId===id);
+   assert.equal(entry?.observed,'not_run',id);
+   assert.ok(entry?.expected);
+  }
+  assert.ok(checks.some(x=>x.attackId==='anonymous_notes_denied'
+    && x.observed.includes('HTTP 401')));
+ }finally{globalThis.fetch=prev;}
+});
