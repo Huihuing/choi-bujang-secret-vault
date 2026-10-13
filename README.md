@@ -1,3 +1,21 @@
+## 10단계 보완 · 검증된 백업 미리보기 및 실제 복원
+
+**대상 서비스:** `notes` (비공개 메모). **복원 경로:** `POST /api/restore`. 두 요청 모두 서명 검증된 심판 시험 계정 B의 Bearer 인증이 필요합니다.
+
+| 구분 | 서비스 | 메서드·경로 | JSON 본문 | 동작 |
+|---|---|---|---|---|
+| 실행 전 미리보기 | `notes` | `POST /api/restore` | `{"id":"메모 UUID","dryRun":true}` | 기준 사본 재읽기·해시 검증 후 버전/변경 항목만 반환, **DB 복구/감사 쓰기 없음** |
+| 실제 한 건 복원 | `notes` | `POST /api/restore` | `{"id":"메모 UUID"}` | 사본 재검증 후 동일 ID·소유자의 한 건만 복구 |
+| 정책 비교 | 시험 정책 `stage10_restore.policy_trial` | `GET /api/recovery-policy` | 없음 | 기준 정책 버전·해시·차이 확인 |
+| 정책 되돌리기 | 시험 정책 `stage10_restore.policy_trial` | `POST /api/recovery-policy` | `{"expectedSha256":"미리보기에서 읽은 기준 해시"}` | **시험 정책만** 검증된 사본으로 되돌림, 실제 RLS 변경 없음 |
+
+- 미리보기 성공은 `preview: true`, `backup_verified: true`, `snapshot_version`, `record_sha256`, `content_sha256`, `changed_fields`(예: `["content","title"]`)를 반환합니다. 메모 내용·실명·토큰·기기 UUID는 응답에 포함하지 않습니다.
+- 사본이 없거나 무결성이 검증되지 않으면 복원은 즉시 중단됩니다. 미리보기와 실제 복원 모두 B의 검증된 신원, 저장된 백업 소유자 일치를 요구하며 요청의 소유자/역할 필드를 받지 않습니다.
+- 실제 복원은 이전과 동일한 `{"id":"UUID"}`를 허용합니다. `dryRun:true`만 추가했으며 `dryRun:false`, 다른 필드, 소유자 주입은 거부합니다. `src/restore-core.mjs`는 미리보기·복원 RPC 호출을 분리해 테스트 가능하도록 했습니다.
+- 테스트: `node --test test/stage10.test.mjs`가 읽기 전용 미리보기(쓰기 RPC 0회), 검증 실패 시 쓰기 0회, 정상 복원 RPC 순서를 검증합니다. **실제 심판 통과 및 심판 B의 운영 복원 실행은 아직 확인되지 않았습니다.**
+
+---
+
 # BYTE BACK 방어전 · 10단계 저장점 — 검증 백업 복원
 
 **현재 단계: 10단계 「백업에서 자료실을 되살립니다」.** 9단계 통과 직후의 GitHub 기준 커밋 `9dde11f22e5f`을 유지하고 기존 1~9단계 판정기·탐지기·로그인·API·RLS 및 보너스 XDR 테스트를 계속 실행합니다.
