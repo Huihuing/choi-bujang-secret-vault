@@ -1,5 +1,5 @@
 // Only cache non-sensitive static shell assets; never cache API replies or notes.
-const CACHE='byteback-shell-v11';
+const CACHE='byteback-shell-v12';
 const ASSETS=['/','/index.html','/app.js','/icon.svg','/icon-192.png','/icon-512.png','/war-room.js','/war-summary.js','/manifest.webmanifest'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
