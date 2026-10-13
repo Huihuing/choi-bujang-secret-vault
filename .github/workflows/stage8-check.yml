@@ -46,6 +46,7 @@ jobs:
       - run: node --test test/judge-owner-identity.test.mjs
       - run: node --test test/stage8-audit.test.mjs
       - run: npm run build -- --local
+      - run: node --test test/stage11-icons.test.mjs
       - run: npm run test:r5
       - run: npm run xdr:test
       - name: Prepare ignored submission explanation
