@@ -1,6 +1,7 @@
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { deploymentIdentity } from './deployment-identity.mjs';
+import {generateIcons} from './create-icons.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const source = resolve(root, 'data.json');
@@ -13,6 +14,7 @@ if (!Array.isArray(data.notes)) {
 }
 
 await mkdir(resolve(root, 'public'), { recursive: true });
+await generateIcons();
 
 if (config.step === 1) {
   await copyFile(source, output);
