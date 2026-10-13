@@ -39,6 +39,7 @@ jobs:
       - run: npm run fixture:7
       - run: node --test test/r7.test.mjs
       - run: npm run test:r8
+      - run: node --test test/judge-owner-identity.test.mjs
       - run: npm run build -- --local
       - run: npm run test:r5
       - run: npm run xdr:test
