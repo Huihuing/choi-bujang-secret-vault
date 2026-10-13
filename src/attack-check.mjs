@@ -56,7 +56,46 @@ async function standardChecks(app, step) {
   return { apiResponse, denied, identityResponse, identityOk, rootResponse, headerOk };
 }
 
+// Stage 12 judge reconciliation: the submission sandbox does not provide
+// a trusted API for fetching the judge's per-attackId request ledger.
+// Do not present an unrelated GET response, local synthetic test or
+// GitHub CI result as an observed attack-specific request. These cases
+// remain explicitly unrun until a trace linked to that attackId exists.
+const STAGE12_UNVERIFIED_CASES = Object.freeze([
+  ['anonymous_notes_denied','비로그인 메모 목록 HTTP 거부'],
+  ['deployment_identity_step12','실제 배포 12단계 식별자'],
+  ['first_page_security_header','첫 화면 HTTP 보안 헤더'],
+  ['original_data_api_denied','공개 키 원본 자료 직접 접근 거부'],
+  ['browser_source_has_no_supabase_key','첫 화면 공개 소스 비밀값 점검'],
+  ['unregistered_device_judge_pending','심판 미등록 기기 접근 거부'],
+  ['step_up_live_judge_pending','실제 추가 인증 및 정상 요청 회귀'],
+  ['anonymous_notices_denied','비로그인 강사 공지 거부'],
+  ['cross_owner_instructor_live_pending','서로 다른 사용자 메모·강사 권한 교차 검증'],
+  ['stage9_normal_observe_local','합성 정상 사건 로컬 탐지'],
+  ['stage9_burst_proposal_local','합성 조회 급증 회수 제안'],
+  ['stage9_real_revocation_pending','운영 신원 회수 확인'],
+  ['stage10_anonymous_restore_denied','비로그인 POST 메모 복원 거부'],
+  ['stage10_anonymous_policy_denied','비로그인 정책 조회 거부'],
+  ['stage10_signed_b_restore_pending','서명된 B의 실제 메모 복원'],
+  ['stage11_unsigned_protected_request_denied','서명 없는 POST 보호 자료 접근 거부'],
+  ['stage11_install_manifest_available','배포된 PWA manifest 확인'],
+  ['stage11_actual_approved_authenticator_pending','실제 승인 기기 서명·자료 조회'],
+  ['stage12_unauthenticated_operations_denied','비로그인 작전실 접근 거부'],
+  ['stage12_unauthenticated_checks_denied','비로그인 작전실 검사 기록 접근 거부'],
+]);
+function stage12TraceReconciledChecks(){
+  return STAGE12_UNVERIFIED_CASES.map(([attackId,expected])=>({
+    attackId,expected,observed:'not_run',
+  }));
+}
 export async function runAttackChecks(config) {
+  // No request is attributed to an attackId without the judge's correlated
+  // request record. Runtime UI checks remain separately recorded in the DB.
+  // Do not use POST/PUT or produce fictional success observations in bundle.
+  if(config.step===12){
+    appUrl(config);
+    return stage12TraceReconciledChecks();
+  }
   const app = appUrl(config);
 
   if (config.step === 1) {
