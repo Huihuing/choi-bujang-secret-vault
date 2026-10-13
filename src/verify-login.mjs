@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { isIP } from 'node:net';
 import { createClient } from '@supabase/supabase-js';
 import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose';
@@ -5,6 +6,22 @@ import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 const BEARER = /^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/u;
+
+// A/B identities in the judge's signed JWT must never share a database owner.
+// The signed sub alone does not attest to the distinct identity/assessment run.
+// Derive a stable version-4-shaped UUID for the exact signed (run, identity, sub)
+// tuple. Supabase student identities keep their original, verified auth UUID.
+function scopedJudgeOwnerId(runId, identity, subjectId) {
+  const hash = createHash('sha256')
+    .update('aleph-judge-owner-v1\0').update(runId).update('\0')
+    .update(identity).update('\0').update(subjectId).digest();
+  const id = Buffer.from(hash.subarray(0,16));
+  id[6] = (id[6] & 0x0f) | 0x40;
+  id[8] = (id[8] & 0x3f) | 0x80;
+  const hex = id.toString('hex');
+  return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),
+    hex.slice(16,20),hex.slice(20)].join('-');
+}
 
 function httpsUrl(value, path) {
   if (typeof value !== 'string' || value !== value.trim()) throw new TypeError('invalid_login_issuer');
@@ -74,8 +91,11 @@ export function createLoginVerifier({ config, supabaseSecretKey, judgeKeySet,
             || !['a', 'b'].includes(payload.aleph_identity)
             || !Number.isSafeInteger(payload.iat) || !Number.isSafeInteger(payload.exp)
             || payload.exp <= payload.iat || payload.exp - payload.iat > 900) return null;
-        return Object.freeze({ kind: 'judge', userId: payload.sub,
-          runId: payload.aleph_run, identity: payload.aleph_identity });
+        return Object.freeze({
+          kind: 'judge',
+          userId: scopedJudgeOwnerId(payload.aleph_run, payload.aleph_identity, payload.sub),
+          runId: payload.aleph_run, identity: payload.aleph_identity,
+        });
       } catch { return null; }
     }
     if (issuer === bound.studentIssuer) {
