@@ -28,7 +28,7 @@ test('stale, malformed or absent authAgeSeconds cannot bypass step_up', async ()
 });
 test('region alone never causes risk', async () => {assert.equal((await decide({...baseline(),signals:{...baseline().signals,region:'foreign'}})).decision,'allow');});
 test('missing or unknown signal provenance not promoted to verified risk', async () => {
-  for (const signals of [undefined,{}, {source:'none',network:'unusual',hour:3},{network:'unusual',hour:3},{source:'client_header',network:'unusual',hour:3}]) {const r=await decide({...risky(),signals});assert.equal(r.decision,'allow');}
+  for (const signals of [undefined,{}, {source:'none',network:'unusual',hour:3},{network:'unusual',hour:3},{source:'client_header',network:'unusual',hour:3}]) {const r=await decide({...risky(),path:'/notes/11111111-1111-4111-8111-111111111111',signals});assert.equal(r.decision,'allow');}
 });
 test('client-provided headers never override engine verified signals', async () => {
   assert.equal((await decide({...baseline(),headers:{'x-network':'unusual','x-location':'foreign','x-hour':'3'},recentEvents:risky().recentEvents})).decision,'allow');
