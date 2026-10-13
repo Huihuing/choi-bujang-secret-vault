@@ -1,3 +1,12 @@
+### 8단계 S08_OTHER_ZONE_ALLOWED 진단 저장점 (2026-10-13)
+
+공식 심판 커밋 `93dae7adedd9`에서도 타인 메모 단건 GET 공격이 통과했습니다. 지금까지의 로컬 fixture 및 모의 DB 테스트는 운영 심판의 실제 A/B 요청을 재현한 것이 아니므로, 통과를 주장할 수 없습니다.
+
+- `GET /api/notes/:id`는 서명 검증된 심판 토큰에 대해서만 `aleph_stage8_note_get` 로그에 **A/B 역할 표시와 조회 결과(`owned` / `not_found` / `db_error`)만** 남깁니다. 사용자 UUID, 토큰, 노트 UUID, 내용, 경로를 로그에 기록하지 않습니다. 향후 심판 판정의 실제 요청을 확인해야 원인을 더 좁힐 수 있습니다.
+- 소유권과 강사 권한 검사 후 **성공한 리소스 응답에만** `X-Resource-Id: notes:<uuid>` 또는 `instructor-notices:<uuid>`를 설정합니다. 타인 메모나 없는 자료의 응답에는 자원 ID를 노출하지 않습니다. 신규 메모 POST 성공 시에도 자기 자원 ID를 표시합니다.
+- 직접 DB 조회 권한은 `anon=false, authenticated=false`이고 `notes` RLS 정책은 `auth.uid()=owner_id`입니다. 서버 전용 DB 권한은 RLS를 우회하므로 API의 저장된 `owner_id` 필터는 계속 필수입니다.
+- 실제 심판이 해당 API를 호출한다는 증거를 수집하기 전까지 `S08_OTHER_ZONE_ALLOWED` 해결을 확정하지 않습니다. 다른 단계 동작과 실제 자료는 변경하지 않았습니다.
+
 ### 8단계 재검증: 심판 A/B 서명된 신원도 서로 다른 소유자
 
 `src/verify-login.mjs`의 기존 심판 JWT 처리는 서명된 `aleph_identity`(a/b)와 `aleph_run`을 검증해 놓고도, `userId`는 `sub`만 사용했습니다. 토큰의 `sub`가 같아도 서명된 A/B 신원이 다르면 동일한 메모 소유자가 될 수 없도록 `run + identity + sub`에서 안정적인 128비트 UUID 형식의 소유자 키를 유도합니다. 실제 학생 인증은 기존 Supabase 검증 `sub`를 그대로 사용합니다. 이 구별은 **검증된 판정 토큰의 서명된 필드로만** 수행하며 클라이언트 role, identity, userId 요청값을 신뢰하지 않습니다. 데이터베이스에는 별도 유출성 신원 정보를 저장하지 않습니다.
