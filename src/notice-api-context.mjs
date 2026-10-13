@@ -1,4 +1,5 @@
 import {createClient} from '@supabase/supabase-js';
+import {studentDeviceAccess} from './app-approval.mjs';
 import config from '../aleph.config.json' with {type:'json'};
 import {createLoginVerifier} from './verify-login.mjs';
 
@@ -30,5 +31,8 @@ export async function noticeContext(request,response) {
   catch {sendNoticeJson(response,503,{error:'login_verifier_not_configured'});return null;}
   const login=await verify(request.headers?.authorization);
   if (!login) {sendNoticeJson(response,401,{error:'authentication_required'});return null;}
+  if (!studentDeviceAccess(login,request)){
+    sendNoticeJson(response,403,{error:'device_approval_required'});return null;
+  }
   return {supabase,login};
 }
