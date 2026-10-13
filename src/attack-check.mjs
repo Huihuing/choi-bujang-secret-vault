@@ -93,7 +93,7 @@ export async function runAttackChecks(config) {
     ];
   }
 
-  if (config.step >= 3 && config.step <= 11) {
+  if (config.step >= 3 && config.step <= 12) {
     const checks = await standardChecks(app, config.step);
     const attempts = [
       { attackId: 'anonymous_notes_denied',
@@ -303,6 +303,24 @@ export async function runAttackChecks(config) {
         observed:'실제 기기 개인키/관리자 승인 정보 없이 자동 테스트할 수 없어 미실행; 가상 서명·변조 테스트만 수행',
       });
     }
+    if (config.step >= 12) {
+      for(const [path,id] of [
+        ['/api/war-room','stage12_unauthenticated_operations_denied'],
+        ['/api/war-room-check','stage12_unauthenticated_checks_denied'],
+      ]){
+        const response=await fetch(new URL(path,app),{
+          method:'GET',redirect:'error',signal:AbortSignal.timeout(10000),
+        });
+        attempts.push({
+          attackId:id,
+          expected:'비로그인 작전실 조회 API는 401 또는 403으로 거부',
+          observed:[401,403].includes(response.status)
+            ? '비로그인 작전실 API 접근 거부 확인 (HTTP '+response.status+')'
+            : '작전실 API 거부 확인 필요 (HTTP '+response.status+')',
+        });
+      }
+    }
+
     return attempts;
   }
 
