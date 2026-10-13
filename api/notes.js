@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import {studentDeviceAccess} from '../src/app-approval.mjs';
 import { createClient } from '@supabase/supabase-js';
 import config from '../aleph.config.json' with { type: 'json' };
 import { createLoginVerifier } from '../src/verify-login.mjs';
@@ -69,6 +70,11 @@ async function context(request, response) {
     return null;
   }
 
+  // Preserve judge A/B assessment routes; protect every ordinary student API.
+  if (!studentDeviceAccess(login,request)) {
+    sendJson(response,403,{error:'device_approval_required'});
+    return null;
+  }
   return { supabase, login };
 }
 
