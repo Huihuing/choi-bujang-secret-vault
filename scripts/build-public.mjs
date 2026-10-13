@@ -19,14 +19,14 @@ await generateIcons();
 if (config.step === 1) {
   await copyFile(source, output);
   console.log('1단계 실습용 공개 자료를 public/data.json에 복사했습니다.');
-} else if (config.step >= 2 && config.step <= 11) {
+} else if (config.step >= 2 && config.step <= 12) {
   if (data.notes.length !== 0) {
     throw new Error('2단계 이후에는 정적 data.json에 메모를 남기지 마세요.');
   }
   await writeFile(output, `${JSON.stringify({ notes: [] }, null, 2)}\n`, 'utf8');
-  console.log('2~11단계 정적 data.json은 메모와 1단계 확인 표시 없이 유지합니다.');
+  console.log('2~12단계 정적 data.json은 메모와 1단계 확인 표시 없이 유지합니다.');
 } else {
-  throw new Error('현재 빌드 흐름은 1~11단계까지만 준비되어 있습니다.');
+  throw new Error('현재 빌드 흐름은 1~12단계까지만 준비되어 있습니다.');
 }
 
 if (!process.argv.includes('--local')) {
