@@ -60,7 +60,13 @@ test('operations screens do not claim live engine event count or official 41/41 
  assert.ok(ops.includes('observedEventCount:null'));
  assert.ok(ops.includes('engineRevocationCount:null'));
  assert.ok(ops.includes('official_41_case_results_not_connected'));
- assert.ok(view.includes('n<=41'));
+ assert.ok(view.includes('공식 41종 (과제 기준)'));
+ assert.ok(!view.includes('0/41건 연동'));
+ assert.ok(!ops.includes('importedJudgements:0'));
+ assert.ok(ops.includes('importedJudgements:null'));
+ assert.ok(ops.includes('countFromServer'));
+ assert.ok(view.includes('미확인 · 서버 실측 자료 없음'));
+ assert.ok(view.includes('현재 학생 계정 DB 실측'));
  assert.ok(view.includes('미확인'));
  assert.ok(!view.includes('41/41 통과'));
  assert.equal(RULE_IDS.length,4);
@@ -85,41 +91,27 @@ test('no API or protected memo content may be cached by PWA service worker',asyn
  assert.ok(!sw.includes("caches.open('notes'"));
 });
 
-test('isolated bundler emits only GET and HEAD; POST-only probes are not_run',async()=>{
+test('isolated bundle must not attribute uncorrelated successes to an attackId',async()=>{
  const {runAttackChecks}=await import('../src/attack-check.mjs');
  const {default:config}=await import('../aleph.config.json',{with:{type:'json'}});
- const prev=globalThis.fetch;
- const methods=[];
- globalThis.fetch=async(input,options={})=>{
-  const method=options.method??'GET';
-  methods.push(method);
-  if(!['GET','HEAD'].includes(method))throw new Error('isolated_judge_forbids_'+method);
-  const url=new URL(input);
-  let response={error:'authentication_required'};
-  let status=401;
-  if(url.pathname==='/aleph.json'){
-   status=200;response={step:config.step,allowedRoutes:config.allowedRoutes};
-  }else if(url.pathname==='/'||url.pathname==='/manifest.webmanifest'){
-   status=200;response={};
-  }else if(url.pathname==='/api/public-config'){
-   status=200;response={publishableKey:'test_key'};
-  }
-  return new Response(JSON.stringify(response),{
-   status,headers:{'Content-Type':'application/json','X-Content-Type-Options':'nosniff'},
-  });
- };
+ const previous=globalThis.fetch;
+ let requests=0;
+ globalThis.fetch=async()=>{requests++;throw Error('no_verified_per_attackId_trace');};
  try{
-  const checks=await runAttackChecks(config);
+  const entries=await runAttackChecks(config);
   assert.equal(config.step,12);
-  assert.equal(checks.length,20);
-  assert.ok(methods.length>0 && methods.every(x=>x==='GET'||x==='HEAD'));
-  for(const id of ['stage10_anonymous_restore_denied',
-                   'stage11_unsigned_protected_request_denied']){
-   const entry=checks.find(x=>x.attackId===id);
-   assert.equal(entry?.observed,'not_run',id);
-   assert.ok(entry?.expected);
+  assert.equal(entries.length,20);
+  assert.equal(requests,0,'no untraceable network requests should be sent from bundle');
+  assert.equal(new Set(entries.map(x=>x.attackId)).size,entries.length);
+  assert.ok(entries.every(x=>x.observed==='not_run'));
+  assert.ok(entries.every(x=>typeof x.expected==='string'&&x.expected.length>4));
+  const ids=[
+   'anonymous_notes_denied','deployment_identity_step12','first_page_security_header',
+   'stage10_anonymous_restore_denied','stage11_unsigned_protected_request_denied',
+   'stage12_unauthenticated_operations_denied',
+  ];
+  for(const id of ids){
+   assert.equal(entries.find(x=>x.attackId===id)?.observed,'not_run');
   }
-  assert.ok(checks.some(x=>x.attackId==='anonymous_notes_denied'
-    && x.observed.includes('HTTP 401')));
- }finally{globalThis.fetch=prev;}
+ }finally{globalThis.fetch=previous;}
 });
