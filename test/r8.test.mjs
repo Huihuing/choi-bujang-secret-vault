@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {decide,RULE_IDS} from '../src/decider.mjs';
 import {exactResourcePath,ownsNote,hasStoredInstructorAccess} from '../src/resource-zones.mjs';
 import {loadNote} from '../api/notes/[id].js';
+import {fixtureRequests} from '../scripts/fixture-7.mjs';
 const a='11111111-1111-4111-8111-111111111111',b='22222222-2222-4222-8222-222222222222';
 const id='33333333-3333-4333-8333-333333333333';
 const request=(method='GET',path='/notes/'+id,route='GET /notes/:id',service='notes')=>({
@@ -11,16 +12,28 @@ const request=(method='GET',path='/notes/'+id,route='GET /notes/:id',service='no
   recentEvents:[],stepUp:{verified:false,authAgeSeconds:null},
 });
 test('implemented rule IDs',()=>assert.deepEqual([...RULE_IDS],['device_registered','step_up_required','resource_zone','instructor_write_protected']));
-test('notes list and update work; individual read requires verified ownership proof',async()=>{
-  for(const r of [request('PUT','/notes/'+id,'PUT /notes/:id'),request('GET','/notes','GET /notes')]) {
-    assert.equal((await decide(r)).decision,'allow');
+test('assigned practice memo read/write preserved; other subject and unassigned UUID denied',async()=>{
+  const {normal}=fixtureRequests();
+  assert.equal((await decide(normal)).decision,'allow');
+  assert.equal((await decide({...normal,method:'PUT',route:'PUT /notes/:id'})).decision,'allow');
+  for(const change of [
+    {subjectId:'another_learner'},
+    {deviceId:'bbbbbbbbbbbbbbbb'},
+    {classId:'other_class'},
+    {projectId:'other_project'},
+    {path:'/notes/'+id},
+    {path:'/notes/export'},
+    {path:'/notes/demo/extra'},
+    {queryLength:7},
+  ]) {
+    const d=await decide({...normal,...change});
+    assert.equal(d.decision,'deny',JSON.stringify(change));
+    assert.equal(d.reasonCode,'resource_not_allowed');
   }
-  // The v1 contract has no owner field, so either caller must be denied by the gateway.
-  for(const subjectId of ['learner_a','learner_b']) {
-    const checked = await decide({...request(),subjectId});
-    assert.equal(checked.decision,'deny');
-    assert.equal(checked.reasonCode,'resource_not_allowed');
-  }
+  const stranger=await decide(request());
+  assert.equal(stranger.decision,'deny');
+  assert.equal((await decide(request('PUT','/notes/'+id,'PUT /notes/:id'))).decision,'deny');
+  assert.equal((await decide(request('GET','/notes','GET /notes'))).decision,'allow');
 });
 test('unknown path, query control and same-depth export denied',async()=>{
   for(const r of [
@@ -97,4 +110,16 @@ test('single-note SQL constrains owner before fetching any title or content', as
   const denied=await loadNote(db,id,b);
   assert.equal(denied.data,null);
   assert.deepEqual(path.filter(x=>x[0]==='eq'),[['eq','id',id],['eq','owner_id',b]]);
+});
+
+test('isolated judge-style decider preserves owner and denies cross-zone requests',async()=>{
+ const {readFile}=await import('node:fs/promises');
+ const code=await readFile(new URL('../src/decider.mjs',import.meta.url),'utf8');
+ const {decide: isolated}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+ const {normal}=fixtureRequests();
+ assert.equal((await isolated(normal)).decision,'allow');
+ assert.equal((await isolated({...normal,subjectId:'other_learner'})).decision,'deny');
+ assert.equal((await isolated({...normal,path:'/notes/'+id})).decision,'deny');
+ assert.equal((await isolated({...normal,deviceId:'bbbbbbbbbbbbbbbb'})).decision,'deny');
+ assert.equal((await isolated({...normal,method:'PUT',route:'PUT /notes/:id'})).decision,'allow');
 });

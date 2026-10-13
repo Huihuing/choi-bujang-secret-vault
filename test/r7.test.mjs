@@ -4,8 +4,9 @@ import { decide, RULE_IDS } from '../src/decider.mjs';
 
 const baseline = () => ({
   requestId: 'fictional-req', deviceRegistered: true,
+  classId: 'class_fixture', projectId: 'project_fixture',
   subjectId: 'learner_fixture', deviceId: 'a'.repeat(16),
-  service: 'notes', method: 'GET', path: '/notes', route: 'GET /notes',
+  service: 'notes', method: 'GET', path: '/notes/demo', route: 'GET /notes/:id',
   signals: { source: 'judge_fixture', region: 'local', network: 'usual', hour: 14 },
   recentEvents: [], stepUp: { verified: false, authAgeSeconds: null },
 });
