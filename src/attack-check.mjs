@@ -93,7 +93,7 @@ export async function runAttackChecks(config) {
     ];
   }
 
-  if (config.step >= 3 && config.step <= 10) {
+  if (config.step >= 3 && config.step <= 11) {
     const checks = await standardChecks(app, config.step);
     const attempts = [
       { attackId: 'anonymous_notes_denied',
@@ -272,6 +272,37 @@ export async function runAttackChecks(config) {
       });
     }
 
+    if (config.step >= 11) {
+      const withoutSignature=await fetch(new URL('/api/app-request',app),{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'execute',target:{
+         method:'GET',path:'/api/notes',body:null,
+        }}),
+        redirect:'error',signal:AbortSignal.timeout(10000),
+      });
+      attempts.push({
+        attackId:'stage11_unsigned_protected_request_denied',
+        expected:'서명과 로그인 없이 보호 메모 게이트웨이를 호출하면 거부되어야 함',
+        observed:withoutSignature.status>=400
+          ? '비로그인·서명 없는 앱 요청 거부 (HTTP '+withoutSignature.status+')'
+          : '서명 없는 요청 차단 확인 필요 (HTTP '+withoutSignature.status+')',
+      });
+      const manifest=await fetch(new URL('/manifest.webmanifest',app),{
+        redirect:'error',signal:AbortSignal.timeout(10000),
+      });
+      attempts.push({
+        attackId:'stage11_install_manifest_available',
+        expected:'설치형 웹앱 manifest 제공 (승인과 별개)',
+        observed:manifest.ok
+          ? '설치 설정 manifest 제공 (HTTP '+manifest.status+')'
+          : 'manifest 제공 상태 확인 필요 (HTTP '+manifest.status+')',
+      });
+      attempts.push({
+        attackId:'stage11_actual_approved_authenticator_pending',
+        expected:'관리자 승인을 받은 실제 기기에서 WebAuthn 요청 서명 및 메모 조회',
+        observed:'실제 기기 개인키/관리자 승인 정보 없이 자동 테스트할 수 없어 미실행; 가상 서명·변조 테스트만 수행',
+      });
+    }
     return attempts;
   }
 
