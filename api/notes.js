@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import config from '../aleph.config.json' with { type: 'json' };
 import { createLoginVerifier } from '../src/verify-login.mjs';
 import { exactResourcePath } from '../src/resource-zones.mjs';
+import { auditNoteEntry, auditNoteAuth } from '../src/stage8-audit.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 
@@ -38,9 +39,11 @@ function hasOnlyKeys(body, allowed) {
 }
 
 async function context(request, response) {
+  const route = '/api/notes';
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
   if (!supabaseUrl || !supabaseSecretKey) {
+    auditNoteAuth(route, null, 'config');
     sendJson(response, 503, { error: 'server_not_configured' });
     return null;
   }
@@ -53,11 +56,14 @@ async function context(request, response) {
   try {
     verifyLogin = createLoginVerifier({ config, supabaseSecretKey, supabaseClient: supabase });
   } catch {
+    auditNoteAuth(route, null, 'config');
     sendJson(response, 503, { error: 'login_verifier_not_configured' });
     return null;
   }
 
-  const login = await verifyLogin(request.headers.authorization);
+  let failureReason = 'verification';
+  const login = await verifyLogin(request.headers?.authorization, reason => { failureReason = reason; });
+  auditNoteAuth(route, login, failureReason);
   if (!login) {
     sendJson(response, 401, { error: 'authentication_required' });
     return null;
@@ -67,6 +73,7 @@ async function context(request, response) {
 }
 
 export default async function handler(request, response) {
+  auditNoteEntry('/api/notes', request);
   if (!['GET', 'POST'].includes(request.method)) {
     response.setHeader('Allow', 'GET, POST');
     return sendJson(response, 405, { error: 'method_not_allowed' });

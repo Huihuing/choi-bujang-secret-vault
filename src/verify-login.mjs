@@ -72,13 +72,22 @@ export function createLoginVerifier({ config, supabaseSecretKey, judgeKeySet,
     throw new TypeError('invalid_login_verifier_configuration');
   }
 
-  return async function verifyLoginAuthorization(authorization) {
-    if (typeof authorization !== 'string' || authorization.length > 8192) return null;
+  // reportFailure is a server-owned, optional sink for privacy-safe diagnostics.
+  // It never receives JWTs, user IDs, error messages or unverified claims.
+  return async function verifyLoginAuthorization(authorization, reportFailure) {
+    const reject = (reason) => {
+      if (typeof reportFailure === 'function') {
+        try { reportFailure(reason); } catch { /* audit failures cannot alter auth */ }
+      }
+      return null;
+    };
+    if (authorization === undefined || authorization === null || authorization === '') return reject('missing');
+    if (typeof authorization !== 'string' || authorization.length > 8192) return reject('format');
     const match = BEARER.exec(authorization);
-    if (!match) return null;
+    if (!match) return reject('format');
     const token = match[1];
     let issuer;
-    try { issuer = decodeJwt(token).iss; } catch { return null; }
+    try { issuer = decodeJwt(token).iss; } catch { return reject('format'); }
     if (issuer === bound.judgeIssuer) {
       try {
         const { payload, protectedHeader } = await jwtVerify(token, keys, {
@@ -90,13 +99,18 @@ export function createLoginVerifier({ config, supabaseSecretKey, judgeKeySet,
             || payload.aleph_role !== 'judge'
             || !['a', 'b'].includes(payload.aleph_identity)
             || !Number.isSafeInteger(payload.iat) || !Number.isSafeInteger(payload.exp)
-            || payload.exp <= payload.iat || payload.exp - payload.iat > 900) return null;
+            || payload.exp <= payload.iat || payload.exp - payload.iat > 900) return reject('claims');
         return Object.freeze({
           kind: 'judge',
           userId: scopedJudgeOwnerId(payload.aleph_run, payload.aleph_identity, payload.sub),
           runId: payload.aleph_run, identity: payload.aleph_identity,
         });
-      } catch { return null; }
+      } catch (error) {
+        if (error?.code === 'ERR_JWT_EXPIRED') return reject('expired');
+        if (error?.code === 'ERR_JWT_CLAIM_VALIDATION_FAILED') return reject('claims');
+        if (error?.code === 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED') return reject('signature');
+        return reject('verification');
+      }
     }
     if (issuer === bound.studentIssuer) {
       try {
@@ -107,11 +121,11 @@ export function createLoginVerifier({ config, supabaseSecretKey, judgeKeySet,
         if (error || !claims || claims.iss !== bound.studentIssuer
             || claims.aud !== bound.studentAudience
             || claims.role !== 'authenticated' || !UUID.test(claims.sub ?? '')
-            || !Number.isSafeInteger(claims.exp)
-            || claims.exp <= Math.floor(Date.now() / 1000)) return null;
+            || !Number.isSafeInteger(claims.exp)) return reject('claims');
+        if (claims.exp <= Math.floor(Date.now() / 1000)) return reject('expired');
         return Object.freeze({ kind: 'student', userId: claims.sub });
-      } catch { return null; }
+      } catch { return reject('verification'); }
     }
-    return null;
+    return reject('issuer');
   };
 }

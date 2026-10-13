@@ -1,3 +1,11 @@
+### 8단계 S08 인증 전 진단 (2026-10-13)
+
+심판의 실제 공격 실패를 판정기·로그인·메모 소유권 중 어디에서 발생했는지 추적하기 위해 메모 목록과 단건 API 핸들러 **진입 즉시** `aleph_s08_entry` 로그를 남깁니다. 요청 메서드는 GET/POST/PUT/DELETE/OTHER로 제한하며, 경로는 `/api/notes` 또는 `/api/notes/:id`라는 정해진 모양만 기록합니다. Authorization 헤더 유무만 남깁니다.
+
+서버가 인증을 확인한 뒤에는 `aleph_s08_auth`로 `judge / student / null`과 실패 사유 `missing / format / issuer / expired / claims / signature / verification / config` 중 하나를 기록합니다. 검증에 실패한 JWT의 issuer 정보는 **로그 분류에만** 활용하며 인가 판단에는 사용하지 않습니다. 토큰 원문·사용자 ID·메모 ID·쿼리·요청 본문·오류 전문은 **절대 로그에 기록하지 않습니다.** 인증 거부 결과 및 API 응답 형식은 변경하지 않습니다. `test/stage8-audit.test.mjs`가 필드 누출과 로그 사유를 검사합니다.
+
+`GET /api/notes/:id`의 기존 소유권 결과 로그(`aleph_stage8_note_get`)는 유지합니다. 로그가 없다는 사실 하나만으로 심판이 API를 호출하지 않았다고 결론 내릴 수는 없습니다. 심판의 실제 실행 시각에 맞춰 Vercel 로그의 보존 기간 안에서 확인해야 하며, 심판 엔진 내부에서 실행되는 `src/decider.mjs`는 Vercel 함수 로그로 관측되지 않습니다.
+
 ### 8단계 S08_OTHER_ZONE_ALLOWED 진단 저장점 (2026-10-13)
 
 공식 심판 커밋 `93dae7adedd9`에서도 타인 메모 단건 GET 공격이 통과했습니다. 지금까지의 로컬 fixture 및 모의 DB 테스트는 운영 심판의 실제 A/B 요청을 재현한 것이 아니므로, 통과를 주장할 수 없습니다.
