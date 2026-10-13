@@ -42,6 +42,11 @@ export function validSignedTarget(target){
  try{const data=JSON.parse(body);return Boolean(data&&typeof data==='object'&&!Array.isArray(data));}
  catch{return false;}
 }
+export function matchesSignedTarget(challenge,target) {
+ return Boolean(challenge && validSignedTarget(target)
+  && challenge.method===target.method && challenge.path===target.path
+  && challenge.body_sha256===digestBody(target.body));
+}
 function delegated(target){
  if(target.path==='/api/notes')return notes;
  if(target.path==='/api/instructor-notices')return notices;
@@ -92,8 +97,7 @@ export default async function handler(req,res){
  });
  if(challengeError)return send(res,503,{error:'challenge_unavailable'});
  if(!challenge)return send(res,403,{error:'challenge_invalid_or_expired'});
- if(challenge.method!==target.method||challenge.path!==target.path||
-  challenge.body_sha256!==digestBody(target.body))
+ if(!matchesSignedTarget(challenge,target))
   return send(res,403,{error:'signed_target_mismatch'});
  const cred=devices.find(d=>d.credential_id===requestBody.proof.id);
  if(!cred)return send(res,403,{error:'approved_credential_required'});
