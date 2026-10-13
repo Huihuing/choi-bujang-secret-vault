@@ -1,4 +1,5 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.117.2';
+import {mountWarRoom} from './war-room.js';
 
 const $=selector=>document.querySelector(selector);
 const loginForm=$('#login-form'),logoutButton=$('#logout-button');
@@ -8,6 +9,7 @@ const createPanel=$('#create-panel'),createForm=$('#create-form'),notes=$('#note
 const authStatus=$('#auth-status'),loginButton=$('#login-button');
 const status=$('#connection-status'),installStatus=$('#install-status');
 let currentSession=null,approved=false,supabase=null;
+const warRoom=mountWarRoom(()=>currentSession?.access_token);
 const b64Decode=input=>{
  const string=atob(input.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-input.length%4)%4));
  return Uint8Array.from(string,c=>c.charCodeAt(0));
@@ -30,7 +32,7 @@ function displayAuth(session,message){
  loginForm.hidden=Boolean(session);logoutButton.hidden=!session;
  deviceSection.hidden=!session;
  show(authStatus,message|| (session?'로그인 확인됨 · 기기 인증 필요':'로그인하지 않음'));
- if(!session){lockedNotes('로그인하고 승인된 기기 인증을 완료해야 자료가 열립니다.');
+ if(!session){warRoom.clear();lockedNotes('로그인하고 승인된 기기 인증을 완료해야 자료가 열립니다.');
    show(deviceStatus,'기기 승인 요청 전');}
 }
 async function jsonFetch(path,options={}){
@@ -186,6 +188,7 @@ loginForm.addEventListener('submit',async event=>{
  $('#password').value='';loginButton.disabled=false;
  if(error){show(authStatus,'로그인 실패: '+error.message,true);return;}
  displayAuth(data.session);
+ void warRoom.refresh();
  try{await checkDevice();}catch(e){show(deviceStatus,e.message,true);}
 });
 logoutButton.addEventListener('click',async()=>{
