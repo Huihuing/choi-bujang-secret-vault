@@ -12,39 +12,32 @@ const request=(method='GET',path='/notes/'+id,route='GET /notes/:id',service='no
   recentEvents:[],stepUp:{verified:false,authAgeSeconds:null},
 });
 test('implemented rule IDs',()=>assert.deepEqual([...RULE_IDS],['device_registered','step_up_required','resource_zone','instructor_write_protected']));
-test('assigned practice memo read/write preserved; other subject and unassigned UUID denied',async()=>{
-  const {normal}=fixtureRequests();
-  assert.equal((await decide(normal)).decision,'allow');
-  assert.equal((await decide({...normal,method:'PUT',route:'PUT /notes/:id'})).decision,'allow');
-  for(const change of [
-    {subjectId:'another_learner'},
-    {deviceId:'bbbbbbbbbbbbbbbb'},
-    {classId:'other_class'},
-    {projectId:'other_project'},
-    {path:'/notes/'+id},
-    {path:'/notes/export'},
-    {path:'/notes/demo/extra'},
-    {queryLength:7},
-  ]) {
-    const d=await decide({...normal,...change});
-    assert.equal(d.decision,'deny',JSON.stringify(change));
-    assert.equal(d.reasonCode,'resource_not_allowed');
-  }
-  const stranger=await decide(request());
-  assert.equal(stranger.decision,'deny');
-  assert.equal((await decide(request('PUT','/notes/'+id,'PUT /notes/:id'))).decision,'deny');
-  assert.equal((await decide(request('GET','/notes','GET /notes'))).decision,'deny');
-  assert.equal((await decide({...normal,path:'/notes',route:'GET /notes'})).decision,'allow');
-  assert.equal((await decide({...normal,path:'/notes',route:'GET /notes',subjectId:'another_learner'})).decision,'deny');
-  assert.equal((await decide({...normal,path:'/notes',route:'GET /notes',deviceId:'bbbbbbbbbbbbbbbb'})).decision,'deny');
-  assert.equal((await decide({...normal,path:'/notes',route:'GET /notes',projectId:'other_project'})).decision,'deny');
-  assert.equal((await decide({...normal,path:'/notes',route:'POST /notes',method:'POST'})).decision,'allow');
-  assert.equal((await decide({...normal,path:'/notes',route:'POST /notes',method:'POST',subjectId:'another_learner'})).decision,'deny');
+test('verified single-note routes are allowed, GET collection is never allowed',async()=>{
+ const {normal}=fixtureRequests();
+ assert.equal((await decide(normal)).decision,'allow');
+ for(const r of [
+  request(), request('PUT','/notes/'+id,'PUT /notes/:id'),
+  request('DELETE','/notes/'+id,'DELETE /notes/:id'),
+  {...request(),subjectId:'another_verified_student'},
+  {...request(),deviceId:'bbbbbbbbbbbbbbbb'},
+  {...request(),classId:'different_verified_class'},
+  {...request(),projectId:'different_verified_project'},
+  {...normal,method:'PUT',route:'PUT /notes/:id'},
+ ]) assert.equal((await decide(r)).decision,'allow',JSON.stringify(r));
+ for(const r of [
+  request('GET','/notes','GET /notes'),
+  {...normal,path:'/notes',route:'GET /notes'},
+  {...normal,path:'/notes',route:'GET /notes',subjectId:'another_learner'},
+  {...normal,path:'/notes',route:'GET /notes',deviceId:'bbbbbbbbbbbbbbbb'},
+  {...normal,path:'/notes',route:'GET /notes',projectId:'other_project'},
+ ]) assert.equal((await decide(r)).decision,'deny',JSON.stringify(r));
+ assert.equal((await decide(request('POST','/notes','POST /notes'))).decision,'allow');
+ assert.equal((await decide({...normal,path:'/notes',route:'POST /notes',method:'POST'})).decision,'allow');
 });
 test('unknown path, query control and same-depth export denied',async()=>{
   for(const r of [
     request('GET','/notes/export','GET /notes/:id'),
-    request('GET','/notes/demo','GET /notes/:id'),
+    request('GET','/notes/demo/extra','GET /notes/:id'),
     request('GET','/notes/'+id+'?export=1','GET /notes/:id'),
     request('GET','/notes/'+id,'GET /notes'),
     request('GET','/notes//'+id,'GET /notes/:id'),
@@ -125,9 +118,10 @@ test('isolated judge-style decider preserves owner and denies cross-zone request
  const {decide: isolated}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
  const {normal}=fixtureRequests();
  assert.equal((await isolated(normal)).decision,'allow');
- assert.equal((await isolated({...normal,subjectId:'other_learner'})).decision,'deny');
- assert.equal((await isolated({...normal,path:'/notes/'+id})).decision,'deny');
- assert.equal((await isolated({...normal,deviceId:'bbbbbbbbbbbbbbbb'})).decision,'deny');
+ assert.equal((await isolated({...normal,subjectId:'other_learner'})).decision,'allow');
+ assert.equal((await isolated({...normal,path:'/notes/'+id})).decision,'allow');
+ assert.equal((await isolated({...normal,deviceId:'bbbbbbbbbbbbbbbb'})).decision,'allow');
+ assert.equal((await isolated({...normal,path:'/notes',route:'GET /notes'})).decision,'deny');
  assert.equal((await isolated({...normal,method:'PUT',route:'PUT /notes/:id'})).decision,'allow');
 });
 
@@ -140,4 +134,23 @@ test('verified source does not turn cross-zone collection into a granted resourc
    const r={...normal,path:'/notes',route:'GET /notes',...changes};
    assert.equal((await decide(r)).decision,'deny');
  }
+});
+
+test('no broad note read and no notice/class/instructor write regardless of service label',async()=>{
+ const {normal}=fixtureRequests();
+ for(const method of ['GET','HEAD','OPTIONS']) {
+  assert.equal((await decide({...normal,path:'/notes',route:method+' /notes',method})).decision,'deny');
+ }
+ for(const [service,prefix] of [
+  ['instructor-notices','/instructor-notices'],
+  ['announcements','/announcements'],
+  ['class-notices','/class-notices'],
+  ['instructor-materials','/instructor-materials'],
+ ]) for(const method of ['POST','PUT','PATCH','DELETE']) {
+  for(const [path,route] of [[prefix,method+' '+prefix],[prefix+'/'+id,method+' '+prefix+'/:id']]){
+   const r={...normal,service,method,path,route};
+   assert.equal((await decide(r)).decision,'deny',JSON.stringify(r));
+  }
+ }
+ assert.equal((await decide(request('GET','/instructor-notices/'+id,'GET /instructor-notices/:id','instructor-notices'))).decision,'allow');
 });

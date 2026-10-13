@@ -2,34 +2,8 @@
 export const RULE_IDS = Object.freeze(['device_registered','step_up_required','resource_zone','instructor_write_protected']);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const DEVICE_ID = /^[0-9a-f]{16}$/u;
-// Practice-only, server-authored binding from scripts/fixture-7.mjs.
-// Neither a matching path nor a client-supplied role establishes ownership.
-// Real users' saved owner_id remains enforced by the protected API.
-const PRACTICE_NOTE = Object.freeze({
-  classId:'class_fixture', projectId:'project_fixture',
-  subjectId:'learner_fixture', deviceId:'aaaaaaaaaaaaaaaa',
-  service:'notes', path:'/notes/demo', methods:Object.freeze(['GET','PUT']),
-});
-function isAssignedNote(request) {
-  return request.classId===PRACTICE_NOTE.classId
-    && request.projectId===PRACTICE_NOTE.projectId
-    && request.subjectId===PRACTICE_NOTE.subjectId
-    && request.deviceId===PRACTICE_NOTE.deviceId
-    && request.service===PRACTICE_NOTE.service
-    && request.path===PRACTICE_NOTE.path
-    && PRACTICE_NOTE.methods.includes(request.method);
-}
-// Collection paths can leak other zones if allowed based on route alone.
-// Only the explicitly assigned, verified subject/device/class/project may
-// exercise this locally registered practice collection.
-function isAssignedCollection(request) {
-  return request.classId===PRACTICE_NOTE.classId
-    && request.projectId===PRACTICE_NOTE.projectId
-    && request.subjectId===PRACTICE_NOTE.subjectId
-    && request.deviceId===PRACTICE_NOTE.deviceId
-    && request.service==='notes' && request.path==='/notes'
-    && ['GET','POST'].includes(request.method);
-}
+// The engine verifies caller, device and exact route; it does NOT provide
+// stored memo ownership. The resource API checks owner_id on every item.
 function hasVerifiedCompositeRisk(request) {
   const signals=request?.signals;
   if (!signals || signals.source!=='judge_fixture') return false;
@@ -52,7 +26,7 @@ function trustedZone(request) {
     || path.includes('?') || path.includes('#')
     || (request.queryLength !== undefined && request.queryLength !== 0)) return null;
   const zones=[
-    {service:'notes',prefix:'/notes',collection:['GET','POST'],item:['GET','PUT','DELETE']},
+    {service:'notes',prefix:'/notes',collection:['POST'],item:['GET','PUT','DELETE']},
     {service:'instructor-notices',prefix:'/instructor-notices',collection:['GET','POST'],item:['GET','PUT']},
   ];
   for (const z of zones) {
@@ -71,17 +45,9 @@ export async function decide(request) {
   if (request?.deviceRegistered!==true) return result(request,'deny','device_not_registered','device_registered');
   const z=trustedZone(request);
   if (!z) return result(request,'deny','resource_not_allowed','resource_zone');
-  // For a single note, fail closed unless the engine's verified subject,
-  // device, class, project, method and exact path match a server-assigned resource.
-  // This static fixture is NOT a binding for real Supabase users.
-  if (z.service==='notes') {
-    const assigned = request.path==='/notes'
-      ? isAssignedCollection(request)
-      : isAssignedNote(request);
-    if (!assigned) {
-      return result(request,'deny','resource_not_allowed','resource_zone');
-    }
-  }
+  // Collection GET is blocked. POST /notes is creation, whereas verified
+  // GET/PUT/DELETE /notes/:id are authorized for a single resource here;
+  // the protected API enforces persisted owner_id before returning/updating it.
   if (z.service==='instructor-notices' && request.method!=='GET') {
     // v1 has NO engine-verified instructor role; notice writing is checked at the final API.
     return result(request,'deny','instructor_required','instructor_write_protected');
