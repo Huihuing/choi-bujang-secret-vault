@@ -91,27 +91,66 @@ test('no API or protected memo content may be cached by PWA service worker',asyn
  assert.ok(!sw.includes("caches.open('notes'"));
 });
 
-test('isolated bundle must not attribute uncorrelated successes to an attackId',async()=>{
+test('isolated bundle records 3 judge-recognized GET/HEAD requests and marks all others not_run',async()=>{
  const {runAttackChecks}=await import('../src/attack-check.mjs');
  const {default:config}=await import('../aleph.config.json',{with:{type:'json'}});
  const previous=globalThis.fetch;
- let requests=0;
- globalThis.fetch=async()=>{requests++;throw Error('no_verified_per_attackId_trace');};
- try{
+ const requests=[];
+ globalThis.fetch=async(input,options={})=>{
+  const url=new URL(input);
+  const method=options.method??'GET';
+  requests.push({path:url.pathname,method});
+  assert.ok(['GET','HEAD'].includes(method),'isolated runner forbids any mutation method');
+  if(url.pathname==='/api/notes')
+    return new Response(JSON.stringify({error:'authentication_required'}),{
+      status:401,headers:{'content-type':'application/json'},
+    });
+  if(url.pathname==='/aleph.json')
+    return new Response(JSON.stringify({step:12,allowedRoutes:['/api/notes']}),{
+      status:200,headers:{'content-type':'application/json'},
+    });
+  if(url.pathname==='/'&&method==='HEAD')
+    return new Response(null,{
+      status:200,headers:{'x-content-type-options':'nosniff'},
+    });
+  throw Error('unexpected uncatalogued request '+method+' '+url.pathname);
+ };
+ try {
   const entries=await runAttackChecks(config);
   assert.equal(config.step,12);
   assert.equal(entries.length,20);
-  assert.equal(requests,0,'no untraceable network requests should be sent from bundle');
+  assert.deepEqual(requests,[
+   {path:'/api/notes',method:'GET'},
+   {path:'/aleph.json',method:'GET'},
+   {path:'/',method:'HEAD'},
+  ]);
   assert.equal(new Set(entries.map(x=>x.attackId)).size,entries.length);
-  assert.ok(entries.every(x=>x.observed==='not_run'));
-  assert.ok(entries.every(x=>typeof x.expected==='string'&&x.expected.length>4));
-  const ids=[
-   'anonymous_notes_denied','deployment_identity_step12','first_page_security_header',
-   'stage10_anonymous_restore_denied','stage11_unsigned_protected_request_denied',
-   'stage12_unauthenticated_operations_denied',
-  ];
-  for(const id of ids){
-   assert.equal(entries.find(x=>x.attackId===id)?.observed,'not_run');
+  const verified=new Set(['anonymous_notes_denied','deployment_identity_step12',
+   'first_page_security_header']);
+  for(const entry of entries){
+   if(verified.has(entry.attackId))assert.ok(entry.observed.includes('HTTP '));
+   else assert.equal(entry.observed,'not_run',entry.attackId);
+  }
+  assert.equal(entries.filter(x=>x.observed==='not_run').length,17);
+ }finally{globalThis.fetch=previous;}
+});
+test('failed actual GET cannot be represented as success in stage-12 bundle',async()=>{
+ const {runAttackChecks}=await import('../src/attack-check.mjs');
+ const {default:config}=await import('../aleph.config.json',{with:{type:'json'}});
+ const previous=globalThis.fetch;
+ globalThis.fetch=async(input,options={})=>{
+  const u=new URL(input);
+  if(u.pathname==='/')return new Response(null,{status:503});
+  if(u.pathname==='/aleph.json')return new Response('{}',{status:503});
+  if(u.pathname==='/api/notes')return new Response('{}',{status:200});
+  throw Error('unexpected');
+ };
+ try{
+  const checks=await runAttackChecks(config);
+  for(const id of ['anonymous_notes_denied','deployment_identity_step12',
+   'first_page_security_header']){
+   const c=checks.find(x=>x.attackId===id);
+   assert.ok(c.observed.includes('불일치')||c.observed.includes('실패'));
   }
  }finally{globalThis.fetch=previous;}
 });
