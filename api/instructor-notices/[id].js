@@ -22,11 +22,13 @@ export default async function handler(request,response) {
       .eq('id',id).select('id,title,content').maybeSingle();
     if (error) return sendNoticeJson(response,503,{error:'notice_update_failed'});
     if (!data) return sendNoticeJson(response,404,{error:'notice_not_found'});
+    response.setHeader('X-Resource-Id','instructor-notices:'+id);
     return sendNoticeJson(response,200,{id:data.id,title:data.title,body:data.content});
   }
   const {data,error}=await ctx.supabase.from('instructor_notices')
     .select('id,title,content').eq('id',id).maybeSingle();
   if (error) return sendNoticeJson(response,503,{error:'notices_unavailable'});
   if (!data) return sendNoticeJson(response,404,{error:'notice_not_found'});
+  response.setHeader('X-Resource-Id','instructor-notices:'+id);
   return sendNoticeJson(response,200,{id:data.id,title:data.title,body:data.content});
 }
