@@ -12,37 +12,37 @@
     {
       "alertId": "kc-01",
       "action": "block",
-      "confidence": 0.97,
+      "confidence": 0.95,
       "reason": "log4shell-encoded-lookup"
     },
     {
       "alertId": "kc-02",
       "action": "block",
-      "confidence": 0.97,
+      "confidence": 0.95,
       "reason": "log4shell-jndi-lookup"
     },
     {
       "alertId": "kc-03",
       "action": "block",
-      "confidence": 0.97,
+      "confidence": 0.95,
       "reason": "log4shell-jndi-lookup"
     },
     {
       "alertId": "kc-04",
       "action": "block",
-      "confidence": 0.97,
+      "confidence": 0.95,
       "reason": "log4shell-encoded-lookup"
     },
     {
       "alertId": "kc-05",
       "action": "block",
-      "confidence": 0.97,
+      "confidence": 0.95,
       "reason": "log4shell-encoded-lookup"
     },
     {
       "alertId": "kc-06",
       "action": "block",
-      "confidence": 0.97,
+      "confidence": 0.95,
       "reason": "log4shell-jndi-lookup"
     },
     {
