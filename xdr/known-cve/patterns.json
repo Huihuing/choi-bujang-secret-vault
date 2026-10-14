@@ -1,7 +1,7 @@
 [
   {
     "name": "log4shell-jndi-lookup",
-    "condition": "요청의 URL/인자/헤더에서 ${jndi:<protocol>://...} 형식의 명확한 JNDI 원격 조회 시그니처 탐지",
+    "condition": "HTTP 머리글·인자·중첩 요청 필드의 완전한 JNDI 프로토콜/호스트 조회 형태. 중괄호가 없는 형태는 MITRE T1190 또는 규칙 수준 4 이상으로 교차 검증하고, 설명만 남은 경우에도 충분한 Wazuh 근거를 요구",
     "basis": "NVD CVE-2021-44228: 로그 메시지와 매개변수의 JNDI 원격 조회 취약점"
   },
   {
@@ -11,7 +11,7 @@
   },
   {
     "name": "log4shell-scan-indicator",
-    "condition": "Wazuh T1190/CVE-2021-44228 및 Log4Shell 검사기 또는 탐색 문자열 흔적, 실제 악용 문자열은 불확실",
+    "condition": "CVE/T1190 또는 nuclei·Log4j-Scanner 같은 점검 도구 흔적, 미완성 JNDI 원격 조회 표현(명확한 악용 증거 없으면 alert)",
     "basis": "MITRE ATT&CK T1190: 공개 서비스 취약점 악용 탐색 및 NVD CVE-2021-44228"
   },
   {
