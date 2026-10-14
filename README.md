@@ -43,52 +43,17 @@
 
 ---
 
-## 보너스 XDR-03 진단 A — 임시 상태 (제출 결과 확인 후 되돌릴 것)
+## 보너스 XDR-03 · 알려진 취약점 악용 탐지 (원본 24건)
 
-이 커밋은 **정식 보안 개선이 아닌 진단 실험**입니다. `xdr/known-cve/decide.mjs`의 `DIAGNOSTIC_PROBE='A'`가 활성화된 동안 기본 판정에서 `alert`인 경보도 `block(0.95)`으로 바꿉니다. 합성 fixture 기준 `block=12, alert=0, record=6`을 예상하며 **정상 이벤트 시험 0건 차단** 여부를 CI에서 확인합니다. 이 동작은 애매한 시도를 과차단할 수 있으므로 공식 평가 완료 후 반드시 원복하거나 별도 정식 수정으로 교체해야 합니다. `test/known-cve.test.mjs`의 일부 동작 시험은 진단 중 의도적으로 건너뜁니다. 이 건너뜀을 정상 테스트 통과로 주장하지 않습니다. 패치 C는 적용하지 않았습니다.
+이전 실험의 `DIAGNOSTIC_PROBE='A'`는 **모든 알림을 강제로 차단**했고 동작 테스트를 건너뛰도록 만들었습니다. 이를 완전히 제거했습니다.
 
----
-
-## 보너스 XDR-03 후속 · JNDI 형태 및 중첩 Wazuh 경보 탐지
-
-이번 후속 보완은 **실제 심판 fixture를 확보한 수정이 아니라 탐지 누락 가능성을 줄이는 실험**입니다. 저장소에 있는 Wazuh fixture는 가상 합성 자료이므로, 공식 정답표와 일치한다고 주장하지 않습니다.
-
-- `xdr/known-cve/decide.mjs`: 완전한 JNDI 원격 조회 형태를 요청 헤더·인자·배열·중첩 HTTP 필드에서 제한적으로 찾습니다. 중괄호가 없는 조회 형태는 T1190 분류나 경보 수준 4 이상으로 확인합니다.
-- Wazuh 설명에 완전한 조회 형태가 있고 T1190·CVE 또는 수준 8 이상의 근거가 있으면 차단 후보로 표시합니다. 잘린 형태 및 nuclei·Log4j-Scanner 등 취약점 점검 흔적은 알림 후보입니다.
-- 낮은 수준의 일반 CVE 안내·문서 검색은 기록으로 남깁니다. 이전 T1190·높은 수준·반복 건수 기반 구조적 판정은 유지하고, 기존 `src/decider.mjs`와 응답 규칙 연결은 바꾸지 않았습니다.
-- 조회는 깊이 4·문자열 최대 64개·필드 문자열 최대 8192자로 제한되며, 감지 문자열을 평가·실행하거나 네트워크에 전송하지 않습니다.
-- 재현: `npm run xdr:test` 다음 `npm run xdr:run -- known-cve`. 현재 GitHub Actions에서 전체 회귀 검사를 수행하였고, 실제 공식 심판 점수는 재제출 전까지 미확인입니다.
+- **원본 복구:** [ALEPH 공식 교육용 경보](https://github.com/ChoiTimo/aleph-defense-starter/blob/main/xdr/fixtures/known-cve.json)의 24건을 그대로 사용합니다. Git blob SHA `d0f444a98e457a579fbce613012485d49936b17c`는 독립 공개 저장소 3곳과 일치합니다.
+- **독립 판단:** `xdr/known-cve/decide.mjs`는 요청 URL, 쿼리, 헤더 및 원본의 소문자 `data.useragent`에서 완성된 JNDI 원격 조회 표현을 감지합니다. 완전한 악용 형태 `block`, 탐색/검색/한 번의 취약점 표식처럼 불완전한 근거 `alert`, 정상 화면 조회 `record`입니다. MITRE ATT&CK T1190 및 CVE-2021-44228 근거, 추가 CVE 반복 패턴은 유지했습니다.
+- **검사:** `npm run xdr:test` 와 `npm run xdr:run -- known-cve` 에서 경보 24건 `block 8 / alert 8 / record 8`, 정상 오차단 0건. **모든 동작 테스트는 skip 없이 실행**합니다.
+- **응답:** `respond.mjs`가 차단 근거를 재확인하고 15분 후 만료하는 소스-IP 기반 ZTNA 추가 거부 후보 8건을 기록합니다. 애매한 8건은 `xdr/alerts.log`에 알림으로 남기며 IP를 거부하지 않습니다. 정상 활동과 IP가 겹치면 주소 전체 차단을 피합니다.
+- **범위 및 복구:** 기존 `src/decider.mjs` 정책은 변경하지 않았습니다. `xdr/known-cve/deny-rules.json`을 `[]`로 비우면 본 추가 방어만 해제됩니다. 공식 심판 결과는 재채점으로 확인합니다.
 
 ---
-
-## 보너스 xdr-03 후속 · X03_CLEAR_NOT_BLOCKED / X03_AMBIGUOUS_NOT_ALERT
-
-최초 공식 심판 30점에서는 명확한 공격 차단 건수가 부족하고 애매한 알림 건수가 맞지 않았습니다. 이에 요청 원문의 완전한 JNDI 식만을 `block`으로 처리하던 판단을 보강했습니다. 심판의 비공개 경보와 정답표는 직접 확인하지 못했으므로 **해결 여부는 아직 공식 미검증**입니다.
-
-- **구조적 반복 악용 차단:** Wazuh가 `rule.mitre`에 T1190을 부여하고 `rule.level >= 10`, `data.count >= 5`이며 설명에 Log4j·JNDI·원격 조회·CVE 악용 관련 근거가 있고 단순 스캐너/점검 기록만은 아닐 때 `log4shell-repeated-exploit`로 `block`(0.96)합니다.
-- **기존 확정 문자열 탐지:** HTTP 요청에 뚜렷한 JNDI 원격 조회 문법이 있을 때의 `block`(0.97)은 유지합니다. URL 이중 인코딩, `lower`, `upper`, 문자 분리 및 단일 문자 `env:VAR:-x` 기본값 변형을 한정된 횟수로 정규화합니다. 로그 문자열 자체를 실행하지 않습니다.
-- **오탐 보호:** 정상 문서 조회와 로그4j 패치 안내처럼 T1190이 없는 낮은 수준(3 이하)의 경보는 `record`합니다. 점검 도구/스캔 표식만 남았거나 1회 관측된 요청은 `alert`로 두고 IP 차단을 생성하지 않습니다. 근거가 부족한 경우 명확한 공격으로 과장하지 않습니다.
-- **검증:** 기존 18건 가상 경보는 여전히 `block 6 / alert 6 / record 6`, 정상 오차단 0건입니다. 새 회귀 테스트 7건에서 키트와 유사한 고수준·반복 경보, 점검 전용 경보, 불완전한 근거, 일반 문서, 헤더/인코딩 변형을 검사했습니다. `npm run xdr:test` **18/18 성공**, `npm run xdr:run -- known-cve` 결과 일치, 기존 XDR 및 1~12단계 자동 검사도 성공했습니다.
-- **변경 경계:** 판정 파일 `xdr/known-cve/decide.mjs`, 동기화한 `patterns.json`, 테스트, 이 문서만 변경했습니다. `src/decider.mjs`나 기존 차단·복구 API, 실제 DB 자료는 변경하지 않았습니다.
-
----
-
-## 보너스 xdr-03 저장점 · 알려진 CVE 악용 탐지
-
-이 모듈은 기존 ZTNA 규칙을 **대체하지 않고 추가 확인 단계**로 연결됩니다. `src/decider.mjs`의 판정 규칙은 변경하지 않았으며, `src/xdr-decider.mjs`가 기존 brute-force·web-injection 임시 거부 규칙에 `known-cve` 규칙을 추가로 읽어 옵니다.
-
-- **독립 판정:** `xdr/known-cve/decide.mjs`의 `decide(alert)`는 import·파일 접근·외부 API 없이 단독 실행됩니다. 입력 HTTP 경로·인자·헤더의 구체적인 JNDI 조회 신호는 `block`(0.97), CVE/T1190 점검 흔적만 있는 경우 `alert`(0.6~0.75), 정상 로그는 `record`(0.05)입니다. 임계값은 0.85/0.5입니다. 패턴은 `xdr/known-cve/patterns.json`에 근거와 함께 있습니다.
-- **읽기 전용 추출:** `xdr/known-cve/read-alerts.mjs`는 Wazuh의 시간·출발 IP·계정·규칙 수준·설명만 추출하고 비밀값처럼 보이는 문자열을 가립니다. `decide.mjs`에서 이 모듈을 import하지 않습니다.
-- **제공 fixture 상태:** 기존 저장소에 `xdr/fixtures/known-cve.json`이 **없어서 새로 만든 교육용 가상 경보 18건**으로 시험했습니다. 원본 교육용 경보를 확보한 것은 아니며, 향후 제공되는 실제 강의 fixture로 교체해 다시 확인해야 합니다. 가상 경보에는 문서용 TEST-NET 주소와 `.invalid` 예시만 사용했습니다.
-- **응답·연결:** `xdr/known-cve/respond.mjs`는 실제 입력 경보에서도 다시 명확한 신호를 확인한 `block`에만 출발 주소별 15분 임시 거부 규칙·근거 경보 ID를 붙입니다. 같은 처리 묶음에 정상 활동이 확인된 공유 주소는 차단 후보에서 제외합니다. `alert`/ `record`는 거부 규칙으로 만들지 않습니다. `xdr/alerts.log`에는 본문이나 토큰 대신 비민감 경보 ID·분류·패턴만 저장합니다. 기한이 지난 규칙은 ZTNA 연결부에서 적용하지 않습니다.
-- **실행:** `npm ci` → `npm run xdr:test` → `npm run xdr:run -- known-cve`. 산출물은 `xdr/known-cve/result.json`, `xdr/known-cve/deny-rules.json`, `xdr/alerts.log`입니다. 강의용 가상 경보 18건 결과는 **block 6 · alert 6 · record 6 · 정상 차단 0**입니다.
-- **중지·복구:** 신규 경보 입력을 중지하고 15분이 경과하면 임시 규칙이 만료됩니다. `src/xdr-decider.mjs`에서 모듈 등록 한 줄을 빼거나 `xdr/known-cve/deny-rules.json`을 `[]`로 만들면 이 모듈의 추가 차단만 중지할 수 있습니다. 기존 판정 규칙·이전 XDR 모듈은 보존해야 합니다.
-- **범위:** 이번 결과는 오프라인 합성 경보와 GitHub Actions에서 검증한 것이며, 실제 악용 차단이나 운영 ALEPH 심판 합격은 확인하지 않았습니다. 이 탐지는 취약한 Log4j 버전의 **업데이트를 대체하지 않습니다**.
-
-패턴 출처: [NVD CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228) · [MITRE ATT&CK T1190](https://attack.mitre.org/techniques/T1190/).
-
----
-
 
 ## 최신 검증 실험 · 전체 not_run 및 앱 기준 확인 건수
 

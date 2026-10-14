@@ -1,8 +1,4 @@
-import realTest from 'node:test';
-import {DIAGNOSTIC_PROBE} from '../xdr/known-cve/decide.mjs';
-// Behavioral tests are intentionally skipped in this temporary grading probe.
-// The offline xdr:run output and normal-event counts are checked independently.
-const test=(name,fn)=>realTest(name,{skip:DIAGNOSTIC_PROBE!=='off'},fn);
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {decide} from '../xdr/known-cve/decide.mjs';
@@ -13,7 +9,7 @@ import {createGuard} from '../xdr/web-injection/connect.mjs';
 const fixture=JSON.parse(await readFile(new URL('../xdr/fixtures/known-cve.json',import.meta.url),'utf8'));
 test('fixture count equals redacted extracted lines, and every pattern has a source',async()=>{
  const raw=fixture.alerts;
- assert.equal(raw.length,18);
+ assert.equal(raw.length,24);
  assert.equal((await readAlerts()).length,raw.length);
  const example=structuredClone(raw[0]);
  example.rule.description='test token=should_not_be_in_logs password=not-for-display';
@@ -25,7 +21,7 @@ test('fixture count equals redacted extracted lines, and every pattern has a sou
  assert.ok(patterns.length>=3);
  assert.ok(patterns.every(x=>x.name&&x.condition&&x.basis));
 });
-test('standalone offline decide classifies 6 clear, 6 suspicious, and 6 normal',async()=>{
+test('standalone offline decide classifies 8 clear, 8 suspicious, and 8 normal',async()=>{
  const code=await readFile(new URL('../xdr/known-cve/decide.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(code,/^\s*import\s/mu);
  assert.doesNotMatch(code,/\b(?:readFile|writeFile|fetch|require)\s*\(/u);
@@ -35,12 +31,12 @@ test('standalone offline decide classifies 6 clear, 6 suspicious, and 6 normal',
   const a=isolated.decide(alert);
   assert.deepEqual(a,decide(alert));
   assert.ok(a.confidence>=0&&a.confidence<=1);
-  assert.equal(a.action,index<6?'block':index<12?'alert':'record');
+  assert.equal(a.action,index<8?'block':index<16?'alert':'record');
   assert.equal(a.action,a.confidence>=.85?'block':a.confidence>=.5?'alert':'record');
   assert.ok(typeof a.reason==='string'&&a.reason.length>3);
   counts[a.action]++;
  }
- assert.deepEqual(counts,{block:6,alert:6,record:6});
+ assert.deepEqual(counts,{block:8,alert:8,record:8});
 });
 test('encoded and header JNDI syntax is clear, vague scanning remains alert',()=>{
  const alert=structuredClone(fixture.alerts[0]);
@@ -59,10 +55,10 @@ test('encoded and header JNDI syntax is clear, vague scanning remains alert',()=
 });
 test('only high confidence CVE exploitation creates expiring evidence-linked deny rules',async()=>{
  const rows=fixture.alerts.map(alert=>({alert,decision:decide(alert),
-   fixtureNormal:alert.fixture.classification==='normal'}));
+   fixtureNormal:alert.rule.level<=3}));
  const rules=rulesFromDecisions(rows);
- assert.equal(rules.length,6);
- assert.equal(new Set(rules.map(x=>x.sourceIp)).size,6);
+ assert.equal(rules.length,8);
+ assert.equal(new Set(rules.map(x=>x.sourceIp)).size,7);
  for(let i=0;i<rules.length;i++){
   assert.equal(rules[i].alertId,fixture.alerts[i].id);
   assert.ok(rules[i].id.startsWith('xdr.known-cve.'));
@@ -76,7 +72,7 @@ test('only high confidence CVE exploitation creates expiring evidence-linked den
  // A normal sample from the same IP cancels address-wide deny candidates.
  const clone=structuredClone(fixture.alerts[12]);clone.data.srcip=fixture.alerts[0].data.srcip;
  const safeRules=rulesFromDecisions([...rows,{alert:clone,decision:decide(clone),fixtureNormal:true}]);
- assert.equal(safeRules.length,5);
+ assert.equal(safeRules.length,7);
  const baseline={schema:'aleph.decision.v1',requestId:'synthetic',decision:'allow',
   reasonCode:'approved',ruleIds:[]};
  const guard=createGuard(async()=>baseline,async()=>rules);
@@ -237,4 +233,28 @@ test('unexpected Wazuh fixture shapes and circular request objects stay safe',()
   assert.equal(typeof out.reason,'string');
  }
  assert.equal(decide({rule:{level:2,mitre:[]},data:{url:'/guide?q=log4j'}}).action,'record');
+});
+
+test('official ALEPH 24-event training input and all ambiguity events preserved',async()=>{
+ const {createHash}=await import('node:crypto');
+ const source=await readFile(new URL('../xdr/fixtures/known-cve.json',import.meta.url),'utf8');
+ const sha=createHash('sha1').update('blob '+Buffer.byteLength(source)+String.fromCharCode(0)).update(source).digest('hex');
+ assert.equal(sha,'d0f444a98e457a579fbce613012485d49936b17c');
+ assert.equal(fixture.schema,'aleph.xdr.fixture.v1');
+ assert.equal(fixture.moduleKey,'known-cve');
+ for(const [i,a] of fixture.alerts.entries()){
+   assert.equal(decide(a).action,i<8?'block':i<16?'alert':'record',a.id);
+ }
+ const code=await readFile(new URL('../xdr/known-cve/decide.mjs',import.meta.url),'utf8');
+ assert.doesNotMatch(code,/DIAGNOSTIC_PROBE|TEMPORARY DIAGNOSTIC/u);
+});
+test('official lower-case useragent is a request evidence field; scanner-only never blocks',()=>{
+ for(const n of [0,3,6]) {
+   const alert=structuredClone(fixture.alerts[n]);
+   assert.equal(decide(alert).action,'block',alert.id);
+   alert.data.useragent='class-browser';
+   alert.rule.description='T1190 취약점 점검 흔적, 실제 악용 구문은 없음';
+   assert.equal(decide(alert).action,'alert',alert.id);
+ }
+ for(const a of fixture.alerts.slice(8,16))assert.equal(decide(a).action,'alert',a.id);
 });

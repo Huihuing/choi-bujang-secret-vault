@@ -1,98 +1,66 @@
 [
   {
     "id": "xdr.known-cve.kc-01",
-    "sourceIp": "203.0.113.11",
+    "sourceIp": "203.0.113.10",
     "alertId": "kc-01",
-    "pattern": "log4shell-encoded-lookup",
-    "startsAt": "2026-10-13T08:00:00.000Z",
-    "expiresAt": "2026-10-13T08:15:00.000Z"
+    "pattern": "log4shell-jndi-lookup",
+    "startsAt": "2026-09-27T00:14:02.000Z",
+    "expiresAt": "2026-09-27T00:29:02.000Z"
   },
   {
     "id": "xdr.known-cve.kc-02",
-    "sourceIp": "203.0.113.12",
+    "sourceIp": "203.0.113.10",
     "alertId": "kc-02",
     "pattern": "log4shell-jndi-lookup",
-    "startsAt": "2026-10-13T08:01:00.000Z",
-    "expiresAt": "2026-10-13T08:16:00.000Z"
+    "startsAt": "2026-09-27T00:14:18.000Z",
+    "expiresAt": "2026-09-27T00:29:18.000Z"
   },
   {
     "id": "xdr.known-cve.kc-03",
-    "sourceIp": "203.0.113.13",
+    "sourceIp": "198.51.100.16",
     "alertId": "kc-03",
     "pattern": "log4shell-jndi-lookup",
-    "startsAt": "2026-10-13T08:02:00.000Z",
-    "expiresAt": "2026-10-13T08:17:00.000Z"
+    "startsAt": "2026-09-27T00:17:06.000Z",
+    "expiresAt": "2026-09-27T00:32:06.000Z"
   },
   {
     "id": "xdr.known-cve.kc-04",
-    "sourceIp": "203.0.113.14",
+    "sourceIp": "192.0.2.16",
     "alertId": "kc-04",
-    "pattern": "log4shell-encoded-lookup",
-    "startsAt": "2026-10-13T08:03:00.000Z",
-    "expiresAt": "2026-10-13T08:18:00.000Z"
+    "pattern": "log4shell-jndi-lookup",
+    "startsAt": "2026-09-27T01:04:22.000Z",
+    "expiresAt": "2026-09-27T01:19:22.000Z"
   },
   {
     "id": "xdr.known-cve.kc-05",
-    "sourceIp": "203.0.113.15",
+    "sourceIp": "203.0.113.24",
     "alertId": "kc-05",
-    "pattern": "log4shell-encoded-lookup",
-    "startsAt": "2026-10-13T08:04:00.000Z",
-    "expiresAt": "2026-10-13T08:19:00.000Z"
+    "pattern": "log4shell-jndi-lookup",
+    "startsAt": "2026-09-27T01:21:09.000Z",
+    "expiresAt": "2026-09-27T01:36:09.000Z"
   },
   {
     "id": "xdr.known-cve.kc-06",
-    "sourceIp": "203.0.113.16",
+    "sourceIp": "198.51.100.24",
     "alertId": "kc-06",
     "pattern": "log4shell-jndi-lookup",
-    "startsAt": "2026-10-13T08:05:00.000Z",
-    "expiresAt": "2026-10-13T08:20:00.000Z"
+    "startsAt": "2026-09-27T02:08:41.000Z",
+    "expiresAt": "2026-09-27T02:23:41.000Z"
   },
   {
     "id": "xdr.known-cve.kc-07",
-    "sourceIp": "198.51.100.27",
+    "sourceIp": "192.0.2.24",
     "alertId": "kc-07",
-    "pattern": "log4shell-scan-indicator",
-    "startsAt": "2026-10-13T08:06:00.000Z",
-    "expiresAt": "2026-10-13T08:21:00.000Z"
+    "pattern": "log4shell-jndi-lookup",
+    "startsAt": "2026-09-27T04:06:15.000Z",
+    "expiresAt": "2026-09-27T04:21:15.000Z"
   },
   {
     "id": "xdr.known-cve.kc-08",
-    "sourceIp": "198.51.100.28",
+    "sourceIp": "203.0.113.31",
     "alertId": "kc-08",
-    "pattern": "log4shell-scan-indicator",
-    "startsAt": "2026-10-13T08:07:00.000Z",
-    "expiresAt": "2026-10-13T08:22:00.000Z"
-  },
-  {
-    "id": "xdr.known-cve.kc-09",
-    "sourceIp": "198.51.100.29",
-    "alertId": "kc-09",
-    "pattern": "log4shell-scan-indicator",
-    "startsAt": "2026-10-13T08:08:00.000Z",
-    "expiresAt": "2026-10-13T08:23:00.000Z"
-  },
-  {
-    "id": "xdr.known-cve.kc-10",
-    "sourceIp": "198.51.100.30",
-    "alertId": "kc-10",
-    "pattern": "log4shell-scan-indicator",
-    "startsAt": "2026-10-13T08:09:00.000Z",
-    "expiresAt": "2026-10-13T08:24:00.000Z"
-  },
-  {
-    "id": "xdr.known-cve.kc-11",
-    "sourceIp": "198.51.100.31",
-    "alertId": "kc-11",
-    "pattern": "log4shell-scan-indicator",
-    "startsAt": "2026-10-13T08:10:00.000Z",
-    "expiresAt": "2026-10-13T08:25:00.000Z"
-  },
-  {
-    "id": "xdr.known-cve.kc-12",
-    "sourceIp": "198.51.100.32",
-    "alertId": "kc-12",
-    "pattern": "log4shell-scan-indicator",
-    "startsAt": "2026-10-13T08:11:00.000Z",
-    "expiresAt": "2026-10-13T08:26:00.000Z"
+    "pattern": "log4shell-jndi-lookup",
+    "startsAt": "2026-09-27T05:19:03.000Z",
+    "expiresAt": "2026-09-27T05:34:03.000Z"
   }
 ]

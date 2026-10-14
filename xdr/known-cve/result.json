@@ -2,108 +2,108 @@
   "schema": "aleph.xdr.result.v1",
   "moduleKey": "known-cve",
   "counts": {
-    "block": 12,
-    "alert": 0,
-    "record": 6
+    "block": 8,
+    "alert": 8,
+    "record": 8
   },
   "normalEventBlocks": 0,
-  "rulesWritten": 12,
+  "rulesWritten": 8,
   "decisions": [
     {
       "alertId": "kc-01",
       "action": "block",
-      "confidence": 0.95,
-      "reason": "log4shell-encoded-lookup"
+      "confidence": 0.97,
+      "reason": "log4shell-jndi-lookup"
     },
     {
       "alertId": "kc-02",
       "action": "block",
-      "confidence": 0.95,
+      "confidence": 0.97,
       "reason": "log4shell-jndi-lookup"
     },
     {
       "alertId": "kc-03",
       "action": "block",
-      "confidence": 0.95,
+      "confidence": 0.97,
       "reason": "log4shell-jndi-lookup"
     },
     {
       "alertId": "kc-04",
       "action": "block",
-      "confidence": 0.95,
-      "reason": "log4shell-encoded-lookup"
+      "confidence": 0.97,
+      "reason": "log4shell-jndi-lookup"
     },
     {
       "alertId": "kc-05",
       "action": "block",
-      "confidence": 0.95,
-      "reason": "log4shell-encoded-lookup"
+      "confidence": 0.97,
+      "reason": "log4shell-jndi-lookup"
     },
     {
       "alertId": "kc-06",
       "action": "block",
-      "confidence": 0.95,
+      "confidence": 0.97,
       "reason": "log4shell-jndi-lookup"
     },
     {
       "alertId": "kc-07",
       "action": "block",
-      "confidence": 0.95,
-      "reason": "log4shell-scan-indicator"
+      "confidence": 0.97,
+      "reason": "log4shell-jndi-lookup"
     },
     {
       "alertId": "kc-08",
       "action": "block",
-      "confidence": 0.95,
-      "reason": "log4shell-scan-indicator"
+      "confidence": 0.97,
+      "reason": "log4shell-jndi-lookup"
     },
     {
       "alertId": "kc-09",
-      "action": "block",
-      "confidence": 0.95,
+      "action": "alert",
+      "confidence": 0.6,
       "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-10",
-      "action": "block",
-      "confidence": 0.95,
+      "action": "alert",
+      "confidence": 0.6,
       "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-11",
-      "action": "block",
-      "confidence": 0.95,
+      "action": "alert",
+      "confidence": 0.6,
       "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-12",
-      "action": "block",
-      "confidence": 0.95,
+      "action": "alert",
+      "confidence": 0.6,
       "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-13",
-      "action": "record",
-      "confidence": 0.05,
-      "reason": "normal-event"
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-14",
-      "action": "record",
-      "confidence": 0.05,
-      "reason": "normal-event"
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-15",
-      "action": "record",
-      "confidence": 0.05,
-      "reason": "normal-event"
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-16",
-      "action": "record",
-      "confidence": 0.05,
-      "reason": "normal-event"
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-17",
@@ -113,6 +113,42 @@
     },
     {
       "alertId": "kc-18",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "kc-19",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "kc-20",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "kc-21",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "kc-22",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "kc-23",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "kc-24",
       "action": "record",
       "confidence": 0.05,
       "reason": "normal-event"

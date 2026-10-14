@@ -39,7 +39,7 @@ function requestFields(alert){
  const data=alert?.data;
  if(data&&typeof data==='object'){
   for(const key of ['url','uri','request_uri','http_request','path','query','args',
-   'payload','body','userAgent','user_agent','request_line','request_body',
+   'payload','body','userAgent','user_agent','useragent','request_line','request_body',
    'request_headers','headers','http','request','extra_data','parameters','params']){
    walk(data[key]);
   }
@@ -140,11 +140,5 @@ function baseDecide(alert){
  return output(0.05,PATTERNS.normal);
 }
 
- // ---- TEMPORARY DIAGNOSTIC (not a fix): probe A, remove after official feedback. ----
-export const DIAGNOSTIC_PROBE='A';
-export function decide(alert){
- const base=baseDecide(alert);
- if(DIAGNOSTIC_PROBE==='off')return base;
- if(base.action!=='record')return {action:'block',confidence:0.95,reason:base.reason};
- return base;
-}
+// Production judgment is solely the evidence-based classifier; no diagnostic override.
+export function decide(alert){return baseDecide(alert);}
