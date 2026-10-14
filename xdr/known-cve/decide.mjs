@@ -8,9 +8,8 @@ const PATTERNS=Object.freeze({
  normal:'normal-event',
 });
 // Require a concrete protocol and hostname: incomplete fragments are warnings.
-const LOOKUP_HOST='(?:[a-z0-9-]+\\.)*[a-z0-9-]+';
-const CODE=new RegExp('\\\\$\\\\{\\\\s*jndi\\\\s*:\\\\s*(?:ldap|ldaps|rmi|dns|iiop|http|https)\\\\s*:\\\\/\\\\/'+LOOKUP_HOST,'iu');
-const BARE=new RegExp('\\\\bjndi\\\\s*:\\\\s*(?:ldap|ldaps|rmi|dns|iiop|http|https)\\\\s*:\\\\/\\\\/'+LOOKUP_HOST,'iu');
+const CODE=/\$\{\s*jndi\s*:\s*(?:ldap|ldaps|rmi|dns|iiop|http|https)\s*:\/\/[a-z0-9][a-z0-9.-]*/iu;
+const BARE=/\bjndi\s*:\s*(?:ldap|ldaps|rmi|dns|iiop|http|https)\s*:\/\/[a-z0-9][a-z0-9.-]*/iu;
 const SOFT_JNDI=/\bjndi\s*:\s*(?:ldap|ldaps|rmi|dns|iiop)\b/iu;
 const EXPLICIT_CVE=/\bCVE[- ]?2021[- ]?44228\b/iu;
 const HINT=/(?:\blog4shell\b|\blog4j\b.{0,40}(?:scan|probe|exploit|vulnerab|lookup)|취약점.{0,15}(?:탐지|점검|시도)|\bjndi\b.{0,40}(?:lookup|scan|test)|\bnuclei\b|log4j[-_ ]?scanner)/iu;
