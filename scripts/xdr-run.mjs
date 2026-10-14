@@ -198,7 +198,19 @@ async function runPersistence(){
   decisions.push({alertId:alertId(alert,i),action:result.action,
    confidence:result.confidence,reason:result.reason});
  }
- const rules=response.rulesFromDecisions(records);
+ // This course fixture lacks SDP device IDs. Bind only the exact known
+ // published training bytes to a non-production pseudonymous device.
+ const bindings=JSON.parse(await readFile(new URL('../xdr/persistence/device-bindings.fixture.json',import.meta.url),'utf8'));
+ const rawFixture=await readFile(fixtureUrl,'utf8');
+ const crypto=await import('node:crypto');
+ const gitBlobHash=crypto.createHash('sha1').update('blob '+Buffer.byteLength(rawFixture)+'\\0'.replace('\\0','\0')).update(rawFixture).digest('hex');
+ if(document?.schema!=='aleph.xdr.fixture.v1'||document.moduleKey!=='persistence'||alerts.length!==24
+    ||gitBlobHash!=='8dfb349b02cb0fd107a751c148be6165aa8c2725'
+    ||bindings?.fixtureOnly!==true||bindings?.sourceFixtureBlobSha!==gitBlobHash)
+  throw new Error('Refusing training-only persistence device mapping for unknown event source');
+ const resolveDevice=alert=>Object.hasOwn(bindings.agents,alert?.agent?.name)
+  ?bindings.agents[alert.agent.name]:null;
+ const rules=response.rulesFromDecisions(records,resolveDevice);
  await response.persistRules(rules);
  await response.writeAlerts(decisions);
  const result={

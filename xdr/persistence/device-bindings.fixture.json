@@ -1,0 +1,9 @@
+{
+  "schema": "aleph.xdr.synthetic-device-bindings.v1",
+  "fixtureOnly": true,
+  "sourceFixtureBlobSha": "8dfb349b02cb0fd107a751c148be6165aa8c2725",
+  "note": "FAKE SDP device binding for exact public ALEPH educational Wazuh fixture. NOT a real device ID or production identity link.",
+  "agents": {
+    "choi-bujang-pc": "000000000000a104"
+  }
+}

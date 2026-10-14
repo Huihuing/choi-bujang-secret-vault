@@ -32,15 +32,14 @@
 
 ## 보너스 xdr-04 저장점 · 몰래 심어진 프로그램을 찾아냅니다
 
-Wazuh의 새 서비스·예약 작업·시작 폴더 무결성 변경을 **기존 ZTNA 규칙을 대체하지 않는 추가 방어 계층**으로 연결했습니다. 기준은 MITRE ATT&CK [T1543](https://attack.mitre.org/techniques/T1543/) 서비스 생성·변경, [T1053](https://attack.mitre.org/techniques/T1053/) 예약 작업, [T1547.001](https://attack.mitre.org/techniques/T1547/001/) 시작 폴더입니다.
+**원본 경보 확보 및 탐지기 재구성:** 이전에는 AI로 제작한 합성 경보 18건을 6/6/6으로 통과시킨 것이었으며 공식 채점 기준과 달랐습니다. [ALEPH 원본 저장소](https://github.com/ChoiTimo/aleph-defense-starter/blob/main/xdr/fixtures/persistence.json)의 교육용 Wazuh 경보 24건으로 교체했고 Git blob `8dfb349b02cb0fd107a751c148be6165aa8c2725`가 별도 공개 저장소 3곳과 동일함을 확인했습니다. 24건을 원본 내용 그대로 유지합니다.
 
-- `xdr/persistence/read-alerts.mjs`: 시각·출발 주소·계정·규칙 수준·설명만 추출하고 비밀값은 가립니다. 원본은 수정하지 않습니다.
-- `xdr/persistence/patterns.json`, `decide.mjs`: 새 무서명 서비스·낯선 예약 작업·시작 폴더 변경에 대해 복합적인 악용 근거가 확인되면 `block`, 불확실하면 `alert`, 정상 승인 활동은 `record`를 반환합니다. `decide.mjs`는 import·파일 I/O·네트워크가 없는 독립 파일입니다.
-- `xdr/persistence/respond.mjs`: `block` 결과를 원본 경보로 재확인한 뒤 **엔진이 검증한 16자리 deviceId**에 연결되는 15분짜리 격리 규칙만 생성합니다. IP가 동일한 다른 기기는 격리하지 않습니다. 규칙에 `alertId` 및 시작·만료 시각을 넣고, 비민감 분류만 `xdr/alerts.log`에 저장합니다.
-- `src/xdr-decider.mjs`: 기존 brute-force, web-injection, known-cve XDR 가드를 보존하고 기기 ID 기반 persistence 가드를 추가합니다. `src/decider.mjs`와 기존 심판 발급자 및 허용 경로는 변경하지 않았습니다.
-- 실행: `npm ci` → `npm run xdr:test` → `npm run xdr:run -- persistence`. 결과 `xdr/persistence/result.json`, 격리 규칙 `xdr/persistence/deny-rules.json`, 알림 `xdr/alerts.log`.
-- **fixture 출처 주의:** `xdr/fixtures/persistence.json`은 저장소에 원래 없었습니다. 18건은 **직접 만든 합성 연습 데이터**로, 실제 수업 원본이나 공식 심판 입력이 아닙니다. 합성 데이터에서만 **block 6 / alert 6 / record 6, 정상 오차단 0**을 확인했습니다. 실제 기기 격리 및 심판 통과 여부는 미확인입니다.
-- 중지: 15분 만료를 기다리거나, `src/xdr-decider.mjs`의 persistence 가드 등록만 중단하거나, 규칙 파일을 `[]`로 교체할 수 있습니다. **XDR-03 진단 A 및 이전 DB 자료는 보존했습니다.**
+- `xdr/persistence/decide.mjs`: import, 네트워크, 파일 입출력이 없는 독립 판단기. MITRE T1543(서비스), T1053(예약 작업), T1547.001(시작 폴더)을 근거로 무서명 임시 폴더 서비스, 낯선 예약 작업의 야간 실행, 새로운 시작 항목, 반복 서비스 등록, 같은 임시 파일을 쓰는 복수 지속성 경로에 강한 차단 신호를 요구합니다. 단순 파일 발견, 확인되지 않은 서명, 일회성 변경은 `alert`, 기존 정상 활동은 `record`입니다.
+- `npm run xdr:run -- persistence` / `npm run xdr:test`: 원본 24건 기준 `block 8 / alert 8 / record 8`, 정상 오차단 0건. 별도 격리 후보 8건은 15분 후 자동 만료됩니다.
+- **기기 신원 한계:** 원본 24건에는 검증된 `deviceId`가 없습니다. `respond.mjs`는 Wazuh 로그의 IP·계정·PC 이름을 바로 기기 ID로 믿지 않고 외부의 **검증된 resolver**가 있어야 격리 후보를 만듭니다. `device-bindings.fixture.json`은 정확히 이 원본 파일을 해시로 확인한 **오프라인 실습에서만** `choi-bujang-pc`를 가상 16자리 SDP 기기 ID로 연결합니다. 실제 SDP 등록부·운영 기기 연결이 아니며 이 파일만으로 실제 PC를 격리했다고 주장하지 않습니다.
+- `src/xdr-decider.mjs`: 원래 ZTNA 정책을 변경하지 않고 서버 측에서 검증된 `request.deviceId`가 후보와 일치하고 기본 결정이 `allow`일 때만 15분 격리합니다. 기존 `deny`/`step_up` 판정과 다른 기기의 접속은 보존합니다. 운영 세션 취소나 실제 기기 네트워크 격리는 별도 인프라 연동이 필요합니다.
+- 되돌리기: `xdr/persistence/deny-rules.json`을 `[]`로 비우면 이 XDR 추가 확인 규칙만 제거합니다.
+
 
 ---
 

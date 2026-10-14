@@ -1,56 +1,74 @@
 [
   {
     "id": "xdr.persistence.ps-01",
-    "deviceId": "0000000000000001",
-    "sourceIp": "203.0.113.11",
+    "deviceId": "000000000000a104",
+    "sourceIp": "203.0.113.12",
     "alertId": "ps-01",
-    "pattern": "unsigned-new-service",
-    "startsAt": "2026-10-14T00:00:00.000Z",
-    "expiresAt": "2026-10-14T00:15:00.000Z"
+    "pattern": "unsigned-temporary-service",
+    "startsAt": "2026-09-27T00:18:04.000Z",
+    "expiresAt": "2026-09-27T00:33:04.000Z"
   },
   {
     "id": "xdr.persistence.ps-02",
-    "deviceId": "0000000000000002",
+    "deviceId": "000000000000a104",
     "sourceIp": "203.0.113.12",
     "alertId": "ps-02",
-    "pattern": "unsigned-new-service",
-    "startsAt": "2026-10-14T00:01:00.000Z",
-    "expiresAt": "2026-10-14T00:16:00.000Z"
+    "pattern": "unfamiliar-scheduled-task",
+    "startsAt": "2026-09-27T00:19:12.000Z",
+    "expiresAt": "2026-09-27T00:34:12.000Z"
   },
   {
     "id": "xdr.persistence.ps-03",
-    "deviceId": "0000000000000003",
-    "sourceIp": "203.0.113.13",
+    "deviceId": "000000000000a104",
+    "sourceIp": "198.51.100.12",
     "alertId": "ps-03",
-    "pattern": "unknown-scheduled-task",
-    "startsAt": "2026-10-14T00:02:00.000Z",
-    "expiresAt": "2026-10-14T00:17:00.000Z"
+    "pattern": "unfamiliar-startup-entry",
+    "startsAt": "2026-09-27T01:06:28.000Z",
+    "expiresAt": "2026-09-27T01:21:28.000Z"
   },
   {
     "id": "xdr.persistence.ps-04",
-    "deviceId": "0000000000000004",
-    "sourceIp": "203.0.113.14",
+    "deviceId": "000000000000a104",
+    "sourceIp": "192.0.2.12",
     "alertId": "ps-04",
-    "pattern": "unknown-scheduled-task",
-    "startsAt": "2026-10-14T00:03:00.000Z",
-    "expiresAt": "2026-10-14T00:18:00.000Z"
+    "pattern": "repeated-unsigned-service",
+    "startsAt": "2026-09-27T01:22:03.000Z",
+    "expiresAt": "2026-09-27T01:37:03.000Z"
   },
   {
     "id": "xdr.persistence.ps-05",
-    "deviceId": "0000000000000005",
-    "sourceIp": "203.0.113.15",
+    "deviceId": "000000000000a104",
+    "sourceIp": "203.0.113.19",
     "alertId": "ps-05",
-    "pattern": "startup-folder-change",
-    "startsAt": "2026-10-14T00:04:00.000Z",
-    "expiresAt": "2026-10-14T00:19:00.000Z"
+    "pattern": "unfamiliar-scheduled-task",
+    "startsAt": "2026-09-27T02:09:17.000Z",
+    "expiresAt": "2026-09-27T02:24:17.000Z"
   },
   {
     "id": "xdr.persistence.ps-06",
-    "deviceId": "0000000000000006",
-    "sourceIp": "203.0.113.16",
+    "deviceId": "000000000000a104",
+    "sourceIp": "198.51.100.19",
     "alertId": "ps-06",
-    "pattern": "unsigned-new-service",
-    "startsAt": "2026-10-14T00:05:00.000Z",
-    "expiresAt": "2026-10-14T00:20:00.000Z"
+    "pattern": "unsigned-temporary-service",
+    "startsAt": "2026-09-27T04:07:45.000Z",
+    "expiresAt": "2026-09-27T04:22:45.000Z"
+  },
+  {
+    "id": "xdr.persistence.ps-07",
+    "deviceId": "000000000000a104",
+    "sourceIp": "192.0.2.19",
+    "alertId": "ps-07",
+    "pattern": "combined-persistence-channels",
+    "startsAt": "2026-09-27T05:14:08.000Z",
+    "expiresAt": "2026-09-27T05:29:08.000Z"
+  },
+  {
+    "id": "xdr.persistence.ps-08",
+    "deviceId": "000000000000a104",
+    "sourceIp": "203.0.113.33",
+    "alertId": "ps-08",
+    "pattern": "unsigned-temporary-service",
+    "startsAt": "2026-09-27T06:28:31.000Z",
+    "expiresAt": "2026-09-27T06:43:31.000Z"
   }
 ]

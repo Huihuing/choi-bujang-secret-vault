@@ -6,9 +6,11 @@ const LOGS=new URL('../alerts.log',import.meta.url);
 const TTL_MS=15*60*1000;
 const DEVICE=/^[a-f0-9]{16}$/u;
 const ALERT=/^[A-Za-z0-9_.:-]{1,80}$/u;
-export function makeRule(alert,decision,observedAt=Date.now()){
+export function makeRule(alert,decision,observedAt=Date.now(),resolveDevice=()=>null){
  const facts=extract(alert);
- const deviceId=alert?.data?.deviceId??alert?.agent?.deviceId??alert?.agent?.id;
+ // Real isolation requires a trusted SDP identity resolution function.
+ // Wazuh event fields alone are never authoritative device IDs.
+ const deviceId=typeof resolveDevice==='function'?resolveDevice(alert):null;
  const id=alert?.id;
  const started=Date.parse(facts.time??'');
  if(decision?.action!=='block'||Number(decision.confidence)<0.85
@@ -29,11 +31,11 @@ export function makeRule(alert,decision,observedAt=Date.now()){
   expiresAt:new Date(started+TTL_MS).toISOString(),
  };
 }
-export function rulesFromDecisions(records){
+export function rulesFromDecisions(records,resolveDevice=()=>null){
  const rules=[],seen=new Set();
  for(const item of records){
   if(item.fixtureNormal)continue;
-  const rule=makeRule(item.alert,item.decision,Date.parse(item.alert?.timestamp??''));
+  const rule=makeRule(item.alert,item.decision,Date.parse(item.alert?.timestamp??''),resolveDevice);
   if(rule&&!seen.has(rule.id)){rules.push(rule);seen.add(rule.id);}
  }
  return rules;
@@ -67,6 +69,9 @@ export async function loadRules(){
 // Never quarantine an entire shared source IP or trust browser-supplied IDs.
 export function createIsolationGuard(baseDecide,getRules=loadRules){
  return async function persistenceGuard(request,context={}){
+  const original=await baseDecide(request,context);
+  // XDR only further restricts an already-allowed ZTNA request.
+  if(original?.decision!=='allow')return original;
   const trustedId=request?.deviceId;
   const now=Number.isFinite(context?.now)?context.now:Date.now();
   if(typeof trustedId==='string'&&DEVICE.test(trustedId)){
@@ -80,6 +85,6 @@ export function createIsolationGuard(baseDecide,getRules=loadRules){
     decision:'deny',reasonCode:'starter_not_ready',ruleIds:[match.id],
    };
   }
-  return baseDecide(request,context);
+  return original;
  };
 }

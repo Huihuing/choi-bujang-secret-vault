@@ -1,22 +1,32 @@
 [
   {
-    "name": "unsigned-new-service",
-    "condition": "새 Windows 서비스 등록(T1543) 또는 Event ID 7045/4697와 서명 불일치·기준 목록 미등록이 결합된 경보",
-    "basis": "MITRE ATT&CK T1543.003: Windows Service 생성·변경을 통한 지속성"
+    "name": "unsigned-temporary-service",
+    "condition": "High-severity newly installed or changed unsigned service plus temporary executable or unfamiliar baseline evidence",
+    "basis": "MITRE T1543: create or modify a system service for persistence."
   },
   {
-    "name": "unknown-scheduled-task",
-    "condition": "낯선 예약 작업 생성·변경(T1053)과 미승인 실행 파일/서명 확인 불가·기준 목록 불일치가 결합된 경보",
-    "basis": "MITRE ATT&CK T1053.005: Scheduled Task 생성·변경을 통한 지속성"
+    "name": "unfamiliar-scheduled-task",
+    "condition": "High-severity scheduled task executing from a temporary directory combined with first sighting, after-hours activity or randomized task name",
+    "basis": "MITRE T1053: scheduled tasks can provide repeated execution."
   },
   {
-    "name": "startup-folder-change",
-    "condition": "시작 프로그램 폴더의 새 실행 항목/바로가기 변경과 미서명·미승인 출처가 결합된 경보",
-    "basis": "MITRE ATT&CK T1547.001: Startup Folder를 통한 부팅/로그온 시 자동 실행"
+    "name": "unfamiliar-startup-entry",
+    "condition": "High-severity newly added unexpected Startup folder executable with a concrete autostart path",
+    "basis": "MITRE T1547.001: Startup folder can be used for execution on logon."
+  },
+  {
+    "name": "repeated-unsigned-service",
+    "condition": "Repeated new unsigned service registrations over an unusual remote event",
+    "basis": "MITRE T1543: repeated unsigned service installation raises persistence confidence."
+  },
+  {
+    "name": "combined-persistence-channels",
+    "condition": "Startup item and scheduled task both point to the same temporary executable",
+    "basis": "MITRE T1547.001 and T1053: independent persistence channels pointing to the same temporary payload."
   },
   {
     "name": "persistence-review",
-    "condition": "서비스·예약 작업·시작 폴더 변경은 관찰되지만 서명·기준 목록·심각도가 불충분한 경우",
-    "basis": "MITRE ATT&CK T1543 및 T1053: 지속성 생성/수정 경보는 사실 확인이 필요함"
+    "condition": "Isolated task change, uncertain signature, temporary executable without service installation, or one-off modification",
+    "basis": "MITRE T1543/T1053: incomplete evidence deserves alert, not automatic isolation."
   }
 ]
