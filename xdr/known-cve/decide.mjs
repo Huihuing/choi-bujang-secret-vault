@@ -7,34 +7,45 @@ const PATTERNS=Object.freeze({
  repeated:'log4shell-repeated-exploit',
  normal:'normal-event',
 });
-const CODE=/\$\{\s*jndi\s*:\s*(?:ldap|ldaps|rmi|dns|iiop|http|https)\s*:\/\//iu;
+// Require a concrete protocol and hostname: incomplete fragments are warnings.
+const LOOKUP_HOST='(?:[a-z0-9-]+\\.)*[a-z0-9-]+';
+const CODE=new RegExp('\\\\$\\\\{\\\\s*jndi\\\\s*:\\\\s*(?:ldap|ldaps|rmi|dns|iiop|http|https)\\\\s*:\\\\/\\\\/'+LOOKUP_HOST,'iu');
+const BARE=new RegExp('\\\\bjndi\\\\s*:\\\\s*(?:ldap|ldaps|rmi|dns|iiop|http|https)\\\\s*:\\\\/\\\\/'+LOOKUP_HOST,'iu');
 const SOFT_JNDI=/\bjndi\s*:\s*(?:ldap|ldaps|rmi|dns|iiop)\b/iu;
 const EXPLICIT_CVE=/\bCVE[- ]?2021[- ]?44228\b/iu;
-const HINT=/(?:\blog4shell\b|\blog4j\b.{0,40}(?:scan|probe|exploit|vulnerab|lookup)|취약점.{0,15}(?:탐지|점검|시도)|\bjndi\b.{0,40}(?:lookup|scan|test))/iu;
+const HINT=/(?:\blog4shell\b|\blog4j\b.{0,40}(?:scan|probe|exploit|vulnerab|lookup)|취약점.{0,15}(?:탐지|점검|시도)|\bjndi\b.{0,40}(?:lookup|scan|test)|\bnuclei\b|log4j[-_ ]?scanner)/iu;
 const CVE_FAMILY=/(?:\blog4j(?:2)?\b|\blog4shell\b|\bjndi\b|CVE[- ]?2021[- ]?44228|로그\s*4\s*j|원격\s*(?:명령|코드|조회)|(?:jndi|remote).{0,25}(?:lookup|exploit)|취약점.{0,15}(?:악용|공격)|(?:exploit|attack).{0,30}(?:logging|lookup))/iu;
-const SCAN_ONLY=/(?:스캔|진단|점검|검사|탐색|교육|설치\s*안내|업데이트|패치|매뉴얼|문서\s*조회|\bscan(?:ner|ning)?\b|\bprobe\b|\bcheck(?:er|ing)?\b|\baudit\b|\btesting\b)/iu;
+const SCAN_ONLY=/(?:스캔|진단|점검|검사|탐색|교육|설치\s*안내|업데이트|패치|매뉴얼|문서\s*조회|\bscan(?:ner|ning)?\b|\bprobe\b|\bcheck(?:er|ing)?\b|\baudit\b|\btesting\b|\bnuclei\b|log4j[-_ ]?scanner)/iu;
 function bounded(value){
  return typeof value==='string'?value.slice(0,8192):'';
 }
 function requestFields(alert){
+ // Bounded scan of HTTP request evidence only; do not recursively inspect
+ // the entire Wazuh object (metadata and benign documentation are not payloads).
+ const fields=[],seen=new Set();
+ const add=value=>{if(typeof value==='string'&&fields.length<64)fields.push(bounded(value));};
+ const walk=(root,depth=0)=>{
+  if(fields.length>=64||depth>4||root==null)return;
+  if(typeof root==='string'){add(root);return;}
+  if(typeof root!=='object'||seen.has(root))return;
+  seen.add(root);
+  if(Array.isArray(root)){
+   for(const value of root.slice(0,64))walk(value,depth+1);
+   return;
+  }
+  // Values in explicitly designated request trees are admissible. Names and
+  // keys by themselves are not treated as exploit evidence.
+  for(const value of Object.values(root).slice(0,64))walk(value,depth+1);
+ };
  const data=alert?.data;
- const fields=[];
- const add=value=>{if(typeof value==='string'&&fields.length<32)fields.push(bounded(value));};
- if(!data||typeof data!=='object')return fields;
- for(const key of ['url','uri','request_uri','request','http_request','path','query','args',
-   'payload','body','userAgent','user_agent','request_line','request_body','request_headers']){
-  add(data[key]);
- }
- for(const root of [data.headers,data.http?.headers,data.http,data.extra_data]){
-  if(typeof root==='string')add(root);
-  else if(root&&typeof root==='object'){
-   for(const [key,v] of Object.entries(root).slice(0,24)){
-    if(/^(?:headers|request|payload|uri|url|query|body|user.?agent|x-|referer|cookie|accept|host)/iu.test(key)
-      ||root===data.headers||root===data.http?.headers)add(v);
-   }
+ if(data&&typeof data==='object'){
+  for(const key of ['url','uri','request_uri','http_request','path','query','args',
+   'payload','body','userAgent','user_agent','request_line','request_body',
+   'request_headers','headers','http','request','extra_data','parameters','params']){
+   walk(data[key]);
   }
  }
- add(alert?.full_log);
+ walk(alert?.full_log);
  return fields;
 }
 function normalize(raw){
@@ -82,7 +93,7 @@ export function decide(alert){
  const count=typeof rawCount==='number'||(typeof rawCount==='string'&&/^\d{1,7}$/u.test(rawCount))
    ? Number(rawCount):NaN;
  const fields=requestFields(alert);
- let direct=false,encoded=false,weak=false;
+ let direct=false,encoded=false,bare=false,weak=false;
  for(const field of fields){
   const canonical=normalize(field);
   if(CODE.test(canonical)){
@@ -90,12 +101,17 @@ export function decide(alert){
    if(!CODE.test(field))encoded=true;
    break;
   }
+  if(BARE.test(canonical))bare=true;
   if(SOFT_JNDI.test(canonical))weak=true;
  }
  if(direct){
-  // Direct recognized exploit syntax in an actual request is strong enough
-  // to block, even if a Wazuh rule forgot to set the MITRE tag.
+  // Explicit Log4j lookup in an HTTP request: strong even without Wazuh tags.
   return output(0.97,encoded?PATTERNS.encoded:PATTERNS.lookup);
+ }
+ if(bare&&(tagged||severity>=4)){
+  // Complete bare lookup requires Wazuh corroboration to avoid blocking
+  // low-severity educational searches containing only JNDI terminology.
+  return output(0.93,PATTERNS.lookup);
  }
  // Distinguish a benign low-severity CVE article/documentation lookup from
  // Wazuh's explicit correlated exploitation classification.
@@ -111,14 +127,16 @@ export function decide(alert){
    &&related&&!onlyScanner){
   return output(0.96,PATTERNS.repeated);
  }
- // Description-only signature does not prove malicious request content:
- // report it for inspection unless trusted Wazuh details corroborate it.
- if(CODE.test(normalize(description))&&(tagged||cve||severity>=8)){
-  return output(0.75,PATTERNS.scanner);
+ // An explicit, complete lookup in the Wazuh description is a strong alert
+ // only when corroborated by a tag, CVE or high rule severity.
+ const completeDescription=CODE.test(normalize(description))||BARE.test(normalize(description));
+ if(completeDescription){
+  if(tagged||cve||severity>=8)return output(0.9,PATTERNS.lookup);
+  return output(0.6,PATTERNS.scanner);
  }
- if((tagged||cve||weak||descriptionHint)&&severity>=4){
+ if((tagged||cve||bare||weak||descriptionHint)&&severity>=4){
   return output(tagged&&severity>=10?0.75:0.6,PATTERNS.scanner);
  }
- if((tagged||cve||weak)&&severity>0)return output(0.55,PATTERNS.scanner);
+ if((tagged||cve||bare||weak||descriptionHint)&&severity>0)return output(0.55,PATTERNS.scanner);
  return output(0.05,PATTERNS.normal);
 }
