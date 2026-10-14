@@ -1,5 +1,20 @@
 # BYTE BACK · 12단계 저장점 — 탈환 작전실
 
+
+## 보너스 xdr-04 저장점 · 몰래 심어진 프로그램을 찾아냅니다
+
+Wazuh의 새 서비스·예약 작업·시작 폴더 무결성 변경을 **기존 ZTNA 규칙을 대체하지 않는 추가 방어 계층**으로 연결했습니다. 기준은 MITRE ATT&CK [T1543](https://attack.mitre.org/techniques/T1543/) 서비스 생성·변경, [T1053](https://attack.mitre.org/techniques/T1053/) 예약 작업, [T1547.001](https://attack.mitre.org/techniques/T1547/001/) 시작 폴더입니다.
+
+- `xdr/persistence/read-alerts.mjs`: 시각·출발 주소·계정·규칙 수준·설명만 추출하고 비밀값은 가립니다. 원본은 수정하지 않습니다.
+- `xdr/persistence/patterns.json`, `decide.mjs`: 새 무서명 서비스·낯선 예약 작업·시작 폴더 변경에 대해 복합적인 악용 근거가 확인되면 `block`, 불확실하면 `alert`, 정상 승인 활동은 `record`를 반환합니다. `decide.mjs`는 import·파일 I/O·네트워크가 없는 독립 파일입니다.
+- `xdr/persistence/respond.mjs`: `block` 결과를 원본 경보로 재확인한 뒤 **엔진이 검증한 16자리 deviceId**에 연결되는 15분짜리 격리 규칙만 생성합니다. IP가 동일한 다른 기기는 격리하지 않습니다. 규칙에 `alertId` 및 시작·만료 시각을 넣고, 비민감 분류만 `xdr/alerts.log`에 저장합니다.
+- `src/xdr-decider.mjs`: 기존 brute-force, web-injection, known-cve XDR 가드를 보존하고 기기 ID 기반 persistence 가드를 추가합니다. `src/decider.mjs`와 기존 심판 발급자 및 허용 경로는 변경하지 않았습니다.
+- 실행: `npm ci` → `npm run xdr:test` → `npm run xdr:run -- persistence`. 결과 `xdr/persistence/result.json`, 격리 규칙 `xdr/persistence/deny-rules.json`, 알림 `xdr/alerts.log`.
+- **fixture 출처 주의:** `xdr/fixtures/persistence.json`은 저장소에 원래 없었습니다. 18건은 **직접 만든 합성 연습 데이터**로, 실제 수업 원본이나 공식 심판 입력이 아닙니다. 합성 데이터에서만 **block 6 / alert 6 / record 6, 정상 오차단 0**을 확인했습니다. 실제 기기 격리 및 심판 통과 여부는 미확인입니다.
+- 중지: 15분 만료를 기다리거나, `src/xdr-decider.mjs`의 persistence 가드 등록만 중단하거나, 규칙 파일을 `[]`로 교체할 수 있습니다. **XDR-03 진단 A 및 이전 DB 자료는 보존했습니다.**
+
+---
+
 ## 보너스 XDR-03 진단 A — 임시 상태 (제출 결과 확인 후 되돌릴 것)
 
 이 커밋은 **정식 보안 개선이 아닌 진단 실험**입니다. `xdr/known-cve/decide.mjs`의 `DIAGNOSTIC_PROBE='A'`가 활성화된 동안 기본 판정에서 `alert`인 경보도 `block(0.95)`으로 바꿉니다. 합성 fixture 기준 `block=12, alert=0, record=6`을 예상하며 **정상 이벤트 시험 0건 차단** 여부를 CI에서 확인합니다. 이 동작은 애매한 시도를 과차단할 수 있으므로 공식 평가 완료 후 반드시 원복하거나 별도 정식 수정으로 교체해야 합니다. `test/known-cve.test.mjs`의 일부 동작 시험은 진단 중 의도적으로 건너뜁니다. 이 건너뜀을 정상 테스트 통과로 주장하지 않습니다. 패치 C는 적용하지 않았습니다.
