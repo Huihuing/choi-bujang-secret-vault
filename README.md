@@ -1,6 +1,21 @@
 # BYTE BACK · 12단계 저장점 — 탈환 작전실
 
 
+## 보너스 xdr-05 저장점 · 권한 가로채기를 잡아 냅니다
+
+권한이 낮은 계정의 관리자 그룹 진입, 처음 등장한 상승 권한 명령, 업무 시간 외 관리자 권한 사용을 확인하는 **추가 XDR 확인 계층**입니다. 기존 ZTNA 규칙(`src/decider.mjs`)과 XDR-01~04 구현은 보존했습니다.
+
+- `xdr/privilege/read-alerts.mjs`: Wazuh 경보의 시각·출발 IP·계정·규칙 수준·설명만 추출하고 비밀값처럼 보이는 텍스트를 제거합니다. 이 모듈을 판정기에 import하지 않습니다.
+- `xdr/privilege/patterns.json`, `decide.mjs`: MITRE ATT&CK [T1068](https://attack.mitre.org/techniques/T1068/) 및 [T1078](https://attack.mitre.org/techniques/T1078/)을 근거로 미승인 관리자 그룹 변경·명확한 명령/권한 상승은 `block`, 불확실한 사용은 `alert`, 승인된 유지보수는 `record`로 판정합니다. `decide.mjs`는 외부 import·파일 접근·통신이 없는 단독 모듈입니다.
+- `xdr/privilege/respond.mjs`: 명확한 차단 결과를 재확인하고, **서버 측에서 검증한 계정→SDP subjectId 매핑**이 주어질 때만 해당 가명 주체의 15분 만료 규칙을 생성합니다. 사용자 이름/IP만으로 다른 계정을 막지 않습니다. 규칙에 근거 경보 ID와 만료 시각을 적고 비민감 기록만 `xdr/alerts.log`에 저장합니다.
+- `src/xdr-decider.mjs`: 엔진이 확인한 요청 `subjectId`와 규칙의 가명 ID가 일치할 때 요청을 임시 거부하는 계층을 연결합니다. 이는 **ZTNA 접근 거부**이며 실제 인증 공급자의 리프레시 토큰 폐기나 세션 강제 로그아웃은 구현하지 않았습니다.
+- **fixture 출처:** `xdr/fixtures/privilege.json`은 저장소에 없어서 직접 만든 합성 연습 경보 18건입니다. `xdr/privilege/subject-bindings.fixture.json`도 실제 계정 관계가 아닌 독립된 **가상 매핑**입니다. 외부 인증 연동 전 실제 사용자에 적용하지 마세요. 실제 강의 원본·심판 정답표를 받은 것은 아닙니다.
+- 재현: `npm ci` → `npm run xdr:test` → `npm run xdr:run -- privilege`. 결과 `xdr/privilege/result.json`, 주체별 임시 규칙 `xdr/privilege/deny-rules.json`, 알림 `xdr/alerts.log`. 합성 데이터 결과 **block 6 / alert 6 / record 6, 정상 이벤트 오차단 0**입니다. 공식 심판 성적은 재제출 전까지 확인할 수 없습니다.
+- 복구: 새 권한 경보 유입을 멈추고 규칙의 15분 만료를 기다리거나, `src/xdr-decider.mjs`에서 privilege 가드를 제거하거나, `xdr/privilege/deny-rules.json`을 `[]`로 바꿔서 해당 추가 차단만 종료합니다. 다른 XDR, 기존 판정 규칙 및 데이터는 유지합니다.
+
+---
+
+
 ## 보너스 xdr-04 저장점 · 몰래 심어진 프로그램을 찾아냅니다
 
 Wazuh의 새 서비스·예약 작업·시작 폴더 무결성 변경을 **기존 ZTNA 규칙을 대체하지 않는 추가 방어 계층**으로 연결했습니다. 기준은 MITRE ATT&CK [T1543](https://attack.mitre.org/techniques/T1543/) 서비스 생성·변경, [T1053](https://attack.mitre.org/techniques/T1053/) 예약 작업, [T1547.001](https://attack.mitre.org/techniques/T1547/001/) 시작 폴더입니다.
