@@ -1,0 +1,456 @@
+{
+  "schema": "aleph.xdr.synthetic-fixture.v1",
+  "moduleKey": "privilege",
+  "source": "AI-created 18 educational alerts, NOT original kit or judge fixture",
+  "alerts": [
+    {
+      "id": "pr-01",
+      "timestamp": "2026-10-14T00:00:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "mitre": [
+          "T1078"
+        ],
+        "description": "Unapproved member added to local Administrators group; unexpected elevation detected."
+      },
+      "data": {
+        "srcip": "203.0.113.11",
+        "srcuser": "sample-account-01",
+        "eventID": "4732",
+        "groupName": "Administrators",
+        "memberName": "sample-account-01",
+        "change": "added",
+        "approved": false,
+        "baselineKnown": false
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-02",
+      "timestamp": "2026-10-14T00:01:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "mitre": [
+          "T1068",
+          "T1078"
+        ],
+        "description": "Unauthorized user added to privileged admin group outside baseline."
+      },
+      "data": {
+        "srcip": "203.0.113.12",
+        "srcuser": "sample-account-02",
+        "win": {
+          "system": {
+            "eventID": "4728"
+          },
+          "eventdata": {
+            "TargetUserName": "Domain Admins"
+          }
+        },
+        "change": "added",
+        "approved": false,
+        "baselineKnown": false
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-03",
+      "timestamp": "2026-10-14T00:02:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 13,
+        "mitre": [
+          "T1078"
+        ],
+        "description": "Unauthorized administrator group membership granted to an ordinary account."
+      },
+      "data": {
+        "srcip": "203.0.113.13",
+        "srcuser": "sample-account-03",
+        "group": "Administrators",
+        "operation": "member added",
+        "approved": false,
+        "expected": false
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-04",
+      "timestamp": "2026-10-14T00:03:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "mitre": [
+          "T1068"
+        ],
+        "description": "Unexpected privileged command from a nonadmin account with elevation."
+      },
+      "data": {
+        "srcip": "203.0.113.14",
+        "srcuser": "sample-account-04",
+        "command": "sample-admin-command",
+        "privilegedCommand": true,
+        "firstSeen": true,
+        "approved": false,
+        "elevation": true
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-05",
+      "timestamp": "2026-10-14T00:04:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "mitre": [
+          "T1078"
+        ],
+        "description": "Unexpected administrative command executed after unexpected elevation."
+      },
+      "data": {
+        "srcip": "203.0.113.15",
+        "srcuser": "sample-account-05",
+        "command": "sample-maintenance-action",
+        "privilegedCommand": true,
+        "firstSeen": true,
+        "approved": false,
+        "elevation": true
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-06",
+      "timestamp": "2026-10-14T00:05:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "mitre": [
+          "T1078"
+        ],
+        "description": "Outside business hours a standard user gained admin role without approval."
+      },
+      "data": {
+        "srcip": "203.0.113.16",
+        "srcuser": "sample-account-06",
+        "operation": "privilege escalated",
+        "adminRole": true,
+        "outsideBusinessHours": true,
+        "approved": false,
+        "baselineKnown": false
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-07",
+      "timestamp": "2026-10-14T00:06:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 7,
+        "mitre": [
+          "T1078"
+        ],
+        "description": "New Administrators membership observed; approval is not yet known."
+      },
+      "data": {
+        "srcip": "198.51.100.17",
+        "srcuser": "sample-account-07",
+        "eventID": "4732",
+        "groupName": "Administrators",
+        "memberName": "sample-account-07"
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-08",
+      "timestamp": "2026-10-14T00:07:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 7,
+        "mitre": [
+          "T1078"
+        ],
+        "description": "Admin privileges were used outside working hours, investigating."
+      },
+      "data": {
+        "srcip": "198.51.100.18",
+        "srcuser": "sample-account-08",
+        "eventID": "4672",
+        "outsideBusinessHours": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-09",
+      "timestamp": "2026-10-14T00:08:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 7,
+        "mitre": [
+          "T1068"
+        ],
+        "description": "Privileged command seen for the first time, permission pending review."
+      },
+      "data": {
+        "srcip": "198.51.100.19",
+        "srcuser": "sample-account-09",
+        "command": "maintenance-task",
+        "firstSeen": true,
+        "privilegedCommand": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-10",
+      "timestamp": "2026-10-14T00:09:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 6,
+        "mitre": [
+          "T1078"
+        ],
+        "description": "Group membership was modified; awaiting owner verification."
+      },
+      "data": {
+        "srcip": "198.51.100.20",
+        "srcuser": "sample-account-10",
+        "eventID": "4732",
+        "groupName": "Administrators",
+        "change": "modified"
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-11",
+      "timestamp": "2026-10-14T00:10:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 8,
+        "mitre": [
+          "T1068"
+        ],
+        "description": "Potential elevated activity detected, no confirmed unauthorized change."
+      },
+      "data": {
+        "srcip": "198.51.100.21",
+        "srcuser": "sample-account-11",
+        "operation": "admin command observed",
+        "elevation": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-12",
+      "timestamp": "2026-10-14T00:11:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 6,
+        "mitre": [
+          "T1078"
+        ],
+        "description": "Off-hours administrator sign-in flagged for investigation."
+      },
+      "data": {
+        "srcip": "198.51.100.22",
+        "srcuser": "sample-account-12",
+        "eventID": "4672",
+        "outsideBusinessHours": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-13",
+      "timestamp": "2026-10-14T00:12:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "mitre": [],
+        "description": "Approved maintenance elevated command completed successfully."
+      },
+      "data": {
+        "srcip": "192.0.2.23",
+        "srcuser": "sample-account-13",
+        "privilegedCommand": true,
+        "approved": true,
+        "baselineKnown": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-14",
+      "timestamp": "2026-10-14T00:13:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "mitre": [],
+        "description": "Authorized administrator joined approved group for scheduled maintenance."
+      },
+      "data": {
+        "srcip": "192.0.2.24",
+        "srcuser": "sample-account-14",
+        "eventID": "4732",
+        "groupName": "Administrators",
+        "approved": true,
+        "baselineKnown": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-15",
+      "timestamp": "2026-10-14T00:14:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "mitre": [],
+        "description": "Standard user signed in successfully."
+      },
+      "data": {
+        "srcip": "192.0.2.25",
+        "srcuser": "sample-account-15",
+        "eventID": "4624"
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-16",
+      "timestamp": "2026-10-14T00:15:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 3,
+        "mitre": [],
+        "description": "Scheduled admin maintenance was performed outside normal hours."
+      },
+      "data": {
+        "srcip": "192.0.2.26",
+        "srcuser": "sample-account-16",
+        "eventID": "4672",
+        "outsideBusinessHours": true,
+        "approved": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-17",
+      "timestamp": "2026-10-14T00:16:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "mitre": [],
+        "description": "Help documentation page about administrators group was opened."
+      },
+      "data": {
+        "srcip": "192.0.2.27",
+        "srcuser": "sample-account-17",
+        "url": "/docs/admin-membership"
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "pr-18",
+      "timestamp": "2026-10-14T00:17:00.000Z",
+      "agent": {
+        "name": "sample-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "mitre": [],
+        "description": "User logged out."
+      },
+      "data": {
+        "srcip": "192.0.2.28",
+        "srcuser": "sample-account-18",
+        "eventID": "4634"
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    }
+  ]
+}
