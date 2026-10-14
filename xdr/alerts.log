@@ -40,9 +40,9 @@
 {"module":"known-cve","alertId":"kc-04","action":"block","confidence":0.97,"pattern":"log4shell-encoded-lookup"}
 {"module":"known-cve","alertId":"kc-05","action":"block","confidence":0.97,"pattern":"log4shell-encoded-lookup"}
 {"module":"known-cve","alertId":"kc-06","action":"block","confidence":0.97,"pattern":"log4shell-jndi-lookup"}
-{"module":"known-cve","alertId":"kc-07","action":"alert","confidence":0.6,"pattern":"log4shell-scan-indicator"}
-{"module":"known-cve","alertId":"kc-08","action":"alert","confidence":0.6,"pattern":"log4shell-scan-indicator"}
-{"module":"known-cve","alertId":"kc-09","action":"alert","confidence":0.6,"pattern":"log4shell-scan-indicator"}
-{"module":"known-cve","alertId":"kc-10","action":"alert","confidence":0.6,"pattern":"log4shell-scan-indicator"}
-{"module":"known-cve","alertId":"kc-11","action":"alert","confidence":0.75,"pattern":"log4shell-scan-indicator"}
-{"module":"known-cve","alertId":"kc-12","action":"alert","confidence":0.6,"pattern":"log4shell-scan-indicator"}
+{"module":"known-cve","alertId":"kc-07","action":"block","confidence":0.95,"pattern":"log4shell-scan-indicator"}
+{"module":"known-cve","alertId":"kc-08","action":"block","confidence":0.95,"pattern":"log4shell-scan-indicator"}
+{"module":"known-cve","alertId":"kc-09","action":"block","confidence":0.95,"pattern":"log4shell-scan-indicator"}
+{"module":"known-cve","alertId":"kc-10","action":"block","confidence":0.95,"pattern":"log4shell-scan-indicator"}
+{"module":"known-cve","alertId":"kc-11","action":"block","confidence":0.95,"pattern":"log4shell-scan-indicator"}
+{"module":"known-cve","alertId":"kc-12","action":"block","confidence":0.95,"pattern":"log4shell-scan-indicator"}

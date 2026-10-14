@@ -2,12 +2,12 @@
   "schema": "aleph.xdr.result.v1",
   "moduleKey": "known-cve",
   "counts": {
-    "block": 6,
-    "alert": 6,
+    "block": 12,
+    "alert": 0,
     "record": 6
   },
   "normalEventBlocks": 0,
-  "rulesWritten": 6,
+  "rulesWritten": 12,
   "decisions": [
     {
       "alertId": "kc-01",
@@ -47,38 +47,38 @@
     },
     {
       "alertId": "kc-07",
-      "action": "alert",
-      "confidence": 0.6,
+      "action": "block",
+      "confidence": 0.95,
       "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-08",
-      "action": "alert",
-      "confidence": 0.6,
+      "action": "block",
+      "confidence": 0.95,
       "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-09",
-      "action": "alert",
-      "confidence": 0.6,
+      "action": "block",
+      "confidence": 0.95,
       "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-10",
-      "action": "alert",
-      "confidence": 0.6,
+      "action": "block",
+      "confidence": 0.95,
       "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-11",
-      "action": "alert",
-      "confidence": 0.75,
+      "action": "block",
+      "confidence": 0.95,
       "reason": "log4shell-scan-indicator"
     },
     {
       "alertId": "kc-12",
-      "action": "alert",
-      "confidence": 0.6,
+      "action": "block",
+      "confidence": 0.95,
       "reason": "log4shell-scan-indicator"
     },
     {
