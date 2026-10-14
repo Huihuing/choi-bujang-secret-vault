@@ -1,0 +1,17 @@
+[
+  {
+    "name": "new-destination-bulk-exfiltration",
+    "condition": "External destination unseen before, unusually large outbound transfer and high-severity corroborating exfiltration alert",
+    "basis": "MITRE ATT&CK T1041/T1048: data may be exfiltrated via a command channel or alternative protocol."
+  },
+  {
+    "name": "off-hours-archive-exfiltration",
+    "condition": "Archive upload to external address outside working hours, additionally large or unapproved, with high-severity exfiltration evidence",
+    "basis": "MITRE ATT&CK T1048: archive transfer over an alternative network protocol is consistent with possible exfiltration."
+  },
+  {
+    "name": "outbound-transfer-review",
+    "condition": "Partial evidence: first-seen external address, high volume, off-hours archive or a T1041/T1048 alert without a corroborated clear attack",
+    "basis": "MITRE ATT&CK T1041/T1048: isolated network anomalies warrant investigation but are not proof requiring blocking."
+  }
+]

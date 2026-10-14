@@ -1,0 +1,553 @@
+{
+  "schema": "aleph.xdr.synthetic-fixture.v1",
+  "moduleKey": "exfiltration",
+  "source": "AI-created 18 synthetic educational Wazuh alerts, NOT original course or judge fixture",
+  "alerts": [
+    {
+      "id": "ex-01",
+      "timestamp": "2026-10-14T02:01:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "description": "Unapproved unusually large outbound upload to first-seen external destination",
+        "mitre": [
+          "T1041"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.21",
+        "srcuser": "sample-account-01",
+        "dstip": "203.0.113.21",
+        "direction": "outbound",
+        "bytes_sent": 471859200,
+        "newDestination": true,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": false,
+        "largeTransfer": true,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-02",
+      "timestamp": "2026-10-14T02:02:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "description": "Unapproved unusually large outbound upload to first-seen external destination",
+        "mitre": [
+          "T1048"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.22",
+        "srcuser": "sample-account-02",
+        "dstip": "203.0.113.22",
+        "direction": "outbound",
+        "bytes_sent": 471859200,
+        "newDestination": true,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": false,
+        "largeTransfer": true,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-03",
+      "timestamp": "2026-10-14T02:03:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "description": "Unapproved unusually large outbound upload to first-seen external destination",
+        "mitre": [
+          "T1041"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.23",
+        "srcuser": "sample-account-03",
+        "dstip": "203.0.113.23",
+        "direction": "outbound",
+        "bytes_sent": 471859200,
+        "newDestination": true,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": false,
+        "largeTransfer": true,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-04",
+      "timestamp": "2026-10-14T02:04:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "description": "Unapproved outbound archive upload outside business hours",
+        "mitre": [
+          "T1048"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.24",
+        "srcuser": "sample-account-04",
+        "dstip": "203.0.113.24",
+        "direction": "outbound",
+        "bytes_sent": 188743680,
+        "newDestination": false,
+        "outsideBusinessHours": true,
+        "filename": "sample-backup.zip",
+        "approved": false,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-05",
+      "timestamp": "2026-10-14T02:05:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "description": "Unapproved outbound archive upload outside business hours",
+        "mitre": [
+          "T1041"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.25",
+        "srcuser": "sample-account-05",
+        "dstip": "203.0.113.25",
+        "direction": "outbound",
+        "bytes_sent": 188743680,
+        "newDestination": false,
+        "outsideBusinessHours": true,
+        "filename": "sample-backup.zip",
+        "approved": false,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-06",
+      "timestamp": "2026-10-14T02:06:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 12,
+        "description": "Unapproved outbound archive upload outside business hours",
+        "mitre": [
+          "T1048"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.26",
+        "srcuser": "sample-account-06",
+        "dstip": "203.0.113.26",
+        "direction": "outbound",
+        "bytes_sent": 188743680,
+        "newDestination": false,
+        "outsideBusinessHours": true,
+        "filename": "sample-backup.zip",
+        "approved": false,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-07",
+      "timestamp": "2026-10-14T02:07:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 7,
+        "description": "Outbound transfer to newly observed external destination, volume unconfirmed",
+        "mitre": [
+          "T1041"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.27",
+        "srcuser": "sample-account-07",
+        "dstip": "203.0.113.27",
+        "direction": "outbound",
+        "bytes_sent": 12582912,
+        "newDestination": true,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": false,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-08",
+      "timestamp": "2026-10-14T02:08:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 7,
+        "description": "Outbound transfer to newly observed external destination, volume unconfirmed",
+        "mitre": [
+          "T1048"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.28",
+        "srcuser": "sample-account-08",
+        "dstip": "203.0.113.28",
+        "direction": "outbound",
+        "bytes_sent": 12582912,
+        "newDestination": true,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": false,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-09",
+      "timestamp": "2026-10-14T02:09:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 7,
+        "description": "Outbound archive upload outside business hours, size not confirmed",
+        "mitre": [
+          "T1041"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.29",
+        "srcuser": "sample-account-09",
+        "dstip": "203.0.113.29",
+        "direction": "outbound",
+        "bytes_sent": 188743680,
+        "newDestination": false,
+        "outsideBusinessHours": true,
+        "filename": "sample-backup.zip",
+        "approved": false,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-10",
+      "timestamp": "2026-10-14T02:10:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 7,
+        "description": "Outbound archive upload outside business hours, size not confirmed",
+        "mitre": [
+          "T1048"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.30",
+        "srcuser": "sample-account-10",
+        "dstip": "203.0.113.30",
+        "direction": "outbound",
+        "bytes_sent": 188743680,
+        "newDestination": false,
+        "outsideBusinessHours": true,
+        "filename": "sample-backup.zip",
+        "approved": false,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-11",
+      "timestamp": "2026-10-14T02:11:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 7,
+        "description": "Large outbound file transfer to recognized business partner",
+        "mitre": [
+          "T1041"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.31",
+        "srcuser": "sample-account-11",
+        "dstip": "203.0.113.31",
+        "direction": "outbound",
+        "bytes_sent": 262144000,
+        "newDestination": false,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": false,
+        "largeTransfer": true,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-12",
+      "timestamp": "2026-10-14T02:12:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 7,
+        "description": "Large outbound file transfer to recognized business partner",
+        "mitre": [
+          "T1048"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.32",
+        "srcuser": "sample-account-12",
+        "dstip": "203.0.113.32",
+        "direction": "outbound",
+        "bytes_sent": 262144000,
+        "newDestination": false,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": false,
+        "largeTransfer": true,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-13",
+      "timestamp": "2026-10-14T02:13:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "description": "Approved scheduled outbound transfer to recognized business destination",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "198.51.100.33",
+        "srcuser": "sample-account-13",
+        "dstip": "192.0.2.33",
+        "direction": "outbound",
+        "bytes_sent": 4194304,
+        "newDestination": false,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": true,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-14",
+      "timestamp": "2026-10-14T02:14:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "description": "Approved scheduled outbound transfer to recognized business destination",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "198.51.100.34",
+        "srcuser": "sample-account-14",
+        "dstip": "192.0.2.34",
+        "direction": "outbound",
+        "bytes_sent": 4194304,
+        "newDestination": false,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": true,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-15",
+      "timestamp": "2026-10-14T02:15:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "description": "Approved scheduled outbound transfer to recognized business destination",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "198.51.100.35",
+        "srcuser": "sample-account-15",
+        "dstip": "192.0.2.35",
+        "direction": "outbound",
+        "bytes_sent": 4194304,
+        "newDestination": false,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": true,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-16",
+      "timestamp": "2026-10-14T02:16:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "description": "Approved scheduled outbound transfer to recognized business destination",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "198.51.100.36",
+        "srcuser": "sample-account-16",
+        "dstip": "192.0.2.36",
+        "direction": "outbound",
+        "bytes_sent": 4194304,
+        "newDestination": false,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": true,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-17",
+      "timestamp": "2026-10-14T02:17:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "description": "Approved scheduled outbound transfer to recognized business destination",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "198.51.100.37",
+        "srcuser": "sample-account-17",
+        "dstip": "192.0.2.37",
+        "direction": "outbound",
+        "bytes_sent": 262144000,
+        "newDestination": false,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": true,
+        "largeTransfer": true,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    },
+    {
+      "id": "ex-18",
+      "timestamp": "2026-10-14T02:18:00.000Z",
+      "agent": {
+        "name": "synthetic-workstation"
+      },
+      "rule": {
+        "level": 2,
+        "description": "Approved scheduled outbound transfer to recognized business destination",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "198.51.100.38",
+        "srcuser": "sample-account-18",
+        "dstip": "192.0.2.38",
+        "direction": "outbound",
+        "bytes_sent": 4194304,
+        "newDestination": false,
+        "outsideBusinessHours": false,
+        "filename": "sample-file.dat",
+        "approved": true,
+        "largeTransfer": false,
+        "externalDestination": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic"
+      }
+    }
+  ]
+}

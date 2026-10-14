@@ -1,0 +1,50 @@
+[
+  {
+    "id": "xdr.exfiltration.ex-01",
+    "destinationIp": "203.0.113.21",
+    "alertId": "ex-01",
+    "pattern": "new-destination-bulk-exfiltration",
+    "startsAt": "2026-10-14T02:01:00.000Z",
+    "expiresAt": "2026-10-14T02:16:00.000Z"
+  },
+  {
+    "id": "xdr.exfiltration.ex-02",
+    "destinationIp": "203.0.113.22",
+    "alertId": "ex-02",
+    "pattern": "new-destination-bulk-exfiltration",
+    "startsAt": "2026-10-14T02:02:00.000Z",
+    "expiresAt": "2026-10-14T02:17:00.000Z"
+  },
+  {
+    "id": "xdr.exfiltration.ex-03",
+    "destinationIp": "203.0.113.23",
+    "alertId": "ex-03",
+    "pattern": "new-destination-bulk-exfiltration",
+    "startsAt": "2026-10-14T02:03:00.000Z",
+    "expiresAt": "2026-10-14T02:18:00.000Z"
+  },
+  {
+    "id": "xdr.exfiltration.ex-04",
+    "destinationIp": "203.0.113.24",
+    "alertId": "ex-04",
+    "pattern": "off-hours-archive-exfiltration",
+    "startsAt": "2026-10-14T02:04:00.000Z",
+    "expiresAt": "2026-10-14T02:19:00.000Z"
+  },
+  {
+    "id": "xdr.exfiltration.ex-05",
+    "destinationIp": "203.0.113.25",
+    "alertId": "ex-05",
+    "pattern": "off-hours-archive-exfiltration",
+    "startsAt": "2026-10-14T02:05:00.000Z",
+    "expiresAt": "2026-10-14T02:20:00.000Z"
+  },
+  {
+    "id": "xdr.exfiltration.ex-06",
+    "destinationIp": "203.0.113.26",
+    "alertId": "ex-06",
+    "pattern": "off-hours-archive-exfiltration",
+    "startsAt": "2026-10-14T02:06:00.000Z",
+    "expiresAt": "2026-10-14T02:21:00.000Z"
+  }
+]
