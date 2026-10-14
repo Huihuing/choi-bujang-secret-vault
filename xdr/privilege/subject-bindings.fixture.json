@@ -1,0 +1,24 @@
+{
+  "schema": "aleph.xdr.synthetic-bindings.v1",
+  "note": "Synthetic verified-identity mapping ONLY for offline demonstrations; not real identity-provider or Wazuh authority.",
+  "subjects": {
+    "sample-account-01": "test-sdp-subject-01",
+    "sample-account-02": "test-sdp-subject-02",
+    "sample-account-03": "test-sdp-subject-03",
+    "sample-account-04": "test-sdp-subject-04",
+    "sample-account-05": "test-sdp-subject-05",
+    "sample-account-06": "test-sdp-subject-06",
+    "sample-account-07": "test-sdp-subject-07",
+    "sample-account-08": "test-sdp-subject-08",
+    "sample-account-09": "test-sdp-subject-09",
+    "sample-account-10": "test-sdp-subject-10",
+    "sample-account-11": "test-sdp-subject-11",
+    "sample-account-12": "test-sdp-subject-12",
+    "sample-account-13": "test-sdp-subject-13",
+    "sample-account-14": "test-sdp-subject-14",
+    "sample-account-15": "test-sdp-subject-15",
+    "sample-account-16": "test-sdp-subject-16",
+    "sample-account-17": "test-sdp-subject-17",
+    "sample-account-18": "test-sdp-subject-18"
+  }
+}
