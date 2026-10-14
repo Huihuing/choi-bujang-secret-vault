@@ -96,7 +96,8 @@ test('quarantine rules only through explicit fixture identity resolver, never fr
  const start=Date.parse(alerts[0].timestamp);
  assert.equal((await guard({requestId:'r',deviceId:'000000000000a104'},{now:start})).decision,'deny');
  assert.deepEqual(await guard({requestId:'r',deviceId:'000000000000ffff'},{now:start,sourceIp:alerts[0].data.srcip}),baseline);
- assert.deepEqual(await guard({requestId:'r',deviceId:'000000000000a104'},{now:start+16*60000}),baseline);
+ assert.equal((await guard({requestId:'r',deviceId:'000000000000a104'},{now:start+16*60000})).decision,'deny', 'later confirmed event has independent 15-minute window');
+ assert.deepEqual(await guard({requestId:'r',deviceId:'000000000000a104'},{now:start+30*60000}),baseline);
  const denies={...baseline,decision:'deny',reasonCode:'preexisting-deny'};
  const stepUp={...baseline,decision:'step_up',reasonCode:'preexisting-step-up'};
  assert.deepEqual(await createIsolationGuard(async()=>denies,async()=>rules)({requestId:'r',deviceId:'000000000000a104'},{now:start}),denies);
