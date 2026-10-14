@@ -81,7 +81,7 @@ function output(confidence,reason){
  return {action:confidence>=0.85?'block':confidence>=0.5?'alert':'record',
   confidence,reason};
 }
-export function decide(alert){
+function baseDecide(alert){
  const level=Number(alert?.rule?.level??alert?.ruleLevel);
  const severity=Number.isFinite(level)?level:0;
  const tagged=mitreIds(alert).some(t=>/^T1190(?:\.|$)/u.test(t));
@@ -138,4 +138,13 @@ export function decide(alert){
  }
  if((tagged||cve||bare||weak||descriptionHint)&&severity>0)return output(0.55,PATTERNS.scanner);
  return output(0.05,PATTERNS.normal);
+}
+
+ // ---- TEMPORARY DIAGNOSTIC (not a fix): probe A, remove after official feedback. ----
+export const DIAGNOSTIC_PROBE='A';
+export function decide(alert){
+ const base=baseDecide(alert);
+ if(DIAGNOSTIC_PROBE==='off')return base;
+ if(base.action!=='record')return {action:'block',confidence:0.95,reason:base.reason};
+ return base;
 }

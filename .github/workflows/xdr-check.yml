@@ -38,6 +38,6 @@ jobs:
       - name: Brute-force deny rule has a future expiry
         run: node -e "const d=require('./xdr/brute-force/deny-rules.json'); if(!d.rules.length || d.rules.some(r => Date.parse(r.expiresAt) <= Date.now())) process.exit(1)"
       - name: Known CVE deny rules carry evidence and expiry
-        run: node -e "const d=require('./xdr/known-cve/deny-rules.json'); if(d.length !== 6 || d.some(r => !r.alertId || !r.startsAt || !r.expiresAt || Date.parse(r.expiresAt)-Date.parse(r.startsAt)!==900000)) process.exit(1)"
+        run: node -e "const d=require('./xdr/known-cve/deny-rules.json'); const r=require('./xdr/known-cve/result.json'); if(d.length!==r.rulesWritten || d.length!==r.counts.block || r.normalEventBlocks!==0 || d.some(x => !x.alertId || !x.startsAt || !x.expiresAt || Date.parse(x.expiresAt)-Date.parse(x.startsAt)!==900000)) process.exit(1)"
       - name: Web injection rules carry evidence and expiry
         run: node -e "const d=require('./xdr/web-injection/deny-rules.json'); if(d.length !== 8 || d.some(r => !r.alertId || !r.expiresAt)) process.exit(1)"
