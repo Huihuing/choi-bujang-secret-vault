@@ -1,14 +1,14 @@
 {
   "schema": "aleph.xdr.result.v1",
   "moduleKey": "exfiltration",
-  "fixtureSource": "synthetic-not-judge",
+  "fixtureSource": "provided-fixture",
   "counts": {
-    "block": 6,
-    "alert": 6,
-    "record": 6
+    "block": 10,
+    "alert": 10,
+    "record": 10
   },
   "normalEventBlocks": 0,
-  "rulesWritten": 6,
+  "rulesWritten": 10,
   "decisions": [
     {
       "alertId": "ex-01",
@@ -19,103 +19,175 @@
     {
       "alertId": "ex-02",
       "action": "block",
-      "confidence": 0.97,
-      "reason": "new-destination-bulk-exfiltration"
+      "confidence": 0.98,
+      "reason": "off-hours-archive-exfiltration"
     },
     {
       "alertId": "ex-03",
       "action": "block",
-      "confidence": 0.97,
-      "reason": "new-destination-bulk-exfiltration"
+      "confidence": 0.96,
+      "reason": "repeated-large-transfer"
     },
     {
       "alertId": "ex-04",
       "action": "block",
-      "confidence": 0.94,
-      "reason": "off-hours-archive-exfiltration"
+      "confidence": 0.96,
+      "reason": "unusual-port-bulk-transfer"
     },
     {
       "alertId": "ex-05",
       "action": "block",
-      "confidence": 0.94,
-      "reason": "off-hours-archive-exfiltration"
+      "confidence": 0.97,
+      "reason": "new-destination-bulk-exfiltration"
     },
     {
       "alertId": "ex-06",
       "action": "block",
-      "confidence": 0.94,
-      "reason": "off-hours-archive-exfiltration"
+      "confidence": 0.96,
+      "reason": "repeated-large-transfer"
     },
     {
       "alertId": "ex-07",
-      "action": "alert",
-      "confidence": 0.63,
-      "reason": "outbound-transfer-review"
+      "action": "block",
+      "confidence": 0.96,
+      "reason": "consecutive-archives-new-destination"
     },
     {
       "alertId": "ex-08",
-      "action": "alert",
-      "confidence": 0.63,
-      "reason": "outbound-transfer-review"
+      "action": "block",
+      "confidence": 0.99,
+      "reason": "whole-repository-transfer"
     },
     {
       "alertId": "ex-09",
-      "action": "alert",
-      "confidence": 0.63,
-      "reason": "outbound-transfer-review"
+      "action": "block",
+      "confidence": 0.97,
+      "reason": "c2-repeated-transfer"
     },
     {
       "alertId": "ex-10",
-      "action": "alert",
-      "confidence": 0.63,
-      "reason": "outbound-transfer-review"
+      "action": "block",
+      "confidence": 0.95,
+      "reason": "consecutive-archives-new-destination"
     },
     {
       "alertId": "ex-11",
       "action": "alert",
-      "confidence": 0.63,
+      "confidence": 0.64,
       "reason": "outbound-transfer-review"
     },
     {
       "alertId": "ex-12",
       "action": "alert",
-      "confidence": 0.63,
+      "confidence": 0.64,
       "reason": "outbound-transfer-review"
     },
     {
       "alertId": "ex-13",
-      "action": "record",
-      "confidence": 0.04,
-      "reason": "normal-transfer"
+      "action": "alert",
+      "confidence": 0.64,
+      "reason": "outbound-transfer-review"
     },
     {
       "alertId": "ex-14",
-      "action": "record",
-      "confidence": 0.04,
-      "reason": "normal-transfer"
+      "action": "alert",
+      "confidence": 0.64,
+      "reason": "outbound-transfer-review"
     },
     {
       "alertId": "ex-15",
-      "action": "record",
-      "confidence": 0.04,
-      "reason": "normal-transfer"
+      "action": "alert",
+      "confidence": 0.76,
+      "reason": "outbound-transfer-review"
     },
     {
       "alertId": "ex-16",
-      "action": "record",
-      "confidence": 0.04,
-      "reason": "normal-transfer"
+      "action": "alert",
+      "confidence": 0.64,
+      "reason": "outbound-transfer-review"
     },
     {
       "alertId": "ex-17",
-      "action": "record",
-      "confidence": 0.04,
-      "reason": "normal-transfer"
+      "action": "alert",
+      "confidence": 0.64,
+      "reason": "outbound-transfer-review"
     },
     {
       "alertId": "ex-18",
+      "action": "alert",
+      "confidence": 0.64,
+      "reason": "outbound-transfer-review"
+    },
+    {
+      "alertId": "ex-19",
+      "action": "alert",
+      "confidence": 0.64,
+      "reason": "outbound-transfer-review"
+    },
+    {
+      "alertId": "ex-20",
+      "action": "alert",
+      "confidence": 0.64,
+      "reason": "outbound-transfer-review"
+    },
+    {
+      "alertId": "ex-21",
       "action": "record",
-      "confidence": 0.04,
+      "confidence": 0.06,
+      "reason": "normal-transfer"
+    },
+    {
+      "alertId": "ex-22",
+      "action": "record",
+      "confidence": 0.06,
+      "reason": "normal-transfer"
+    },
+    {
+      "alertId": "ex-23",
+      "action": "record",
+      "confidence": 0.06,
+      "reason": "normal-transfer"
+    },
+    {
+      "alertId": "ex-24",
+      "action": "record",
+      "confidence": 0.06,
+      "reason": "normal-transfer"
+    },
+    {
+      "alertId": "ex-25",
+      "action": "record",
+      "confidence": 0.06,
+      "reason": "normal-transfer"
+    },
+    {
+      "alertId": "ex-26",
+      "action": "record",
+      "confidence": 0.06,
+      "reason": "normal-transfer"
+    },
+    {
+      "alertId": "ex-27",
+      "action": "record",
+      "confidence": 0.06,
+      "reason": "normal-transfer"
+    },
+    {
+      "alertId": "ex-28",
+      "action": "record",
+      "confidence": 0.06,
+      "reason": "normal-transfer"
+    },
+    {
+      "alertId": "ex-29",
+      "action": "record",
+      "confidence": 0.06,
+      "reason": "normal-transfer"
+    },
+    {
+      "alertId": "ex-30",
+      "action": "record",
+      "confidence": 0.06,
       "reason": "normal-transfer"
     }
   ]

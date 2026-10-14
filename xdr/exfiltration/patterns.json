@@ -1,17 +1,47 @@
 [
   {
     "name": "new-destination-bulk-exfiltration",
-    "condition": "External destination unseen before, unusually large outbound transfer and high-severity corroborating exfiltration alert",
-    "basis": "MITRE ATT&CK T1041/T1048: data may be exfiltrated via a command channel or alternative protocol."
+    "condition": "First-seen destination, outbound bulk transfer >=50MB, and evidence of a document batch or >=50 files",
+    "basis": "MITRE ATT&CK T1048: substantial exfiltration toward a new destination is a strong correlated transfer indicator."
   },
   {
     "name": "off-hours-archive-exfiltration",
-    "condition": "Archive upload to external address outside working hours, additionally large or unapproved, with high-severity exfiltration evidence",
-    "basis": "MITRE ATT&CK T1048: archive transfer over an alternative network protocol is consistent with possible exfiltration."
+    "condition": "External compressed archive sent outside class/business hours to a first-seen destination, substantial transfer volume",
+    "basis": "MITRE ATT&CK T1048: off-hours archive egress via an alternative channel is suspicious with independent transfer evidence."
+  },
+  {
+    "name": "repeated-large-transfer",
+    "condition": "At least five repeated sizable transfers to the same external destination",
+    "basis": "MITRE ATT&CK T1041/T1048: repeated exfiltration via a single outbound channel may split a data theft into bursts."
+  },
+  {
+    "name": "unusual-port-bulk-transfer",
+    "condition": "An unfamiliar outbound port carrying at least 50 document records and >=50MB",
+    "basis": "MITRE ATT&CK T1048: transferring many files over an unusual network port indicates possible alternate-protocol exfiltration."
+  },
+  {
+    "name": "whole-repository-transfer",
+    "condition": "The complete repository copied externally in a short period with >=100 files and high transfer volume",
+    "basis": "MITRE ATT&CK T1041/T1048: exporting a complete repository in bulk creates material exfiltration evidence."
+  },
+  {
+    "name": "c2-repeated-transfer",
+    "condition": "Repeated substantial upload through a command/control channel to a new external destination",
+    "basis": "MITRE ATT&CK T1041: exfiltration over a command-and-control channel with repeated transfers."
+  },
+  {
+    "name": "consecutive-archives-new-destination",
+    "condition": "Consecutive archives to a first-seen destination or same archive sent to multiple unfamiliar destinations with substantial volume",
+    "basis": "MITRE ATT&CK T1048: repeated or multi-destination archive egress is consistent with alternative-channel exfiltration."
   },
   {
     "name": "outbound-transfer-review",
-    "condition": "Partial evidence: first-seen external address, high volume, off-hours archive or a T1041/T1048 alert without a corroborated clear attack",
-    "basis": "MITRE ATT&CK T1041/T1048: isolated network anomalies warrant investigation but are not proof requiring blocking."
+    "condition": "Partial transfer, archive creation, new destination, failed transfer, or volume anomaly without sufficient independent evidence to block",
+    "basis": "MITRE ATT&CK T1041/T1048: isolated indicators warrant alerting for investigation without automatic blocking."
+  },
+  {
+    "name": "normal-transfer",
+    "condition": "Routine low-severity reading, small synchronization, session activity, or explicitly approved transfer",
+    "basis": "MITRE ATT&CK T1041/T1048: normal activity without correlated exfiltration indicators should only be recorded."
   }
 ]

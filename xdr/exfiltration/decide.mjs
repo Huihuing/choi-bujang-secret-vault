@@ -1,70 +1,92 @@
-// Pure offline detector. No imports, IO or network. PATTERNS mirror patterns.json.
-const PATTERNS=Object.freeze({
-  "large": "new-destination-bulk-exfiltration",
+// Pure synchronous XDR-06 decision; original Wazuh facts only. No imports or I/O.
+const P=Object.freeze({
+  "bulk": "new-destination-bulk-exfiltration",
   "archive": "off-hours-archive-exfiltration",
+  "repeat": "repeated-large-transfer",
+  "alternate": "unusual-port-bulk-transfer",
+  "whole": "whole-repository-transfer",
+  "c2": "c2-repeated-transfer",
+  "compressed": "consecutive-archives-new-destination",
   "review": "outbound-transfer-review",
   "normal": "normal-transfer"
 });
-function obj(v){return v&&typeof v==="object"&&!Array.isArray(v)?v:{}}
 
-function s(v){return typeof v==="string"?v.slice(0,1200):""}
+function object(x){return x!==null&&typeof x==="object"&&!Array.isArray(x)?x:{}}
 
-function first(...a){return a.find(x=>x!==undefined&&x!==null)}
+function field(x,...paths){for(const path of paths){let v=x;for(const part of path.split("."))v=v?.[part];if(v!==undefined&&v!==null&&v!=="")return v}return undefined}
 
-function bytes(v){
- if(typeof v==="number")return Number.isFinite(v)&&v>=0?v:0;
- if(typeof v!=="string")return 0;
- const m=v.trim().match(/(\d+(?:\.\d+)?)\s*(?:bytes?|B|KB|KIB|MB|MIB|GB|GIB|TB|TIB)?/iu);
- const unit=(v.match(/\d(?:\.\d+)?\s*(bytes?|KB|KIB|MB|MIB|GB|GIB|TB|TIB)\b/iu)||[])[1]||"B";
- return m?Number(m[1])*({B:1,BYTE:1,BYTES:1,KB:1e3,KIB:1024,MB:1048576,MIB:1048576,GB:1073741824,GIB:1073741824,TB:1099511627776,TIB:1099511627776}[unit.toUpperCase()]||1):0;
+function asText(x){return typeof x==="string"?x.slice(0,1100):""}
+
+function amount(x){
+ if(typeof x==="number")return Number.isFinite(x)&&x>=0?x:0;
+ if(typeof x!=="string")return 0;
+ const m=x.trim().match(/^(\d+(?:\.\d+)?)\s*(B|KB|MB|MiB|GB|GiB|TB|TiB)?$/iu);
+ if(!m)return 0;
+ return Number(m[1])*({B:1,KB:1e3,MB:1e6,MIB:1048576,GB:1e9,GIB:1073741824,TB:1e12,TIB:1099511627776}[String(m[2]||"B").toUpperCase()]||1);
 }
 
-function tagged(r){
- const v=r?.mitre,a=Array.isArray(v)?v:Array.isArray(v?.id)?v.id:typeof v?.id==="string"?[v.id]:[];
- return a.some(x=>typeof x==="string"&&/^T(?:1041|1048)(?:\.|$)/u.test(x));
+function externalAddress(x){
+ if(typeof x!=="string")return false;
+ const m=x.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/u);
+ if(m){const a=m.slice(1).map(Number);if(a.some(n=>n>255))return false;return !(a[0]===0||a[0]===10||a[0]===127||a[0]>=224||(a[0]===172&&a[1]>=16&&a[1]<=31)||(a[0]===192&&a[1]===168)||(a[0]===169&&a[1]===254));}
+ if(/^[a-f0-9:]+$/iu.test(x)&&x.includes(":"))return !/^(?:fe80|fc|fd|::1)/iu.test(x);
+ return /^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/iu.test(x)&&!/\.(?:local|internal|localhost)$/iu.test(x);
 }
 
-function externalIP(ip){
- if(typeof ip!=="string")return false;
- const m=ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/u);
- if(!m)return (/^[0-9a-f:]+$/iu.test(ip)&&ip.includes(":")&&!/^fe80:|^fc|^fd|^::1$/iu.test(ip)) || (/^[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/u.test(ip)&&!/\.(?:local|internal|localhost)$/iu.test(ip));
- const v=m.slice(1).map(Number);if(v.some(n=>n>255))return false;
- return !(v[0]===0||v[0]===10||v[0]===127||v[0]>=224||(v[0]===172&&v[1]>=16&&v[1]<=31)||(v[0]===192&&v[1]===168)||(v[0]===169&&v[1]===254));
+function bool(x){
+ if(x===true||x===1)return true;
+ if(x===false||x===0)return false;
+ if(typeof x!=="string")return null;
+ return /^(?:true|yes|1|new|unknown)$/iu.test(x)?true:/^(?:false|no|0|known)$/iu.test(x)?false:null;
 }
 
-export function decide(a){
- a=obj(a);
- const r=obj(a.rule),d=obj(a.data),net=obj(d.network),tx=obj(d.transfer),f=obj(d.file),dest=obj(d.destination);
- const description=s(first(r.description,a.description));
- const context=(description+" "+s(first(a.full_log,a.message,d.message,d.operation,d.action,d.event_type))+" "+s(first(d.protocol,tx.protocol))+" "+s(first(d.filename,d.fileName,d.file_path,f.name))).toLowerCase();
- const destination=first(d.dstip,d.dstIp,d.dst_ip,d.dest_ip,d.destination_ip,d.destinationIp,d.destIp,d.remote_ip,d.remoteIp,d.remote_addr,d.remoteAddress,d.dst,dest.ip,dest.address,dest.host,typeof d.destination==="string"?d.destination:undefined,net.dstip,net.dst_ip,net.destination?.ip,d.flow?.dst_ip,a.destination?.ip,a.dstip);
- const sz=Math.max(bytes(first(d.bytes_sent,d.bytesSent,d.outboundBytes,d.outbound_bytes,d.bytes_out,d.bytesOut,d.bytes_outbound,d.sent_bytes,d.sentBytes,d.bytesTransferred,d.bytes_transferred,d.transfer_bytes,d.transferBytes,net.bytes_sent,net.bytes_out,tx.bytesSent,tx.bytes,tx.size,d.fileSize,f.size,d.bytes,d.size)),bytes(d.size_mb)*1048576,bytes(d.transfer_size_mb)*1048576,bytes(d.transferSizeMb)*1048576,bytes(d.size_gb)*1073741824, ...[...context.matchAll(/\d+(?:\.\d+)?\s*(?:TB|TIB|GB|GIB|MB|MIB|KB|KIB)\b/giu)].map(m=>bytes(m[0])),0);
- const outbound=/^(?:out|outbound|egress|upload|sent|external|outgoing)$/iu.test(s(first(d.direction,net.direction,tx.direction,d.flow?.direction)))
-   ||[d.bytes_sent,d.bytesSent,d.outboundBytes,d.outbound_bytes,d.bytes_out,d.bytesOut,d.bytes_outbound,d.sent_bytes,d.sentBytes,net.bytes_sent,net.bytes_out,d.flow?.bytes_out,tx.bytesSent].some(v=>v!==undefined)
-   ||/\b(?:outbound|outgoing|egress|upload(?:ed|ing)?|sent|sending|exfiltrat(?:ion|ed)|export(?:ed)?|transferr?(?:ed|ing)?)\b|외부\s*전송|외부\s*반출|유출|업로드|반출|송신|전송/iu.test(context);
- const external=externalIP(destination)||d.externalDestination===true||d.isExternal===true||d.is_external===true||dest.external===true||net.external===true||/\b(?:external|internet|off[- ]?site|remote (?:server|host|destination))\b|외부\s*(?:주소|목적지|서버|전송|반출)|바깥\s*주소|대외\s*전송/iu.test(context);
- const unknown=d.newDestination===true||d.firstSeenDestination===true||d.firstSeen===true||d.destinationKnown===false||d.knownDestination===false||d.isNewDestination===true||d.destination_first_seen===true||d.first_seen_destination===true||d.new_dst===true||d.unknownDestination===true||d.isFirstSeen===true||d.new_dstip===true||dest.firstSeen===true||dest.new===true
-  ||/(?:first[- ]?seen|never[- ]?seen|previously unseen|new|unknown|unfamiliar|rare).{0,40}(?:destination|remote (?:ip|host|address)|external (?:ip|host|address))|(?:destination|external (?:ip|host|address)).{0,24}(?:first[- ]?seen|unknown|unseen)|처음\s*(?:보는|관측|확인)|최초\s*(?:접속|전송)|신규\s*(?:목적지|외부\s*주소)|미등록\s*(?:목적지|서버)|낯선\s*(?:주소|목적지)/iu.test(context);
- const typical=Math.max(bytes(first(d.baselineBytes,d.baseline_bytes,d.avg_bytes,d.averageBytes,d.usualBytes,d.normalBytes,tx.baselineBytes)),bytes(first(d.baseline_mb,d.avg_size_mb))*1048576);
- const large=sz>=100*1048576||(typical>=1048576&&sz>=10*1048576&&sz>=typical*5)||d.largeTransfer===true||d.unusuallyLarge===true||d.volumeAnomaly===true||d.isLargeTransfer===true||d.largeUpload===true||d.bulkTransfer===true||d.volume_anomaly===true||tx.unusuallyLarge===true
-  ||/(?:large|bulk|massive|oversized|unusual(?:ly)?\s*(?:large|high)).{0,28}(?:file|transfer|upload|data|volume)|대용량|대량\s*(?:전송|반출|유출|파일)|평소보다\s*(?:큰|많은)|비정상적\s*(?:전송량|용량)/iu.test(context);
- const off=d.outsideBusinessHours===true||d.outsideWorkingHours===true||d.nonBusinessHours===true||d.offHours===true||d.afterHours===true||d.off_hours===true||d.after_hours===true||d.outside_business_hours===true||tx.offHours===true
-  ||/\b(?:off[- ]?hours|after[- ]?hours|outside (?:working|business) hours|nighttime)\b|업무\s*시간\s*(?:외|밖)|근무\s*시간\s*(?:외|밖)|심야|야간/iu.test(context);
- const filename=s(first(d.filename,d.fileName,d.file_path,d.filePath,d.path,f.name,f.path,tx.fileName));
- const archive=d.compressedFile===true||d.isArchive===true||d.archive===true||d.isCompressed===true||d.compressed===true||f.compressed===true||/\.(?:zip|7z|rar|tar|tgz|gz|bz2|xz)(?:\?|$)/iu.test(filename)
-  ||/\b(?:archive|compressed|zip file|tarball)\b|압축\s*(?:파일|자료)|압축파일/iu.test(context);
- const approved=d.approved===true||d.authorized===true||d.allowlisted===true||d.whitelisted===true||d.sanctioned===true||d.expected===true||(/\b(?:approved|authorized|authorised|allowlisted|routine|scheduled backup)\b|승인된|허용된|정상\s*(?:업무|전송|백업)|정기\s*백업/iu.test(context)&&!/\b(?:unapproved|unauthorized|unauthorised|not approved)\b|미승인|승인\s*없이|무단\s*(?:전송|반출)/iu.test(context));
- const unapproved=d.approved===false||d.authorized===false||d.expected===false||(/\b(?:unapproved|unauthori[sz]ed|not approved|unsanctioned)\b|미승인|승인\s*(?:없이|되지)|허가되지|무단\s*(?:반출|전송)/iu.test(context));
- const severity=Number(first(r.level,a.ruleLevel))||0;
- const t=tagged(r);
- const relevant=t||/\b(?:exfiltrat(?:ion|ed)|data transfer|file upload|external upload)\b|자료\s*(?:유출|반출)|정보\s*유출/iu.test(context);
- function result(n,reason){return {action:n>=.85?"block":n>=.5?"alert":"record",confidence:n,reason}}
- if(approved&&!unapproved)return result(.04,PATTERNS.normal);
- const direction=s(first(d.direction,net.direction,tx.direction,d.flow?.direction,d.traffic?.direction));
- if(/^(?:in|inbound|incoming|ingress|download|received|receive)$/iu.test(direction))return result(.08,PATTERNS.normal);
- if(!external||!outbound)return result(.08,PATTERNS.normal);
- if(unknown&&large)return result(.97,PATTERNS.large);
- if(off&&archive&&((large&&severity>=9)||(unknown&&large)||(unapproved&&severity>=10&&(tagged||relevant))))return result(.94,PATTERNS.archive);
- if(unknown||large||off&&archive||(t&&severity>=4))return result(severity>=8?.73:.63,PATTERNS.review);
- return result(.08,PATTERNS.normal);
+export function decide(alert){
+ const a=object(alert),d=object(a.data),r=object(a.rule);
+ const desc=asText(field(r,"description")??field(a,"description"));
+ const text=(desc+" "+asText(field(d,"action","operation","event_type","message"))).toLowerCase();
+ const dest=field(d,"dstip","dstIp","dst_ip","dest_ip","destIp","destination_ip","destinationIp","destination.ip","remote_ip","remoteIp","network.dstip","flow.dst_ip")??field(a,"destination.ip","dstip");
+ const size=Math.max(amount(field(d,"bytes","bytes_sent","bytesSent","bytes_out","outboundBytes","outbound_bytes","transferBytes","transfer_bytes","transfer.bytes","file.size","size")),amount(field(d,"size_mb","transfer_size_mb"))*1e6);
+ const typical=amount(field(d,"avg_bytes","baselineBytes","baseline_bytes","usualBytes","transfer.baselineBytes"));
+ const large=size>=50000000||(size>=10000000&&typical>=1000000&&size>=typical*5);
+ const files=amount(field(d,"files","file_count","filesSent","files_sent"));
+ const repeats=amount(field(d,"count","transferCount","repeats","transfers"));
+ const severity=Number(field(r,"level")??field(a,"ruleLevel"))||0;
+ const mitre=field(r,"mitre")??field(a,"mitre"),tags=Array.isArray(mitre)?mitre:Array.isArray(mitre?.id)?mitre.id:typeof mitre?.id==="string"?[mitre.id]:[];
+ const technique=tags.some(t=>typeof t==="string"&&/^T(?:1041|1048)(?:\.|$)/u.test(t));
+ const direction=asText(field(d,"direction","flow.direction","network.direction","transfer.direction")).toLowerCase();
+ const inbound=/^(?:in|inbound|receive|received|download|ingress)$/u.test(direction);
+ const approved=d.approved===true||d.authorized===true||d.allowlisted===true||d.expected===true||/\b(?:approved|authorized|routine|allowlisted|scheduled backup)\b|승인된|허용된|정상\s*(?:업무|전송|백업)/iu.test(text);
+ const unapproved=d.approved===false||d.authorized===false||/\b(?:unapproved|unauthorized)\b|미승인|무단\s*반출/iu.test(text);
+ const novel=bool(field(d,"newDestination","firstSeenDestination","destination_first_seen","firstSeen","isNewDestination","destination.new"))===true||d.destinationKnown===false
+  ||/처음\s*보는\s*(?:목적지|주소)|평소와\s*다른\s*주소|신규\s*(?:목적지|주소)|낯선\s*(?:목적지|주소)|first[- ]?seen|new destination|unknown destination/iu.test(text);
+ const offHours=bool(field(d,"offHours","outsideBusinessHours","off_hours","afterHours","outside_business_hours"))===true
+  ||/(?:수업|업무|근무)\s*시간\s*(?:밖|외)|after[- ]?hours|off[- ]?hours|overnight|야간/iu.test(text);
+ const archive=d.compressedFile===true||d.isArchive===true||/압축\s*파일|\.zip\b|compressed|archive/iu.test(text+" "+asText(field(d,"filename","fileName","file.name")));
+ const repeated=repeats>=3||/연속|반복|\d+\s*번|repeated|consecutive/iu.test(text);
+ const sameDestination=/같은\s*목적지|same destination/iu.test(text);
+ const multipleDestinations=/목적지\s*(?:두|여러|\d+)\s*곳|multiple destinations/iu.test(text);
+ const command=/명령\s*통로|C2 channel|command.and.control/iu.test(text);
+ const unusualPort=/평소에\s*쓰지\s*않던\s*포트|비표준\s*포트|unusual port/iu.test(text);
+ const manyDocuments=/메모\s*묶음|자료\s*\d+\s*건|묶음|batch of files/iu.test(text);
+ const wholeRepository=/자료실\s*전체|whole repository|entire repository/iu.test(text);
+ const outbound=/나갔|올라갔|전송|송신|반출|복사됐|유출|uploaded|sent|outbound|egress/iu.test(text)
+  ||/^(?:out|outbound|egress|upload|sent)$/iu.test(direction)||field(d,"bytes_sent","bytes_out","outboundBytes")!==undefined;
+ const external=externalAddress(dest)||d.externalDestination===true||/외부\s*(?:주소|목적지)|external destination/iu.test(text);
+ function result(confidence,reason){return {action:confidence>=.85?"block":confidence>=.5?"alert":"record",confidence,reason}}
+ if(inbound||approved&&!unapproved)return result(.05,P.normal);
+ if(severity<=3&&size<1000000)return result(.06,P.normal);
+ if(external&&outbound&&large&&severity>=9){
+  if(offHours&&archive&&novel)return result(.98,P.archive);
+  if(command&&repeated&&novel&&(repeats>=3||severity>=11))return result(.97,P.c2);
+  if(unusualPort&&files>=50)return result(.96,P.alternate);
+  if(wholeRepository&&files>=100)return result(.99,P.whole);
+  if(archive&&novel&&repeated&&files>=3)return result(.96,P.compressed);
+  if(archive&&novel&&multipleDestinations)return result(.95,P.compressed);
+  if(sameDestination&&repeated&&repeats>=5)return result(.96,P.repeat);
+  if(novel&&(files>=50||manyDocuments||archive&&offHours))return result(.97,P.bulk);
+ }
+ const hint=novel||offHours||archive||command||unusualPort||repeated||manyDocuments||large
+  ||/전송|나갔|압축|목적지|파일|자료\s*\d+\s*건|백업|transfer|upload|외부|읽힌\s*뒤/iu.test(text);
+ if(hint&&(severity>=4||technique))return result(severity>=8?.76:.64,P.review);
+ return result(.08,P.normal);
 }

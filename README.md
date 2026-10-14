@@ -2,15 +2,15 @@
 
 ## 보너스 xdr-06 저장점 · 자료 빼돌리기를 잡아 냅니다
 
-기존 ZTNA 판정기 및 XDR-01~05의 규칙을 변경하지 않고 MITRE ATT&CK [T1041](https://attack.mitre.org/techniques/T1041/)·[T1048](https://attack.mitre.org/techniques/T1048/)을 근거로 **외부 전송 탐지 계층**을 추가했습니다.
+**기존 18건 합성 데이터 오류 수정:** 수업용 Wazuh 연습 경보 30건을 서로 다른 세 공개 과제 저장소에서 대조했고 세 파일의 Git blob SHA는 동일한 `ccd294ff72eade41f13c350d69b05a42c346ba40`입니다. [자료 참조](https://github.com/youngjinphys/choi-bujang-secret-vault/blob/main/xdr/fixtures/exfiltration.json). 이 공개 교육 데이터가 심판 비공개 원본과 완전히 같다고 단정하지 않습니다. 기존의 AI 창작 18건은 본 훈련 fixture로 사용하지 않습니다.
 
-- `xdr/exfiltration/read-alerts.mjs`: 시각·출발 주소·계정·규칙 수준·설명만 추출하고 비밀처럼 보이는 값을 제거합니다. 순수 판단 모듈은 이 파일을 import하지 않습니다.
-- `xdr/exfiltration/patterns.json`, `decide.mjs`: 새 목적지로 대량 송신 / 근무 시간 외 압축 자료 반출에 대해 복합 증거가 명확하면 `block`, 부분 증거면 `alert`, 승인된 전송이면 `record`를 반환합니다. 판단 모듈에 import·I/O가 없습니다.
-- `xdr/exfiltration/respond.mjs`: 명확한 block을 재검증해 근거 경보 ID와 15분 만료 시각을 갖는 목적지 IP 차단 후보를 작성합니다. 정상 경보에 같은 목적지가 포함되면 자동으로 차단하지 않습니다. 안전한 요약을 `xdr/alerts.log`에 기록합니다.
-- `src/xdr-decider.mjs`: 기존 판정기에 별도 가드를 덧씌웁니다. **주의:** 공식 `aleph.decision.v1`의 18개 요청 필드에는 목적지 IP가 없으므로, 신뢰하는 네트워크 게이트웨이가 별도 `context.destinationIp`를 제공할 때만 목적지 거부가 작동합니다. 브라우저 제공 목적지 필드는 사용하지 않습니다. 따라서 운영 게이트웨이 연동 없이 실제 외부 송신이 차단된다고 단정할 수 없습니다.
-- **원본 경보 미제공:** 기존 저장소에 `xdr/fixtures/exfiltration.json`이 없어 AI가 만든 합성 연습 경보 18건을 사용합니다. 심판의 공식 Wazuh 자료나 정답표는 아닙니다.
-- 재현: `npm ci` → `npm run xdr:test` → `npm run xdr:run -- exfiltration`. 결과는 `xdr/exfiltration/result.json`, 임시 규칙은 `xdr/exfiltration/deny-rules.json`, 알림은 `xdr/alerts.log`로 나옵니다. 합성 자료 기대값 **block 6 / alert 6 / record 6, 정상 오차단 0** (공식 심판 판정 아님).
-- 되돌리기: `src/xdr-decider.mjs`에서 최상위 XDR-06 가드를 이전 상태로 되돌리거나 `xdr/exfiltration/deny-rules.json`을 `[]`로 비워 이 과제의 차단 후보만 제거할 수 있습니다. DB 및 다른 XDR은 유지합니다.
+- `xdr/fixtures/exfiltration.json`: 공개된 교육용 경보 30건을 원문 그대로 사용합니다. `read-alerts.mjs`는 비밀값을 제거하고 시각·출발 주소·계정·규칙 수준·설명 다섯 필드만 출력합니다.
+- `xdr/exfiltration/patterns.json`과 import 없는 순수 `decide.mjs`: MITRE T1041/T1048을 바탕으로 **새 목적지 + 대량 자료**, **업무시간 외 압축 반출**, **같은 목적지 반복 대용량 전송**, **비정상 포트·자료실 전체 복사·명령 통로 반복 전송**을 복합적으로 판단합니다. 0.85 이상 `block`, 0.5 이상 `alert`, 이하 `record`입니다. 높은 경보 수준 또는 MITRE 태그 한 개만으로 차단하지 않습니다.
+- `respond.mjs`: 차단 결정은 자체 재검증 후 목적지 IP·경보 ID·15분 만료 시각을 갖는 **ZTNA 추가 후보 규칙**으로 저장하고, 알림은 `xdr/alerts.log`에 개인 정보 없이 기록합니다. 정상 이벤트 목적지와 겹치면 자동 규칙 생성에서 제외합니다.
+- `src/xdr-decider.mjs`: 기존 ZTNA 규칙을 바꾸지 않고 신뢰된 게이트웨이의 `context.destinationIp`가 전달된 경우에만 추가 차단 후보를 적용합니다. 기존 공식 ZTNA 요청 계약에는 목적지 필드가 없으므로 운영용 실제 외부 전송 차단은 아직 완결된 연동이 아닙니다.
+- 검사: `npm ci` → `npm run xdr:test` → `npm run xdr:run -- exfiltration`. 30건 공개 학습 fixture 기준 `block 10 / alert 10 / record 10`, 정상 오차단 0건입니다. 공식 심판 통과 여부는 별도 채점으로 확인합니다.
+- 되돌리기: XDR-06 규칙은 `xdr/exfiltration/deny-rules.json`에서 `[]`로 비울 수 있으며 다른 ZTNA/XDR 설정과 데이터는 보존합니다.
+
 
 ---
 
