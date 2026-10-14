@@ -1,22 +1,27 @@
 [
   {
-    "name": "unapproved-admin-group-add",
-    "condition": "Windows admin group membership event (4728/4732/4756) or explicitly described privileged group addition corroborated by unauthorized/unknown-baseline status and elevated severity",
-    "basis": "MITRE ATT&CK T1078 Valid Accounts; unauthorized privilege group addition enables abuse of elevated account permissions"
+    "name": "unexpected-admin-group-change",
+    "condition": "Ordinary account joins/rejoins administrative group, with corroborated administrator command, unusual remote account/group changes, or multiple targets; high-severity completed event",
+    "basis": "MITRE ATT&CK T1078: abnormal use of valid accounts with elevated administrator group membership."
   },
   {
-    "name": "unexpected-privileged-command",
-    "condition": "Previously unseen privileged command from ordinary/non-admin account, unapproved elevation and high-severity privilege/valid-account alert",
-    "basis": "MITRE ATT&CK T1068 Exploitation for Privilege Escalation and T1078 Valid Accounts"
+    "name": "unexpected-elevated-command",
+    "condition": "Newly promoted administrator executes a privileged command or first-seen remote address plus off-hours administrative execution; high-severity confirmed event",
+    "basis": "MITRE ATT&CK T1068/T1078: unexpected privilege use following elevation or uncommon access circumstances."
   },
   {
-    "name": "off-hours-elevation",
-    "condition": "Off-hours privilege assignment/elevation AND lack of approval or baseline validation, with clear admin-role change and severe alert",
-    "basis": "MITRE ATT&CK T1078 Valid Accounts; deviations in administrator account privileges merit investigation"
+    "name": "new-address-admin-session",
+    "condition": "Previously ordinary session becomes administrator-level with first-seen access address, high-severity confirmed event",
+    "basis": "MITRE ATT&CK T1078: an established account unexpectedly gains high-privilege capability."
+  },
+  {
+    "name": "cross-account-privileged-use",
+    "condition": "Privileged command executes under another account's rights with high-severity evidence",
+    "basis": "MITRE ATT&CK T1078: anomalous use of a different account's elevated permissions."
   },
   {
     "name": "privilege-review",
-    "condition": "Unverified admin group change, privileged command, or after-hours admin use without sufficient evidence to justify immediate session denial",
-    "basis": "MITRE ATT&CK T1068/T1078; uncertain privilege events should be alerted for investigation"
+    "condition": "Low-confidence privilege prompts, command failure, non-admin group changes, isolated elevated commands or canceled attempts; alert only",
+    "basis": "MITRE ATT&CK T1068/T1078: incomplete privilege indicators warrant investigation, not session revocation."
   }
 ]

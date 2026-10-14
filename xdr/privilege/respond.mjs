@@ -66,7 +66,10 @@ export async function loadRules(){
 }
 export function createSessionGuard(baseDecide,getRules=loadRules){
  return async function privilegeGuard(request,context={}){
-  // The ZTNA engine validated request.subjectId before calling this guard.
+  // Preserve any existing deny / step_up; only further restrict already-allowed sessions.
+  const original=await baseDecide(request,context);
+  if(original?.decision!=='allow')return original;
+  // request.subjectId must have been validated by the trusted ZTNA engine.
   const subjectId=request?.subjectId;
   const now=Number.isFinite(context?.now)?context.now:Date.now();
   if(typeof subjectId==='string'&&IDENT.test(subjectId)){
@@ -79,6 +82,6 @@ export function createSessionGuard(baseDecide,getRules=loadRules){
      decision:'deny',reasonCode:'starter_not_ready',ruleIds:[match.id]};
    }
   }
-  return baseDecide(request,context);
+  return original;
  };
 }

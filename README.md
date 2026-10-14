@@ -18,15 +18,14 @@
 
 ## 보너스 xdr-05 저장점 · 권한 가로채기를 잡아 냅니다
 
-권한이 낮은 계정의 관리자 그룹 진입, 처음 등장한 상승 권한 명령, 업무 시간 외 관리자 권한 사용을 확인하는 **추가 XDR 확인 계층**입니다. 기존 ZTNA 규칙(`src/decider.mjs`)과 XDR-01~04 구현은 보존했습니다.
+**원본 경보로 다시 검증:** 기존 AI 합성 경보 18건을 공식 공개 교육용 Wazuh 경보 26건으로 교체했습니다. [ALEPH 교육용 원본](https://github.com/ChoiTimo/aleph-defense-starter/blob/main/xdr/fixtures/privilege.json)의 Git blob SHA는 `442fc3297bcc73969fa61b1368d08e0038b9c135`이며, 별도 공개 저장소 세 곳에서도 동일 파일임을 확인했습니다. SHA-256 `e5e4b41e81138c79de7a62ad23859ce166cbf078fd8f9a2bac54a79e6f547a85`에 일치할 때만 가상 신원 매핑을 사용합니다.
 
-- `xdr/privilege/read-alerts.mjs`: Wazuh 경보의 시각·출발 IP·계정·규칙 수준·설명만 추출하고 비밀값처럼 보이는 텍스트를 제거합니다. 이 모듈을 판정기에 import하지 않습니다.
-- `xdr/privilege/patterns.json`, `decide.mjs`: MITRE ATT&CK [T1068](https://attack.mitre.org/techniques/T1068/) 및 [T1078](https://attack.mitre.org/techniques/T1078/)을 근거로 미승인 관리자 그룹 변경·명확한 명령/권한 상승은 `block`, 불확실한 사용은 `alert`, 승인된 유지보수는 `record`로 판정합니다. `decide.mjs`는 외부 import·파일 접근·통신이 없는 단독 모듈입니다.
-- `xdr/privilege/respond.mjs`: 명확한 차단 결과를 재확인하고, **서버 측에서 검증한 계정→SDP subjectId 매핑**이 주어질 때만 해당 가명 주체의 15분 만료 규칙을 생성합니다. 사용자 이름/IP만으로 다른 계정을 막지 않습니다. 규칙에 근거 경보 ID와 만료 시각을 적고 비민감 기록만 `xdr/alerts.log`에 저장합니다.
-- `src/xdr-decider.mjs`: 엔진이 확인한 요청 `subjectId`와 규칙의 가명 ID가 일치할 때 요청을 임시 거부하는 계층을 연결합니다. 이는 **ZTNA 접근 거부**이며 실제 인증 공급자의 리프레시 토큰 폐기나 세션 강제 로그아웃은 구현하지 않았습니다.
-- **fixture 출처:** `xdr/fixtures/privilege.json`은 저장소에 없어서 직접 만든 합성 연습 경보 18건입니다. `xdr/privilege/subject-bindings.fixture.json`도 실제 계정 관계가 아닌 독립된 **가상 매핑**입니다. 외부 인증 연동 전 실제 사용자에 적용하지 마세요. 실제 강의 원본·심판 정답표를 받은 것은 아닙니다.
-- 재현: `npm ci` → `npm run xdr:test` → `npm run xdr:run -- privilege`. 결과 `xdr/privilege/result.json`, 주체별 임시 규칙 `xdr/privilege/deny-rules.json`, 알림 `xdr/alerts.log`. 합성 데이터 결과 **block 6 / alert 6 / record 6, 정상 이벤트 오차단 0**입니다. 공식 심판 성적은 재제출 전까지 확인할 수 없습니다.
-- 복구: 새 권한 경보 유입을 멈추고 규칙의 15분 만료를 기다리거나, `src/xdr-decider.mjs`에서 privilege 가드를 제거하거나, `xdr/privilege/deny-rules.json`을 `[]`로 바꿔서 해당 추가 차단만 종료합니다. 다른 XDR, 기존 판정 규칙 및 데이터는 유지합니다.
+- **읽기와 판정:** `read-alerts.mjs`가 시각·출발 IP·계정·규칙 수준·설명만 안전하게 보여줍니다. `decide.mjs`는 import·파일 I/O 없이 MITRE ATT&CK T1068/T1078 기반 관리자 그룹 가입·권한 명령 실행·처음 보는 원격 주소·다른 계정 권한 사용 등을 서로 연관지어 판단합니다. 고위험 복합 증거는 `block`(0.85 이상), 미완결·취소·실패·일반 그룹 변경은 `alert`(0.5 이상), 통상 로그인/조회는 `record`입니다.
+- **결과:** 26건의 공개 교육용 경보 기준 `block=9, alert=8, record=9`, 정상 이벤트 오차단 `0`건. `npm run xdr:test`와 `npm run xdr:run -- privilege`로 재생성 및 검증합니다.
+- **추가 ZTNA 확인:** `respond.mjs`는 재확인된 `block`에 한해서 서버 검증 계정→가명 주체 매핑을 받은 경우 15분 동안 해당 주체를 임시 거부합니다. 기본 판정기의 `deny` 및 `step_up`은 보존하고 기존 규칙은 수정하지 않습니다.
+- **주의:** `subject-bindings.fixture.json`은 해당 교육용 경보의 계정을 **테스트용 가명에만** 매핑하며 실제 신원공급자/세션 정보가 아닙니다. 이 실습에서는 ZTNA 요청 임시 거부를 시뮬레이션하고, 운영 토큰 폐기나 실제 로그인 세션 회수를 완료했다고 주장하지 않습니다.
+- **복원:** `xdr/privilege/deny-rules.json`을 `[]`로 교체하면 해당 추가 규칙만 제거할 수 있습니다.
+
 
 ---
 

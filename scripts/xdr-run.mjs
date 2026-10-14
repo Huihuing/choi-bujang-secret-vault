@@ -227,9 +227,8 @@ async function runPrivilege(){
  let normalEventBlocks=0;
  for(let i=0;i<alerts.length;i++){
   const alert=alerts[i],decision=decide(alert);
-  const fixtureNormal=alert?.fixture?.classification==='normal'
-   ||(alert?.fixture?.classification==null
-      &&Number(alert?.rule?.level??0)<=3&&!mitreIds(alert).some(x=>/^T(?:1068|1078)(?:\.|$)/u.test(x)));
+  const fixtureNormal=Number(alert?.rule?.level??0)<=3
+   &&(!Array.isArray(alert?.rule?.mitre)||alert.rule.mitre.length===0);
   if(fixtureNormal&&decision.action==='block')normalEventBlocks++;
   counts[decision.action]++;
   rows.push({alert,decision,fixtureNormal});
@@ -239,8 +238,15 @@ async function runPrivilege(){
  // Fixture-only identity bindings simulate what a trusted SDP account
  // resolver must provide. No production username->subject mapping is inferred.
  const bindings=JSON.parse(await readFile(new URL('../xdr/privilege/subject-bindings.fixture.json',import.meta.url),'utf8'));
- if(source?.source?.includes('AI-created')!==true || !bindings?.schema?.includes('synthetic'))
-  throw new Error('Refusing to use synthetic subject bindings on an unknown real log source');
+ // This mapping is ONLY for the exact published educational fixture, never a live Wazuh log.
+ const expectedFixtureSha256='e5e4b41e81138c79de7a62ad23859ce166cbf078fd8f9a2bac54a79e6f547a85';
+ const fixtureText=await readFile(new URL('../xdr/fixtures/privilege.json',import.meta.url),'utf8');
+ const actualFixtureSha256=(await import('node:crypto')).createHash('sha256').update(fixtureText).digest('hex');
+ if(source?.schema!=='aleph.xdr.fixture.v1'||source?.moduleKey!=='privilege'||
+    source.alerts.length!==26||actualFixtureSha256!==expectedFixtureSha256||
+    bindings?.fixtureOnly!==true||
+    bindings?.sourceFixtureBlobSha!=='442fc3297bcc73969fa61b1368d08e0038b9c135')
+  throw new Error('Refusing fixture-only pseudonymous identity bindings for an unrecognized privilege alert source');
  const resolver=account=>Object.hasOwn(bindings.subjects,account)?bindings.subjects[account]:null;
  const rules=response.rulesFromDecisions(rows,resolver);
  await response.persistRules(rules);
