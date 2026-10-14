@@ -212,11 +212,55 @@ async function runPersistence(){
  if(normalEventBlocks>0)process.exitCode=1;
 }
 
+async function runPrivilege(){
+ const [{readAlerts},{decide},response]=await Promise.all([
+  import('../xdr/privilege/read-alerts.mjs'),
+  import('../xdr/privilege/decide.mjs'),
+  import('../xdr/privilege/respond.mjs'),
+ ]);
+ const source=JSON.parse(await readFile(new URL('../xdr/fixtures/privilege.json',import.meta.url),'utf8'));
+ const alerts=Array.isArray(source)?source:source?.alerts;
+ if(!Array.isArray(alerts))throw new TypeError('Expected Wazuh privilege fixture alerts');
+ const extracted=await readAlerts();
+ if(extracted.length!==alerts.length)throw new Error('Privilege fixture extraction count differs');
+ const counts={block:0,alert:0,record:0},rows=[],decisions=[];
+ let normalEventBlocks=0;
+ for(let i=0;i<alerts.length;i++){
+  const alert=alerts[i],decision=decide(alert);
+  const fixtureNormal=alert?.fixture?.classification==='normal'
+   ||(alert?.fixture?.classification==null
+      &&Number(alert?.rule?.level??0)<=3&&!mitreIds(alert).some(x=>/^T(?:1068|1078)(?:\.|$)/u.test(x)));
+  if(fixtureNormal&&decision.action==='block')normalEventBlocks++;
+  counts[decision.action]++;
+  rows.push({alert,decision,fixtureNormal});
+  decisions.push({alertId:alertId(alert,i),action:decision.action,
+   confidence:decision.confidence,reason:decision.reason});
+ }
+ // Fixture-only identity bindings simulate what a trusted SDP account
+ // resolver must provide. No production username->subject mapping is inferred.
+ const bindings=JSON.parse(await readFile(new URL('../xdr/privilege/subject-bindings.fixture.json',import.meta.url),'utf8'));
+ if(source?.source?.includes('AI-created')!==true || !bindings?.schema?.includes('synthetic'))
+  throw new Error('Refusing to use synthetic subject bindings on an unknown real log source');
+ const resolver=account=>Object.hasOwn(bindings.subjects,account)?bindings.subjects[account]:null;
+ const rules=response.rulesFromDecisions(rows,resolver);
+ await response.persistRules(rules);
+ await response.writeAlerts(decisions);
+ const result={
+  schema:'aleph.xdr.result.v1',moduleKey:'privilege',counts,
+  normalEventBlocks,rulesWritten:rules.length,decisions,
+ };
+ await writeFile(new URL('../xdr/privilege/result.json',import.meta.url),
+  JSON.stringify(result,null,2)+'\n','utf8');
+ console.log('block='+counts.block+' alert='+counts.alert+' record='+counts.record+' normalEventBlocks='+normalEventBlocks);
+ if(normalEventBlocks>0)process.exitCode=1;
+}
+
 if (moduleName === 'brute-force') await runBruteForce();
 else if (moduleName === 'web-injection') await runWebInjection();
 else if (moduleName === 'known-cve') await runKnownCve();
 else if (moduleName === 'persistence') await runPersistence();
+else if (moduleName === 'privilege') await runPrivilege();
 else {
-  console.error('Usage: npm run xdr:run -- <brute-force|web-injection|known-cve|persistence>');
+  console.error('Usage: npm run xdr:run -- <brute-force|web-injection|known-cve|persistence|privilege>');
   process.exitCode = 2;
 }

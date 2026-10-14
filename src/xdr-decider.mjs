@@ -3,6 +3,7 @@ import { decide as baseDecide } from './decider.mjs';
 import { createGuard, loadRules as loadWebInjection } from '../xdr/web-injection/connect.mjs';
 import {loadRules as loadKnownCve} from '../xdr/known-cve/respond.mjs';
 import {createIsolationGuard,loadRules as loadPersistence} from '../xdr/persistence/respond.mjs';
+import {createSessionGuard,loadRules as loadPrivilege} from '../xdr/privilege/respond.mjs';
 
 async function loadBruteForce() {
   try {
@@ -28,4 +29,6 @@ const existingXdrDecide = createGuard(baseDecide, async () => [
   ...await loadKnownCve(),
 ]);
 // Add device-specific persistence quarantine after existing XDR checks.
-export const decideWithXdr=createIsolationGuard(existingXdrDecide,loadPersistence);
+const withDeviceIsolation=createIsolationGuard(existingXdrDecide,loadPersistence);
+// Privilege denial uses only an SDP-verified subjectId and trusted mapping.
+export const decideWithXdr=createSessionGuard(withDeviceIsolation,loadPrivilege);
