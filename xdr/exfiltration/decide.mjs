@@ -27,7 +27,7 @@ function tagged(r){
 function externalIP(ip){
  if(typeof ip!=="string")return false;
  const m=ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/u);
- if(!m)return /^[0-9a-f:]+$/iu.test(ip)&&ip.includes(":")&&!/^fe80:|^fc|^fd|^::1$/iu.test(ip);
+ if(!m)return (/^[0-9a-f:]+$/iu.test(ip)&&ip.includes(":")&&!/^fe80:|^fc|^fd|^::1$/iu.test(ip)) || (/^[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/u.test(ip)&&!/\.(?:local|internal|localhost)$/iu.test(ip));
  const v=m.slice(1).map(Number);if(v.some(n=>n>255))return false;
  return !(v[0]===0||v[0]===10||v[0]===127||v[0]>=224||(v[0]===172&&v[1]>=16&&v[1]<=31)||(v[0]===192&&v[1]===168)||(v[0]===169&&v[1]===254));
 }
@@ -59,6 +59,8 @@ export function decide(a){
  const relevant=t||/\b(?:exfiltrat(?:ion|ed)|data transfer|file upload|external upload)\b|자료\s*(?:유출|반출)|정보\s*유출/iu.test(context);
  function result(n,reason){return {action:n>=.85?"block":n>=.5?"alert":"record",confidence:n,reason}}
  if(approved&&!unapproved)return result(.04,PATTERNS.normal);
+ const direction=s(first(d.direction,net.direction,tx.direction,d.flow?.direction,d.traffic?.direction));
+ if(/^(?:in|inbound|incoming|ingress|download|received|receive)$/iu.test(direction))return result(.08,PATTERNS.normal);
  if(!external||!outbound)return result(.08,PATTERNS.normal);
  if(unknown&&large)return result(.97,PATTERNS.large);
  if(off&&archive&&severity>=9&&(large||unapproved||unknown)&&(tagged||relevant))return result(.94,PATTERNS.archive);

@@ -53,3 +53,25 @@ test('incomplete Wazuh records cannot block',()=>{
   assert.notEqual(decide(a).action,'block');
  }
 });
+
+
+test('Wazuh alias fields, localized descriptions and transfer-size units',()=>{
+ const samples=[
+  {rule:{level:7},data:{dest_ip:'203.0.113.41',direction:'outbound',transfer_size_mb:500,destination_first_seen:true}},
+  {rule:{level:8,description:'처음 보는 외부 주소로 대용량 파일 전송'},data:{dst_ip:'203.0.113.42'}},
+  {rule:{level:12,mitre:{id:['T1048']},description:'External outbound archive upload outside business hours'},
+   data:{dest_ip:'203.0.113.43',bytes_sent:'750 MB',filename:'records.zip',approved:false}},
+ ];
+ for(const sample of samples)assert.equal(decide(sample).action,'block');
+ const newDestination={rule:{level:7,description:'Outbound upload to a new external destination'},
+  data:{dstip:'203.0.113.44',bytes_sent:1200}};
+ assert.equal(decide(newDestination).action,'alert');
+});
+test('approved transfers and inbound traffic must not be blocked',()=>{
+ const approved={rule:{level:12,mitre:['T1041'],description:'Approved scheduled backup to external destination'},
+  data:{dstip:'203.0.113.52',bytes_sent:1e9,newDestination:true,approved:true}};
+ const inbound={rule:{level:12,mitre:['T1041'],description:'New large transfer involving external address'},
+  data:{dstip:'203.0.113.53',bytes_out:1e9,newDestination:true,direction:'inbound'}};
+ assert.equal(decide(approved).action,'record');
+ assert.equal(decide(inbound).action,'record');
+});
