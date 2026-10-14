@@ -1,5 +1,20 @@
 # BYTE BACK · 12단계 저장점 — 탈환 작전실
 
+## 보너스 xdr-06 저장점 · 자료 빼돌리기를 잡아 냅니다
+
+기존 ZTNA 판정기 및 XDR-01~05의 규칙을 변경하지 않고 MITRE ATT&CK [T1041](https://attack.mitre.org/techniques/T1041/)·[T1048](https://attack.mitre.org/techniques/T1048/)을 근거로 **외부 전송 탐지 계층**을 추가했습니다.
+
+- `xdr/exfiltration/read-alerts.mjs`: 시각·출발 주소·계정·규칙 수준·설명만 추출하고 비밀처럼 보이는 값을 제거합니다. 순수 판단 모듈은 이 파일을 import하지 않습니다.
+- `xdr/exfiltration/patterns.json`, `decide.mjs`: 새 목적지로 대량 송신 / 근무 시간 외 압축 자료 반출에 대해 복합 증거가 명확하면 `block`, 부분 증거면 `alert`, 승인된 전송이면 `record`를 반환합니다. 판단 모듈에 import·I/O가 없습니다.
+- `xdr/exfiltration/respond.mjs`: 명확한 block을 재검증해 근거 경보 ID와 15분 만료 시각을 갖는 목적지 IP 차단 후보를 작성합니다. 정상 경보에 같은 목적지가 포함되면 자동으로 차단하지 않습니다. 안전한 요약을 `xdr/alerts.log`에 기록합니다.
+- `src/xdr-decider.mjs`: 기존 판정기에 별도 가드를 덧씌웁니다. **주의:** 공식 `aleph.decision.v1`의 18개 요청 필드에는 목적지 IP가 없으므로, 신뢰하는 네트워크 게이트웨이가 별도 `context.destinationIp`를 제공할 때만 목적지 거부가 작동합니다. 브라우저 제공 목적지 필드는 사용하지 않습니다. 따라서 운영 게이트웨이 연동 없이 실제 외부 송신이 차단된다고 단정할 수 없습니다.
+- **원본 경보 미제공:** 기존 저장소에 `xdr/fixtures/exfiltration.json`이 없어 AI가 만든 합성 연습 경보 18건을 사용합니다. 심판의 공식 Wazuh 자료나 정답표는 아닙니다.
+- 재현: `npm ci` → `npm run xdr:test` → `npm run xdr:run -- exfiltration`. 결과는 `xdr/exfiltration/result.json`, 임시 규칙은 `xdr/exfiltration/deny-rules.json`, 알림은 `xdr/alerts.log`로 나옵니다. 합성 자료 기대값 **block 6 / alert 6 / record 6, 정상 오차단 0** (공식 심판 판정 아님).
+- 되돌리기: `src/xdr-decider.mjs`에서 최상위 XDR-06 가드를 이전 상태로 되돌리거나 `xdr/exfiltration/deny-rules.json`을 `[]`로 비워 이 과제의 차단 후보만 제거할 수 있습니다. DB 및 다른 XDR은 유지합니다.
+
+---
+
+
 
 ## 보너스 xdr-05 저장점 · 권한 가로채기를 잡아 냅니다
 

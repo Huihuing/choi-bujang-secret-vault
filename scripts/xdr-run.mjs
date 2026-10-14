@@ -255,12 +255,51 @@ async function runPrivilege(){
  if(normalEventBlocks>0)process.exitCode=1;
 }
 
+
+async function runExfiltration(){
+ const [{readAlerts},{decide},response]=await Promise.all([
+  import('../xdr/exfiltration/read-alerts.mjs'),
+  import('../xdr/exfiltration/decide.mjs'),
+  import('../xdr/exfiltration/respond.mjs'),
+ ]);
+ const source=JSON.parse(await readFile(new URL('../xdr/fixtures/exfiltration.json',import.meta.url),'utf8'));
+ const alerts=Array.isArray(source)?source:source?.alerts;
+ if(!Array.isArray(alerts))throw new TypeError('Expected Wazuh exfiltration fixture alerts');
+ const extracted=await readAlerts();
+ if(extracted.length!==alerts.length)throw new Error('Exfiltration alert extraction count mismatch');
+ const counts={block:0,alert:0,record:0},rows=[],decisions=[];
+ let normalEventBlocks=0;
+ for(let i=0;i<alerts.length;i++){
+  const alert=alerts[i],output=decide(alert);
+  const normal=alert?.fixture?.classification==='normal'
+    ||(alert?.fixture?.classification==null&&Number(alert?.rule?.level??0)<=3
+      &&!mitreIds(alert).some(id=>/^T(?:1041|1048)(?:\.|$)/u.test(id)));
+  if(normal&&output.action==='block')normalEventBlocks++;
+  counts[output.action]++;
+  rows.push({alert,decision:output,fixtureNormal:normal});
+  decisions.push({alertId:alertId(alert,i),action:output.action,
+    confidence:output.confidence,reason:output.reason});
+ }
+ const rules=response.rulesFromDecisions(rows);
+ await response.persistRules(rules);
+ await response.writeAlerts(decisions);
+ const result={
+  schema:'aleph.xdr.result.v1',moduleKey:'exfiltration',
+  fixtureSource:source?.source?.includes('AI-created')?'synthetic-not-judge':'provided-fixture',
+  counts,normalEventBlocks,rulesWritten:rules.length,decisions,
+ };
+ await writeFile(new URL('../xdr/exfiltration/result.json',import.meta.url),JSON.stringify(result,null,2)+'\n','utf8');
+ console.log('block='+counts.block+' alert='+counts.alert+' record='+counts.record+' normalEventBlocks='+normalEventBlocks);
+ if(normalEventBlocks>0)process.exitCode=1;
+}
+
 if (moduleName === 'brute-force') await runBruteForce();
 else if (moduleName === 'web-injection') await runWebInjection();
 else if (moduleName === 'known-cve') await runKnownCve();
 else if (moduleName === 'persistence') await runPersistence();
 else if (moduleName === 'privilege') await runPrivilege();
+else if (moduleName === 'exfiltration') await runExfiltration();
 else {
-  console.error('Usage: npm run xdr:run -- <brute-force|web-injection|known-cve|persistence|privilege>');
+  console.error('Usage: npm run xdr:run -- <brute-force|web-injection|known-cve|persistence|privilege|exfiltration>');
   process.exitCode = 2;
 }

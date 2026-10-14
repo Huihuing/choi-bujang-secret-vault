@@ -36,9 +36,10 @@ jobs:
       - run: npm run xdr:run -- known-cve
       - run: npm run xdr:run -- persistence
       - run: npm run xdr:run -- privilege
+      - run: npm run xdr:run -- exfiltration
       - run: npm run test:r5
       - name: Generated result files are current
-        run: git diff --exit-code -- xdr/brute-force/result.json xdr/web-injection/result.json xdr/known-cve/result.json xdr/persistence/result.json xdr/privilege/result.json
+        run: git diff --exit-code -- xdr/brute-force/result.json xdr/web-injection/result.json xdr/known-cve/result.json xdr/persistence/result.json xdr/privilege/result.json xdr/exfiltration/result.json
       - name: Brute-force deny rule has a future expiry
         run: node -e "const d=require('./xdr/brute-force/deny-rules.json'); if(!d.rules.length || d.rules.some(r => Date.parse(r.expiresAt) <= Date.now())) process.exit(1)"
       - name: Known CVE deny rules carry evidence and expiry
@@ -47,5 +48,7 @@ jobs:
         run: node -e "const d=require('./xdr/persistence/deny-rules.json');const r=require('./xdr/persistence/result.json');if(d.length!==r.rulesWritten || d.some(x=>!x.deviceId || !/^[a-f0-9]{16}$/.test(x.deviceId) || !x.alertId || Date.parse(x.expiresAt)-Date.parse(x.startsAt)!==900000))process.exit(1)"
       - name: Privilege session rules require pseudonymous SDP subject and expiry
         run: node -e "const d=require('./xdr/privilege/deny-rules.json');const r=require('./xdr/privilege/result.json');if(d.length!==r.rulesWritten || r.normalEventBlocks!==0 || d.some(x=>!x.subjectId || !x.alertId || Date.parse(x.expiresAt)-Date.parse(x.startsAt)!==900000))process.exit(1)"
+      - name: Exfiltration destination deny rules carry evidence and expiry
+        run: node -e "const d=require('./xdr/exfiltration/deny-rules.json');const r=require('./xdr/exfiltration/result.json');if(d.length!==r.rulesWritten || r.normalEventBlocks!==0 || d.some(x=>!x.destinationIp || !x.alertId || Date.parse(x.expiresAt)-Date.parse(x.startsAt)!==900000))process.exit(1)"
       - name: Web injection rules carry evidence and expiry
         run: node -e "const d=require('./xdr/web-injection/deny-rules.json'); if(d.length !== 8 || d.some(r => !r.alertId || !r.expiresAt)) process.exit(1)"
