@@ -44,12 +44,14 @@ test('encoded and header JNDI syntax is clear, vague scanning remains alert',()=
  alert.rule.level=5;
  assert.equal(decide(alert).action,'block');
  alert.data.url='/docs?topic=log4j';
+ delete alert.data.useragent;
  alert.rule.description='log4shell vulnerability probe';
  assert.equal(decide(alert).action,'alert');
  alert.rule.description='정상 문서 조회';alert.rule.level=2;
  assert.equal(decide(alert).action,'record');
  const sample=structuredClone(fixture.alerts[1]);
  sample.data.headers={'User-Agent':'ordinary browser'};
+ sample.data.url='/notes?view=recent';
  sample.rule.description='로그 취약점 탐색 경보';
  assert.equal(decide(sample).action,'alert');
 });
@@ -72,7 +74,7 @@ test('only high confidence CVE exploitation creates expiring evidence-linked den
  // A normal sample from the same IP cancels address-wide deny candidates.
  const clone=structuredClone(fixture.alerts[12]);clone.data.srcip=fixture.alerts[0].data.srcip;
  const safeRules=rulesFromDecisions([...rows,{alert:clone,decision:decide(clone),fixtureNormal:true}]);
- assert.equal(safeRules.length,7);
+ assert.equal(safeRules.length,6,'two malicious alerts share one denied IP');
  const baseline={schema:'aleph.decision.v1',requestId:'synthetic',decision:'allow',
   reasonCode:'approved',ruleIds:[]};
  const guard=createGuard(async()=>baseline,async()=>rules);
