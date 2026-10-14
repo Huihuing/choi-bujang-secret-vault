@@ -19,7 +19,7 @@
       "alertId": "pv-02",
       "action": "block",
       "confidence": 0.97,
-      "reason": "unexpected-admin-group-change"
+      "reason": "unexpected-elevated-command"
     },
     {
       "alertId": "pv-03",

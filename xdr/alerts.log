@@ -79,7 +79,7 @@
 {"module":"exfiltration","alertId":"ex-19","action":"alert","confidence":0.64,"pattern":"outbound-transfer-review"}
 {"module":"exfiltration","alertId":"ex-20","action":"alert","confidence":0.64,"pattern":"outbound-transfer-review"}
 {"module":"privilege","alertId":"pv-01","action":"block","confidence":0.97,"pattern":"unexpected-admin-group-change"}
-{"module":"privilege","alertId":"pv-02","action":"block","confidence":0.97,"pattern":"unexpected-admin-group-change"}
+{"module":"privilege","alertId":"pv-02","action":"block","confidence":0.97,"pattern":"unexpected-elevated-command"}
 {"module":"privilege","alertId":"pv-03","action":"block","confidence":0.97,"pattern":"unexpected-elevated-command"}
 {"module":"privilege","alertId":"pv-04","action":"block","confidence":0.97,"pattern":"unexpected-admin-group-change"}
 {"module":"privilege","alertId":"pv-05","action":"block","confidence":0.97,"pattern":"unexpected-admin-group-change"}

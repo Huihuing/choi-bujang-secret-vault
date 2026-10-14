@@ -11,7 +11,7 @@
     "id": "xdr.privilege.pv-02",
     "subjectId": "test-sdp-subject-user01",
     "alertId": "pv-02",
-    "pattern": "unexpected-admin-group-change",
+    "pattern": "unexpected-elevated-command",
     "startsAt": "2026-09-27T00:15:40.000Z",
     "expiresAt": "2026-09-27T00:30:40.000Z"
   },
