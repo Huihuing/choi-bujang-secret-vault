@@ -46,3 +46,15 @@
 {"module":"known-cve","alertId":"kc-10","action":"block","confidence":0.95,"pattern":"log4shell-scan-indicator"}
 {"module":"known-cve","alertId":"kc-11","action":"block","confidence":0.95,"pattern":"log4shell-scan-indicator"}
 {"module":"known-cve","alertId":"kc-12","action":"block","confidence":0.95,"pattern":"log4shell-scan-indicator"}
+{"module":"persistence","alertId":"ps-01","action":"block","confidence":0.96,"pattern":"unsigned-new-service"}
+{"module":"persistence","alertId":"ps-02","action":"block","confidence":0.96,"pattern":"unsigned-new-service"}
+{"module":"persistence","alertId":"ps-03","action":"block","confidence":0.96,"pattern":"unknown-scheduled-task"}
+{"module":"persistence","alertId":"ps-04","action":"block","confidence":0.96,"pattern":"unknown-scheduled-task"}
+{"module":"persistence","alertId":"ps-05","action":"block","confidence":0.96,"pattern":"startup-folder-change"}
+{"module":"persistence","alertId":"ps-06","action":"block","confidence":0.96,"pattern":"unsigned-new-service"}
+{"module":"persistence","alertId":"ps-07","action":"alert","confidence":0.6,"pattern":"unsigned-new-service"}
+{"module":"persistence","alertId":"ps-08","action":"alert","confidence":0.6,"pattern":"unknown-scheduled-task"}
+{"module":"persistence","alertId":"ps-09","action":"alert","confidence":0.6,"pattern":"startup-folder-change"}
+{"module":"persistence","alertId":"ps-10","action":"alert","confidence":0.6,"pattern":"unsigned-new-service"}
+{"module":"persistence","alertId":"ps-11","action":"alert","confidence":0.6,"pattern":"unknown-scheduled-task"}
+{"module":"persistence","alertId":"ps-12","action":"alert","confidence":0.6,"pattern":"startup-folder-change"}

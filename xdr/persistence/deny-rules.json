@@ -1,0 +1,56 @@
+[
+  {
+    "id": "xdr.persistence.ps-01",
+    "deviceId": "0000000000000001",
+    "sourceIp": "203.0.113.11",
+    "alertId": "ps-01",
+    "pattern": "unsigned-new-service",
+    "startsAt": "2026-10-14T00:00:00.000Z",
+    "expiresAt": "2026-10-14T00:15:00.000Z"
+  },
+  {
+    "id": "xdr.persistence.ps-02",
+    "deviceId": "0000000000000002",
+    "sourceIp": "203.0.113.12",
+    "alertId": "ps-02",
+    "pattern": "unsigned-new-service",
+    "startsAt": "2026-10-14T00:01:00.000Z",
+    "expiresAt": "2026-10-14T00:16:00.000Z"
+  },
+  {
+    "id": "xdr.persistence.ps-03",
+    "deviceId": "0000000000000003",
+    "sourceIp": "203.0.113.13",
+    "alertId": "ps-03",
+    "pattern": "unknown-scheduled-task",
+    "startsAt": "2026-10-14T00:02:00.000Z",
+    "expiresAt": "2026-10-14T00:17:00.000Z"
+  },
+  {
+    "id": "xdr.persistence.ps-04",
+    "deviceId": "0000000000000004",
+    "sourceIp": "203.0.113.14",
+    "alertId": "ps-04",
+    "pattern": "unknown-scheduled-task",
+    "startsAt": "2026-10-14T00:03:00.000Z",
+    "expiresAt": "2026-10-14T00:18:00.000Z"
+  },
+  {
+    "id": "xdr.persistence.ps-05",
+    "deviceId": "0000000000000005",
+    "sourceIp": "203.0.113.15",
+    "alertId": "ps-05",
+    "pattern": "startup-folder-change",
+    "startsAt": "2026-10-14T00:04:00.000Z",
+    "expiresAt": "2026-10-14T00:19:00.000Z"
+  },
+  {
+    "id": "xdr.persistence.ps-06",
+    "deviceId": "0000000000000006",
+    "sourceIp": "203.0.113.16",
+    "alertId": "ps-06",
+    "pattern": "unsigned-new-service",
+    "startsAt": "2026-10-14T00:05:00.000Z",
+    "expiresAt": "2026-10-14T00:20:00.000Z"
+  }
+]
