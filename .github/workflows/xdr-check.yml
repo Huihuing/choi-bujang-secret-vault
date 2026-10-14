@@ -10,6 +10,7 @@ on:
       - 'test/*injection*.test.mjs'
       - 'test/brute-force.test.mjs'
       - 'test/known-cve.test.mjs'
+      - 'test/persistence.test.mjs'
       - 'README.md'
       - 'package.json'
       - '.github/workflows/xdr-check.yml'
@@ -32,12 +33,15 @@ jobs:
       - run: npm run xdr:run -- brute-force
       - run: npm run xdr:run -- web-injection
       - run: npm run xdr:run -- known-cve
+      - run: npm run xdr:run -- persistence
       - run: npm run test:r5
       - name: Generated result files are current
-        run: git diff --exit-code -- xdr/brute-force/result.json xdr/web-injection/result.json xdr/known-cve/result.json
+        run: git diff --exit-code -- xdr/brute-force/result.json xdr/web-injection/result.json xdr/known-cve/result.json xdr/persistence/result.json
       - name: Brute-force deny rule has a future expiry
         run: node -e "const d=require('./xdr/brute-force/deny-rules.json'); if(!d.rules.length || d.rules.some(r => Date.parse(r.expiresAt) <= Date.now())) process.exit(1)"
       - name: Known CVE deny rules carry evidence and expiry
         run: node -e "const d=require('./xdr/known-cve/deny-rules.json'); const r=require('./xdr/known-cve/result.json'); if(d.length!==r.rulesWritten || d.length!==r.counts.block || r.normalEventBlocks!==0 || d.some(x => !x.alertId || !x.startsAt || !x.expiresAt || Date.parse(x.expiresAt)-Date.parse(x.startsAt)!==900000)) process.exit(1)"
+      - name: Persistence quarantine rules bound to verified device and expiry
+        run: node -e "const d=require('./xdr/persistence/deny-rules.json');const r=require('./xdr/persistence/result.json');if(d.length!==r.rulesWritten || d.some(x=>!x.deviceId || !/^[a-f0-9]{16}$/.test(x.deviceId) || !x.alertId || Date.parse(x.expiresAt)-Date.parse(x.startsAt)!==900000))process.exit(1)"
       - name: Web injection rules carry evidence and expiry
         run: node -e "const d=require('./xdr/web-injection/deny-rules.json'); if(d.length !== 8 || d.some(r => !r.alertId || !r.expiresAt)) process.exit(1)"

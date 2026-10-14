@@ -173,10 +173,50 @@ async function runKnownCve(){
  if(normalEventBlocks>0)process.exitCode=1;
 }
 
+async function runPersistence(){
+ const [{readAlerts},{decide},response]=await Promise.all([
+  import('../xdr/persistence/read-alerts.mjs'),
+  import('../xdr/persistence/decide.mjs'),
+  import('../xdr/persistence/respond.mjs'),
+ ]);
+ const fixtureUrl=new URL('../xdr/fixtures/persistence.json',import.meta.url);
+ const document=JSON.parse(await readFile(fixtureUrl,'utf8'));
+ const alerts=Array.isArray(document)?document:document?.alerts;
+ if(!Array.isArray(alerts))throw new TypeError('Expected Wazuh persistence alerts array');
+ const extracted=await readAlerts(fixtureUrl);
+ if(extracted.length!==alerts.length)throw new Error('Extracted alerts count mismatch');
+ const counts={block:0,alert:0,record:0},records=[],decisions=[];
+ let normalEventBlocks=0;
+ for(let i=0;i<alerts.length;i++){
+  const alert=alerts[i],result=decide(alert);
+  const tagged=mitreIds(alert).some(x=>/^T(?:1543|1053|1547)(?:\.|$)/u.test(x));
+  const fixtureNormal=alert?.fixture?.classification==='normal'
+    ||(alert?.fixture?.classification==null&&!tagged&&Number(alert?.rule?.level??0)<=3);
+  if(fixtureNormal&&result.action==='block')normalEventBlocks++;
+  counts[result.action]++;
+  records.push({alert,decision:result,fixtureNormal});
+  decisions.push({alertId:alertId(alert,i),action:result.action,
+   confidence:result.confidence,reason:result.reason});
+ }
+ const rules=response.rulesFromDecisions(records);
+ await response.persistRules(rules);
+ await response.writeAlerts(decisions);
+ const result={
+  schema:'aleph.xdr.result.v1',moduleKey:'persistence',counts,
+  normalEventBlocks,rulesWritten:rules.length,decisions,
+ };
+ await writeFile(new URL('../xdr/persistence/result.json',import.meta.url),
+  JSON.stringify(result,null,2)+'\n','utf8');
+ console.log('block='+counts.block+' alert='+counts.alert+' record='+counts.record
+  +' normalEventBlocks='+normalEventBlocks);
+ if(normalEventBlocks>0)process.exitCode=1;
+}
+
 if (moduleName === 'brute-force') await runBruteForce();
 else if (moduleName === 'web-injection') await runWebInjection();
 else if (moduleName === 'known-cve') await runKnownCve();
+else if (moduleName === 'persistence') await runPersistence();
 else {
-  console.error('Usage: npm run xdr:run -- <brute-force|web-injection|known-cve>');
+  console.error('Usage: npm run xdr:run -- <brute-force|web-injection|known-cve|persistence>');
   process.exitCode = 2;
 }

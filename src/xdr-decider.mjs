@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { decide as baseDecide } from './decider.mjs';
 import { createGuard, loadRules as loadWebInjection } from '../xdr/web-injection/connect.mjs';
 import {loadRules as loadKnownCve} from '../xdr/known-cve/respond.mjs';
+import {createIsolationGuard,loadRules as loadPersistence} from '../xdr/persistence/respond.mjs';
 
 async function loadBruteForce() {
   try {
@@ -21,8 +22,10 @@ async function loadBruteForce() {
 }
 
 // sourceIp is supplied by a trusted gateway, never by the browser request body.
-export const decideWithXdr = createGuard(baseDecide, async () => [
+const existingXdrDecide = createGuard(baseDecide, async () => [
   ...await loadBruteForce(),
   ...await loadWebInjection(),
   ...await loadKnownCve(),
 ]);
+// Add device-specific persistence quarantine after existing XDR checks.
+export const decideWithXdr=createIsolationGuard(existingXdrDecide,loadPersistence);
