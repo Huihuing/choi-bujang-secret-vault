@@ -1,0 +1,524 @@
+{
+  "schema": "aleph.xdr.synthetic-fixture.v1",
+  "moduleKey": "persistence",
+  "source": "AI-generated synthetic Wazuh-shaped exercise fixture; not ALEPH judge data",
+  "alerts": [
+    {
+      "id": "ps-01",
+      "timestamp": "2026-10-14T00:00:00.000Z",
+      "agent": {
+        "id": "0000000000000001",
+        "name": "training-pc-01"
+      },
+      "rule": {
+        "level": 12,
+        "description": "서명 없는 새 서비스가 등록되었으며 평소 허용 목록에 없습니다.",
+        "mitre": [
+          "T1543.003"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.11",
+        "srcuser": "training1",
+        "deviceId": "0000000000000001",
+        "eventID": "7045",
+        "serviceName": "TrainingSvcA",
+        "signatureValid": false,
+        "baselineKnown": false,
+        "change": "created"
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic",
+        "label": "unsigned service create"
+      }
+    },
+    {
+      "id": "ps-02",
+      "timestamp": "2026-10-14T00:01:00.000Z",
+      "agent": {
+        "id": "0000000000000002",
+        "name": "training-pc-02"
+      },
+      "rule": {
+        "level": 11,
+        "description": "Unknown unsigned Windows service installed; not in baseline.",
+        "mitre": [
+          "T1543"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.12",
+        "srcuser": "training2",
+        "deviceId": "0000000000000002",
+        "win": {
+          "system": {
+            "eventID": "4697"
+          },
+          "eventdata": {
+            "ServiceName": "TrainingSvcB",
+            "ServiceFileName": "C:\\Training\\svc-b.exe"
+          }
+        },
+        "signed": false,
+        "known": false
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic",
+        "label": "unsigned service install"
+      }
+    },
+    {
+      "id": "ps-03",
+      "timestamp": "2026-10-14T00:02:00.000Z",
+      "agent": {
+        "id": "0000000000000003",
+        "name": "training-pc-03"
+      },
+      "rule": {
+        "level": 12,
+        "description": "서명되지 않은 새 예약 작업이 생성됐고 기준 목록에 없습니다.",
+        "mitre": [
+          "T1053.005"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.13",
+        "srcuser": "training3",
+        "deviceId": "0000000000000003",
+        "eventID": "4698",
+        "taskName": "TrainingTaskA",
+        "signed": false,
+        "baselineKnown": false,
+        "action": "create"
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic",
+        "label": "unknown scheduled task"
+      }
+    },
+    {
+      "id": "ps-04",
+      "timestamp": "2026-10-14T00:03:00.000Z",
+      "agent": {
+        "id": "0000000000000004",
+        "name": "training-pc-04"
+      },
+      "rule": {
+        "level": 12,
+        "description": "Untrusted scheduled task creation from unknown unsigned executable.",
+        "mitre": [
+          "T1053"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.14",
+        "srcuser": "training4",
+        "deviceId": "0000000000000004",
+        "win": {
+          "system": {
+            "eventID": "4698"
+          },
+          "eventdata": {
+            "TaskName": "\\Training\\TaskB"
+          }
+        },
+        "signature": {
+          "valid": false
+        },
+        "baseline": {
+          "known": false
+        }
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic",
+        "label": "task creation"
+      }
+    },
+    {
+      "id": "ps-05",
+      "timestamp": "2026-10-14T00:04:00.000Z",
+      "agent": {
+        "id": "0000000000000005",
+        "name": "training-pc-05"
+      },
+      "rule": {
+        "level": 12,
+        "description": "시작 폴더에 미서명 실행 파일이 새로 추가되었고 승인되지 않았습니다.",
+        "mitre": [
+          "T1547.001"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.15",
+        "srcuser": "training5",
+        "deviceId": "0000000000000005",
+        "syscheck": {
+          "path": "C:\\Users\\Training\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\updater.lnk",
+          "event": "added"
+        },
+        "signed": false,
+        "known": false
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic",
+        "label": "startup folder unsigned"
+      }
+    },
+    {
+      "id": "ps-06",
+      "timestamp": "2026-10-14T00:05:00.000Z",
+      "agent": {
+        "id": "0000000000000006",
+        "name": "training-pc-06"
+      },
+      "rule": {
+        "level": 11,
+        "description": "새로 생성된 무서명 서비스가 등록된 적 없는 시작 항목을 추가했습니다.",
+        "mitre": [
+          "T1543.003"
+        ]
+      },
+      "data": {
+        "srcip": "203.0.113.16",
+        "srcuser": "training6",
+        "deviceId": "0000000000000006",
+        "service": {
+          "name": "TrainingSvcC",
+          "operation": "install"
+        },
+        "signatureStatus": "NotSigned",
+        "baselineKnown": false
+      },
+      "fixture": {
+        "classification": "block",
+        "source": "synthetic",
+        "label": "service baseline change"
+      }
+    },
+    {
+      "id": "ps-07",
+      "timestamp": "2026-10-14T00:06:00.000Z",
+      "agent": {
+        "id": "0000000000000007",
+        "name": "training-pc-07"
+      },
+      "rule": {
+        "level": 7,
+        "description": "새 서비스 등록 감지, 서명 상태와 승인 여부 확인 필요.",
+        "mitre": [
+          "T1543"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.17",
+        "srcuser": "training7",
+        "deviceId": "0000000000000007",
+        "serviceName": "TrainingSvcD",
+        "action": "created"
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic",
+        "label": "unknown publisher"
+      }
+    },
+    {
+      "id": "ps-08",
+      "timestamp": "2026-10-14T00:07:00.000Z",
+      "agent": {
+        "id": "0000000000000008",
+        "name": "training-pc-08"
+      },
+      "rule": {
+        "level": 8,
+        "description": "예약 작업이 잠깐 수정되었으나 승인 여부는 확인되지 않았습니다.",
+        "mitre": [
+          "T1053"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.18",
+        "srcuser": "training8",
+        "deviceId": "0000000000000008",
+        "eventID": "4702",
+        "taskName": "TrainingBackup",
+        "action": "modified"
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic",
+        "label": "task changed"
+      }
+    },
+    {
+      "id": "ps-09",
+      "timestamp": "2026-10-14T00:08:00.000Z",
+      "agent": {
+        "id": "0000000000000009",
+        "name": "training-pc-09"
+      },
+      "rule": {
+        "level": 6,
+        "description": "시작 폴더에 바로가기 변경 흔적 발견, 소유자 미확인.",
+        "mitre": [
+          "T1547.001"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.19",
+        "srcuser": "training9",
+        "deviceId": "0000000000000009",
+        "syscheck": {
+          "path": "C:\\Users\\Training\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\sample.lnk",
+          "event": "modified"
+        }
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic",
+        "label": "startup suspicious"
+      }
+    },
+    {
+      "id": "ps-10",
+      "timestamp": "2026-10-14T00:09:00.000Z",
+      "agent": {
+        "id": "000000000000000a",
+        "name": "training-pc-10"
+      },
+      "rule": {
+        "level": 6,
+        "description": "서비스 설정에서 알 수 없는 변경이 관찰되었습니다.",
+        "mitre": [
+          "T1543"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.20",
+        "srcuser": "training10",
+        "deviceId": "000000000000000a",
+        "serviceName": "TrainingSvcE"
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic",
+        "label": "service metadata"
+      }
+    },
+    {
+      "id": "ps-11",
+      "timestamp": "2026-10-14T00:10:00.000Z",
+      "agent": {
+        "id": "000000000000000b",
+        "name": "training-pc-11"
+      },
+      "rule": {
+        "level": 8,
+        "description": "새 예약 작업이 등록됐으나 서명 검증 상태는 알려지지 않았습니다.",
+        "mitre": [
+          "T1053.005"
+        ]
+      },
+      "data": {
+        "srcip": "198.51.100.21",
+        "srcuser": "training11",
+        "deviceId": "000000000000000b",
+        "eventID": "4698",
+        "taskName": "TrainingTaskX",
+        "known": false
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic",
+        "label": "scheduled task reviewed"
+      }
+    },
+    {
+      "id": "ps-12",
+      "timestamp": "2026-10-14T00:11:00.000Z",
+      "agent": {
+        "id": "000000000000000c",
+        "name": "training-pc-12"
+      },
+      "rule": {
+        "level": 6,
+        "description": "시작 프로그램 폴더의 낯선 항목 변경을 조사 중입니다.",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "198.51.100.22",
+        "srcuser": "training12",
+        "deviceId": "000000000000000c",
+        "startup": true
+      },
+      "fixture": {
+        "classification": "alert",
+        "source": "synthetic",
+        "label": "startup reported"
+      }
+    },
+    {
+      "id": "ps-13",
+      "timestamp": "2026-10-14T00:12:00.000Z",
+      "agent": {
+        "id": "000000000000000d",
+        "name": "training-pc-13"
+      },
+      "rule": {
+        "level": 2,
+        "description": "서명된 승인 서비스 업데이트가 정상 설치되었습니다.",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.23",
+        "srcuser": "training13",
+        "deviceId": "000000000000000d",
+        "eventID": "7045",
+        "serviceName": "TrainingTrusted",
+        "signatureValid": true,
+        "baselineKnown": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic",
+        "label": "approved service update"
+      }
+    },
+    {
+      "id": "ps-14",
+      "timestamp": "2026-10-14T00:13:00.000Z",
+      "agent": {
+        "id": "000000000000000e",
+        "name": "training-pc-14"
+      },
+      "rule": {
+        "level": 3,
+        "description": "허가된 백업 예약 작업이 정상 실행됐습니다.",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.24",
+        "srcuser": "training14",
+        "deviceId": "000000000000000e",
+        "eventID": "4698",
+        "taskName": "TrainingBackup",
+        "signed": true,
+        "known": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic",
+        "label": "scheduled backup"
+      }
+    },
+    {
+      "id": "ps-15",
+      "timestamp": "2026-10-14T00:14:00.000Z",
+      "agent": {
+        "id": "000000000000000f",
+        "name": "training-pc-15"
+      },
+      "rule": {
+        "level": 2,
+        "description": "정상 로그인 성공.",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.25",
+        "srcuser": "training15",
+        "deviceId": "000000000000000f",
+        "operation": "login"
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic",
+        "label": "login"
+      }
+    },
+    {
+      "id": "ps-16",
+      "timestamp": "2026-10-14T00:15:00.000Z",
+      "agent": {
+        "id": "0000000000000010",
+        "name": "training-pc-16"
+      },
+      "rule": {
+        "level": 2,
+        "description": "정상 서명된 자동 시작 앱이 실행됐습니다.",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.26",
+        "srcuser": "training16",
+        "deviceId": "0000000000000010",
+        "syscheck": {
+          "path": "C:\\Users\\Training\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\trusted.lnk",
+          "event": "modified"
+        },
+        "signed": true,
+        "baselineKnown": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic",
+        "label": "startup trusted"
+      }
+    },
+    {
+      "id": "ps-17",
+      "timestamp": "2026-10-14T00:16:00.000Z",
+      "agent": {
+        "id": "0000000000000011",
+        "name": "training-pc-17"
+      },
+      "rule": {
+        "level": 2,
+        "description": "허용된 서비스가 정상 종료됐습니다.",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.27",
+        "srcuser": "training17",
+        "deviceId": "0000000000000011",
+        "serviceName": "TrainingSvcF",
+        "eventID": "7036",
+        "signed": true,
+        "baselineKnown": true
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic",
+        "label": "service stopped"
+      }
+    },
+    {
+      "id": "ps-18",
+      "timestamp": "2026-10-14T00:17:00.000Z",
+      "agent": {
+        "id": "0000000000000012",
+        "name": "training-pc-18"
+      },
+      "rule": {
+        "level": 2,
+        "description": "기존 앱 실행 로그.",
+        "mitre": []
+      },
+      "data": {
+        "srcip": "192.0.2.28",
+        "srcuser": "training18",
+        "deviceId": "0000000000000012",
+        "process": "training-app.exe"
+      },
+      "fixture": {
+        "classification": "normal",
+        "source": "synthetic",
+        "label": "application launch"
+      }
+    }
+  ]
+}
