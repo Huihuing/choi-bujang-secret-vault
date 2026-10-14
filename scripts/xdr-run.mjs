@@ -203,7 +203,7 @@ async function runPersistence(){
  const bindings=JSON.parse(await readFile(new URL('../xdr/persistence/device-bindings.fixture.json',import.meta.url),'utf8'));
  const rawFixture=await readFile(fixtureUrl,'utf8');
  const crypto=await import('node:crypto');
- const gitBlobHash=crypto.createHash('sha1').update('blob '+Buffer.byteLength(rawFixture)+'\\0'.replace('\\0','\0')).update(rawFixture).digest('hex');
+ const gitBlobHash=crypto.createHash('sha1').update('blob '+Buffer.byteLength(rawFixture)+String.fromCharCode(0)).update(rawFixture).digest('hex');
  if(document?.schema!=='aleph.xdr.fixture.v1'||document.moduleKey!=='persistence'||alerts.length!==24
     ||gitBlobHash!=='8dfb349b02cb0fd107a751c148be6165aa8c2725'
     ||bindings?.fixtureOnly!==true||bindings?.sourceFixtureBlobSha!==gitBlobHash)
