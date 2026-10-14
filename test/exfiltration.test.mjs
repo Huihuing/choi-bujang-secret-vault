@@ -75,3 +75,35 @@ test('approved transfers and inbound traffic must not be blocked',()=>{
  assert.equal(decide(approved).action,'record');
  assert.equal(decide(inbound).action,'record');
 });
+
+
+test('baseline membership is not proof of explicit authorization',()=>{
+ const caseFile={
+  rule:{level:11,mitre:['T1048'],description:'Large outbound transfer to first-seen destination'},
+  data:{dstip:'203.0.113.91',bytes_sent:250*1048576,newDestination:true,baselineKnown:true}
+ };
+ assert.equal(decide(caseFile).action,'block');
+});
+test('relative volume, nested destination aliases and Japanese/Korean-style time markers',()=>{
+ const comparison={
+  rule:{level:6},data:{dest_ip:'203.0.113.92',bytes_out:40*1048576,
+   baselineBytes:3*1048576,firstSeen:true,direction:'outbound'}
+ };
+ assert.equal(decide(comparison).action,'block');
+ const event={id:'ex-alias-01',timestamp:'2026-10-14T03:00:00Z',
+  rule:{level:9,description:'처음 보는 외부 주소로 대용량 파일 전송'},
+  data:{dest_ip:'203.0.113.93'}};
+ const decision=decide(event);
+ assert.equal(decision.action,'block');
+ const rule=makeRule(event,decision,Date.parse(event.timestamp));
+ assert.equal(rule.destinationIp,'203.0.113.93');
+ assert.equal(rule.alertId,'ex-alias-01');
+});
+test('unknown or approved-only evidence never turns into a block',()=>{
+ const tagOnly={rule:{level:2,mitre:['T1041'],description:'Routine outbound transfer'},
+ data:{dstip:'203.0.113.95',bytes_sent:1024}};
+ assert.equal(decide(tagOnly).action,'record');
+ const confirmed={rule:{level:12,mitre:['T1048'],description:'Approved external archive transfer after hours'},
+ data:{dstip:'203.0.113.96',newDestination:true,bytes_sent:250*1048576,approved:true}};
+ assert.equal(decide(confirmed).action,'record');
+});
