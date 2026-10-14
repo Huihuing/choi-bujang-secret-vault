@@ -31,7 +31,7 @@ test('standalone offline decide classifies clear 6 / ambiguous 6 / normal 6',asy
   assert.deepEqual(actual,decide(alert));
   assert.ok(actual.confidence>=0&&actual.confidence<=1);
   assert.equal(actual.action,actual.confidence>=.85?'block':actual.confidence>=.5?'alert':'record');
-  assert.equal(actual.action,alert.fixture.classification,alert.id);
+  assert.equal(actual.action,alert.fixture.classification==='normal'?'record':alert.fixture.classification,alert.id);
   counts[actual.action]++;
  }
  assert.deepEqual(counts,{block:6,alert:6,record:6});
