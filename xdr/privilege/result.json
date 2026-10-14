@@ -1,0 +1,121 @@
+{
+  "schema": "aleph.xdr.result.v1",
+  "moduleKey": "privilege",
+  "counts": {
+    "block": 6,
+    "alert": 6,
+    "record": 6
+  },
+  "normalEventBlocks": 0,
+  "rulesWritten": 6,
+  "decisions": [
+    {
+      "alertId": "pr-01",
+      "action": "block",
+      "confidence": 0.97,
+      "reason": "unapproved-admin-group-add"
+    },
+    {
+      "alertId": "pr-02",
+      "action": "block",
+      "confidence": 0.97,
+      "reason": "unapproved-admin-group-add"
+    },
+    {
+      "alertId": "pr-03",
+      "action": "block",
+      "confidence": 0.97,
+      "reason": "unapproved-admin-group-add"
+    },
+    {
+      "alertId": "pr-04",
+      "action": "block",
+      "confidence": 0.95,
+      "reason": "unexpected-privileged-command"
+    },
+    {
+      "alertId": "pr-05",
+      "action": "block",
+      "confidence": 0.95,
+      "reason": "unexpected-privileged-command"
+    },
+    {
+      "alertId": "pr-06",
+      "action": "block",
+      "confidence": 0.92,
+      "reason": "off-hours-elevation"
+    },
+    {
+      "alertId": "pr-07",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "privilege-review"
+    },
+    {
+      "alertId": "pr-08",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "privilege-review"
+    },
+    {
+      "alertId": "pr-09",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "privilege-review"
+    },
+    {
+      "alertId": "pr-10",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "privilege-review"
+    },
+    {
+      "alertId": "pr-11",
+      "action": "alert",
+      "confidence": 0.75,
+      "reason": "privilege-review"
+    },
+    {
+      "alertId": "pr-12",
+      "action": "alert",
+      "confidence": 0.6,
+      "reason": "privilege-review"
+    },
+    {
+      "alertId": "pr-13",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "pr-14",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "pr-15",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "pr-16",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "pr-17",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    },
+    {
+      "alertId": "pr-18",
+      "action": "record",
+      "confidence": 0.05,
+      "reason": "normal-event"
+    }
+  ]
+}

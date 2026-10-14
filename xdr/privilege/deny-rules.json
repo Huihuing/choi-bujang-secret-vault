@@ -1,0 +1,50 @@
+[
+  {
+    "id": "xdr.privilege.pr-01",
+    "subjectId": "test-sdp-subject-01",
+    "alertId": "pr-01",
+    "pattern": "unapproved-admin-group-add",
+    "startsAt": "2026-10-14T00:00:00.000Z",
+    "expiresAt": "2026-10-14T00:15:00.000Z"
+  },
+  {
+    "id": "xdr.privilege.pr-02",
+    "subjectId": "test-sdp-subject-02",
+    "alertId": "pr-02",
+    "pattern": "unapproved-admin-group-add",
+    "startsAt": "2026-10-14T00:01:00.000Z",
+    "expiresAt": "2026-10-14T00:16:00.000Z"
+  },
+  {
+    "id": "xdr.privilege.pr-03",
+    "subjectId": "test-sdp-subject-03",
+    "alertId": "pr-03",
+    "pattern": "unapproved-admin-group-add",
+    "startsAt": "2026-10-14T00:02:00.000Z",
+    "expiresAt": "2026-10-14T00:17:00.000Z"
+  },
+  {
+    "id": "xdr.privilege.pr-04",
+    "subjectId": "test-sdp-subject-04",
+    "alertId": "pr-04",
+    "pattern": "unexpected-privileged-command",
+    "startsAt": "2026-10-14T00:03:00.000Z",
+    "expiresAt": "2026-10-14T00:18:00.000Z"
+  },
+  {
+    "id": "xdr.privilege.pr-05",
+    "subjectId": "test-sdp-subject-05",
+    "alertId": "pr-05",
+    "pattern": "unexpected-privileged-command",
+    "startsAt": "2026-10-14T00:04:00.000Z",
+    "expiresAt": "2026-10-14T00:19:00.000Z"
+  },
+  {
+    "id": "xdr.privilege.pr-06",
+    "subjectId": "test-sdp-subject-06",
+    "alertId": "pr-06",
+    "pattern": "off-hours-elevation",
+    "startsAt": "2026-10-14T00:05:00.000Z",
+    "expiresAt": "2026-10-14T00:20:00.000Z"
+  }
+]

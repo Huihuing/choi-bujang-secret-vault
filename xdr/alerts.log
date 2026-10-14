@@ -58,3 +58,15 @@
 {"module":"persistence","alertId":"ps-10","action":"alert","confidence":0.6,"pattern":"unsigned-new-service"}
 {"module":"persistence","alertId":"ps-11","action":"alert","confidence":0.6,"pattern":"unknown-scheduled-task"}
 {"module":"persistence","alertId":"ps-12","action":"alert","confidence":0.6,"pattern":"startup-folder-change"}
+{"module":"privilege","alertId":"pr-01","action":"block","confidence":0.97,"pattern":"unapproved-admin-group-add"}
+{"module":"privilege","alertId":"pr-02","action":"block","confidence":0.97,"pattern":"unapproved-admin-group-add"}
+{"module":"privilege","alertId":"pr-03","action":"block","confidence":0.97,"pattern":"unapproved-admin-group-add"}
+{"module":"privilege","alertId":"pr-04","action":"block","confidence":0.95,"pattern":"unexpected-privileged-command"}
+{"module":"privilege","alertId":"pr-05","action":"block","confidence":0.95,"pattern":"unexpected-privileged-command"}
+{"module":"privilege","alertId":"pr-06","action":"block","confidence":0.92,"pattern":"off-hours-elevation"}
+{"module":"privilege","alertId":"pr-07","action":"alert","confidence":0.6,"pattern":"privilege-review"}
+{"module":"privilege","alertId":"pr-08","action":"alert","confidence":0.6,"pattern":"privilege-review"}
+{"module":"privilege","alertId":"pr-09","action":"alert","confidence":0.6,"pattern":"privilege-review"}
+{"module":"privilege","alertId":"pr-10","action":"alert","confidence":0.6,"pattern":"privilege-review"}
+{"module":"privilege","alertId":"pr-11","action":"alert","confidence":0.75,"pattern":"privilege-review"}
+{"module":"privilege","alertId":"pr-12","action":"alert","confidence":0.6,"pattern":"privilege-review"}
