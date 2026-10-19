@@ -536,6 +536,11 @@ export function createStudentView() {
         WB_CLCO_COHORT_BUDGET_EXHAUSTED: '반의 AI 사용량이 소진됐습니다. 담당자에게 확인하세요.',
         WB_CLCO_LIMIT_REACHED: 'AI 이용 한도에 도달했습니다. 담당자에게 확인하세요.',
         WB_CLCO_SESSION_CLOSED: '현재 AI 이용 시간이 아닙니다. 운영 시간을 확인하세요.',
+        // These are safe transport codes. The provided UI may currently
+        // normalize them to AI_REQUEST_UNVERIFIED; that contract is not changed here.
+        NETWORK_ERROR: '로컬 서버와 네트워크 연결에 실패했습니다. 연결 상태를 확인하고 잠시 뒤 직접 다시 점검하세요.',
+        WB_CLCO_NETWORK_ERROR: 'AI 게이트 네트워크 연결에 실패했습니다. 연결 상태를 확인하고 잠시 뒤 직접 다시 점검하세요.',
+        WB_CLCO_SERVER_UNAVAILABLE: 'AI 서버가 응답하지 않습니다. 잠시 뒤 직접 다시 점검하고 반복되면 담당자에게 확인하세요.',
         WB_CLCO_RATE_LIMITED: '요청 제한 상태입니다. 잠시 뒤 사용자가 직접 다시 점검하세요.',
         WB_CLCO_TIMEOUT: 'AI 응답 시간이 초과됐습니다. 잠시 뒤 사용자가 직접 다시 점검하세요.',
         REQUEST_TIMEOUT: '서버 요청 시간이 초과됐습니다. 사용자가 직접 다시 점검하세요.',
@@ -548,7 +553,7 @@ export function createStudentView() {
         ON_AI_MODEL_LIST_EMPTY: '허용된 AI 모델이 없습니다. 담당자에게 모델 허용 설정을 확인하세요.',
         ON_AI_INVALID_INPUT: '사건 입력을 검증하지 못했습니다. 해당 기록을 확인하세요.',
         ON_AI_INVALID_OUTPUT: 'AI 설명 결과를 검증하지 못했습니다. 해당 기록의 근거를 확인하세요.',
-        AI_REQUEST_UNVERIFIED: 'AI 연결 또는 응답을 확인할 수 없습니다. 담당자에게 연결·권한을 확인하세요.',
+        AI_REQUEST_UNVERIFIED: 'AI 연결 또는 응답 원인을 확인할 수 없습니다. 네트워크 상태와 계정 연결을 확인하고 잠시 뒤 직접 다시 점검하세요. 문제가 반복되면 담당자에게 권한과 오류 코드를 확인하세요.',
       };
 
       add('h3', '알레프게이트 AI 연결 점검');
