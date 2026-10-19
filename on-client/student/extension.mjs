@@ -411,7 +411,7 @@ export function createStudentView() {
           if (/timeout|timed.?out|시간\s*초과/i.test(code + ' ' + message)) {
             line(section, name + ' 조회 시간 초과');
           }
-          line(section, name + '을(를) 불러오지 못했습니다: ' + message);
+          line(section, name + ' 정보를 불러오지 못했습니다: ' + message);
           line(section, '다시 시도는 위쪽 다시 불러오기 버튼을 직접 누르세요. 자동 재요청하지 않습니다.');
         } else if (resource.status === 'ok') {
           if (!Array.isArray(resource.data)) {
