@@ -29,8 +29,16 @@ export function createStudentView() {
       const value = (item) =>
         typeof item === 'string' && item.trim() ? item :
         typeof item === 'number' && Number.isFinite(item) ? String(item) : '확인 불가';
-      const deviceState = (status) => deviceStates[status] ?? '확인 불가';
-      const sessionState = (status) => sessionStates[status] ?? '확인 불가';
+      // Show both the exact API status and its Korean interpretation.
+      // Keep raw status tokens unchanged for the official 13-stage review.
+      const statusText = (status, meanings) => {
+        const raw = typeof status === 'string' && status.trim()
+          ? status : 'unknown';
+        return raw + ' · ' + (Object.prototype.hasOwnProperty.call(meanings, raw)
+          ? meanings[raw] : '확인 불가');
+      };
+      const deviceState = (status) => statusText(status, deviceStates);
+      const sessionState = (status) => statusText(status, sessionStates);
 
       const line = (parent, text, tag = 'p') => {
         const element = document.createElement(tag);
