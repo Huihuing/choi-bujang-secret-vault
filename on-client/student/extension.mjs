@@ -6,9 +6,14 @@ export function createStudentView() {
       // The host replaces the previously mounted node with this new tree on refresh.
       // No previous identity data or DOM nodes are cached between calls.
       const root = document.createElement('section');
+      root.className = 'wd-identity';
       const title = document.createElement('h2');
       title.textContent = '로그인 사용자·기기·세션';
       root.appendChild(title);
+      const intro = document.createElement('p');
+      intro.className = 'wd-identity-intro';
+      intro.textContent = '이 앱이 기존 서버에서 받은 계정·기기·세션 상태입니다. 실제 Windows 보안 검사 결과가 아닙니다.';
+      root.appendChild(intro);
 
       const deviceStates = {
         compliant: '보안 기준 충족',
@@ -56,8 +61,10 @@ export function createStudentView() {
       };
       const section = (heading, response, showOk) => {
         const container = document.createElement('section');
+        container.className = 'wd-identity-panel';
         line(container, heading, 'h3');
         const state = response && typeof response === 'object' ? response : {};
+        container.setAttribute('data-wd-state', ['ok', 'error', 'loading'].includes(state.status) ? state.status : 'unverified');
         if (Object.prototype.hasOwnProperty.call(modes, state.mode)) {
           line(container, modes[state.mode]);
         }
@@ -184,6 +191,7 @@ export function createStudentView() {
       // Only the supplied user's recent records are shown; never query another endpoint.
       // Each call owns a new DOM and selection state, so reload drops stale details.
       const root = document.createElement('section');
+      root.className = 'wd-timeline';
       const make = (tag, text) => {
         const node = document.createElement(tag);
         if (text !== undefined) node.textContent = String(text);
@@ -203,7 +211,16 @@ export function createStudentView() {
       const kindLabels = { access: '접속 기록', xdr: 'XDR 경보' };
       const appLabel = (appId) => value(appId, '앱 ID 없음 · 확인 불가');
 
-      root.appendChild(make('h3', '내 접속 기록과 XDR 경보'));
+      const introduction = make('header');
+      introduction.className = 'wd-timeline-intro';
+      const eyebrow = make('p', 'WATCHDOGS  /  ACTIVITY');
+      eyebrow.className = 'wd-eyebrow';
+      introduction.appendChild(eyebrow);
+      introduction.appendChild(make('h3', '내 접속 기록과 XDR 경보'));
+      const originNote = make('p', '발생 시각(at) 최신순 · 실제 조회 시각은 앱 상단의 「확인 시각」을 확인하세요.');
+      originNote.className = 'wd-timeline-origin';
+      introduction.appendChild(originNote);
+      root.appendChild(introduction);
       if (mode === 'demo') line(root, '예제 자료 · 실제 계정 기록이 아닙니다.');
       else if (mode === 'disconnected') line(root, '연결 없음');
       else if (mode === 'unknown') line(root, '연결 상태 확인 불가');
@@ -230,16 +247,34 @@ export function createStudentView() {
       // Copy before sorting; do not mutate server data.
       const records = data.slice().sort((a, b) =>
         (Date.parse(b?.at) || 0) - (Date.parse(a?.at) || 0));
-      line(root, '현재 계정의 최근 접속·저장된 XDR 기록만 표시합니다(서버 제공 범위 최대 40건). 전체 직원 이력이나 실시간 탐지 결과가 아닙니다.');
+      const summary = make('div');
+      summary.className = 'wd-timeline-summary';
+      const metric = (label, count) => {
+        const cell = make('div');
+        cell.className = 'wd-metric';
+        const valueNode = make('strong', String(count));
+        const labelNode = make('span', label);
+        cell.appendChild(valueNode);
+        cell.appendChild(labelNode);
+        summary.appendChild(cell);
+      };
+      metric(mode === 'demo' ? '받은 예제 기록' : '받은 기록', records.length);
+      metric('접속 기록', records.filter(item => item?.kind === 'access').length);
+      metric('XDR 기록', records.filter(item => item?.kind === 'xdr').length);
+      root.appendChild(summary);
+      const scopeNote = line(root, '현재 계정의 최근 접속·저장된 XDR 기록만 표시합니다(서버 제공 범위 최대 40건). 전체 직원 이력이나 실시간 탐지 결과가 아닙니다.');
+      scopeNote.className = 'wd-timeline-scope';
       if (records.length === 0) {
         line(root, '표시할 기록이 없습니다');
         return root;
       }
 
       const filters = document.createElement('div');
+      filters.className = 'wd-timeline-filters';
       root.appendChild(filters);
       const createFilter = (name, options) => {
         const label = make('label', name);
+        label.className = 'wd-timeline-filter';
         const select = document.createElement('select');
         select.setAttribute('aria-label', name);
         const addOption = (key, text) => {
@@ -265,12 +300,16 @@ export function createStudentView() {
           [access, stateLabel(access, accessLabels)]));
 
       const count = make('p');
+      count.className = 'wd-timeline-count';
+      count.setAttribute('role', 'status');
       root.appendChild(count);
       const list = document.createElement('ul');
+      list.className = 'wd-timeline-track';
       root.appendChild(list);
 
       const makeDetail = (event) => {
         const detail = document.createElement('section');
+        detail.className = 'wd-record-detail';
         detail.setAttribute('data-student-event-detail', event.id);
         detail.appendChild(make('h4', '기록 상세 · ' + value(event.id)));
         line(detail, '사건 ID: ' + value(event.id));
@@ -323,7 +362,19 @@ export function createStudentView() {
         }
         for (const event of matching) {
           const item = document.createElement('li');
+          item.className = 'wd-timeline-item';
           item.setAttribute('data-student-event-id', event.id);
+          item.setAttribute('data-wd-kind', event.kind === 'access' || event.kind === 'xdr' ? event.kind : 'unknown');
+          const meta = make('div');
+          meta.className = 'wd-timeline-meta';
+          const badge = make('span', (kindLabels[event.kind] ?? '기록 종류 확인 불가') + '(' + value(event.kind) + ')');
+          badge.className = 'wd-kind-badge';
+          meta.appendChild(badge);
+          const at = make('time', '발생 ' + value(event.at));
+          at.className = 'wd-timeline-time';
+          if (typeof event.at === 'string' && Number.isFinite(Date.parse(event.at))) at.dateTime = event.at;
+          meta.appendChild(at);
+          item.appendChild(meta);
           item.appendChild(make('h4', '요약: ' + value(event.summary)));
           line(item, '사건 ID: ' + value(event.id));
           line(item, '시각: ' + value(event.at));
@@ -361,6 +412,7 @@ export function createStudentView() {
       // The provided UI supplies snapshots and owns all requests and refresh.
       // This function only displays current data; no previous result is cached.
       const root = document.createElement('section');
+      root.className = 'wd-status';
       const make = (tag, text) => {
         const node = document.createElement(tag);
         if (text !== undefined) node.textContent = String(text);
@@ -392,14 +444,19 @@ export function createStudentView() {
       };
 
       root.appendChild(make('h3', '기기·세션·알림·도움정보'));
-      line(root, '연결 상태: ' + modeText(mode));
-      line(root, '등록 기기는 최대 100개까지 조회합니다. 세션은 현재 검증된 연결 한 개만 조회하며, 과거 세션 목록이 아닙니다.');
+      const modeLine = line(root, '연결 상태: ' + modeText(mode));
+      modeLine.className = 'wd-status-connection';
+      modeLine.setAttribute('data-wd-mode', Object.prototype.hasOwnProperty.call(modeNames, mode) ? mode : 'unknown');
+      const scopeLine = line(root, '등록 기기는 최대 100개까지 조회합니다. 세션은 현재 검증된 연결 한 개만 조회하며, 과거 세션 목록이 아닙니다.');
+      scopeLine.className = 'wd-status-scope';
 
       const showList = (name, input, type, emptyText) => {
         const section = document.createElement('section');
+        section.className = 'wd-status-panel';
         section.appendChild(make('h4', name));
         root.appendChild(section);
         const resource = input && typeof input === 'object' ? input : {};
+        section.setAttribute('data-wd-state', ['ok', 'error', 'loading'].includes(resource.status) ? resource.status : 'unverified');
         if (resource.mode === 'demo' || resource.mode === 'disconnected' || resource.mode === 'unknown') {
           line(section, '자료 연결: ' + modeText(resource.mode));
         }
@@ -436,25 +493,34 @@ export function createStudentView() {
       showList('세션', sessions, 'session', '현재 연결 없음');
 
       const alerts = document.createElement('section');
+      alerts.className = 'wd-alerts';
       alerts.appendChild(make('h4', '주의 알림'));
       root.appendChild(alerts);
+      const alertHelp = line(alerts, '이 목록은 연결·조회 실패 알림을 포함합니다. 실제 접속·XDR 경보는 「보안 기록」에서 확인하세요.');
+      alertHelp.className = 'wd-alert-scope';
       if (!Array.isArray(notifications)) {
         line(alerts, '알림 자료 확인 불가');
       } else if (notifications.length === 0) {
         line(alerts, '주의할 알림이 없습니다');
       } else {
         const list = document.createElement('ul');
+        list.className = 'wd-alert-list';
         for (const alert of notifications) {
           const code = typeof alert?.code === 'string' &&
             /^[A-Za-z0-9_.:-]{1,80}$/.test(alert.code) && !secretPattern.test(alert.code)
               ? alert.code : '확인 불가';
-          list.appendChild(make('li', '자료(resource): ' + safeMessage(alert?.resource) +
-            ' · 코드(code): ' + code + ' · 알림(message): ' + safeMessage(alert?.message)));
+          const notice = make('li', '자료(resource): ' + safeMessage(alert?.resource) +
+            ' · 코드(code): ' + code + ' · 알림(message): ' + safeMessage(alert?.message));
+          notice.className = 'wd-alert';
+          notice.setAttribute('data-wd-alert-kind', code === 'ENGINE_NOT_CONNECTED' ? 'connection'
+            : code === 'CONTRACT_MISMATCH' ? 'unverified' : 'request');
+          list.appendChild(notice);
         }
         alerts.appendChild(list);
       }
 
       const help = document.createElement('section');
+      help.className = 'wd-status-help';
       help.appendChild(make('h4', '연결 도움정보'));
       root.appendChild(help);
       const check = diagnostics && typeof diagnostics === 'object' ? diagnostics : {};

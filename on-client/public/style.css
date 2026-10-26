@@ -207,3 +207,141 @@ main:focus { outline: none; }
 .state-ok { background: var(--allow-soft); color: var(--allow); }
 .ai-result[data-state="connected"] { border-left: 3px solid var(--allow); padding-left: 12px; }
 .ai-result[data-state="unknown"] { border-left: 3px solid var(--unknown); padding-left: 12px; }
+
+
+/* 워치독스 총공세 1일차: 시간순 보안 기록, 연결 상태, 오류 알림.
+   기존 화면·API·판정 로직은 변경하지 않고 학생 표시와 레이아웃만 개선한다. */
+:root {
+  --wd-deep: #172e50;
+  --wd-blue: #2657bd;
+  --wd-cyan: #007c88;
+  --wd-line: #d4deec;
+  --wd-paper: #f8faff;
+  --wd-shadow: 0 12px 34px rgba(24, 48, 90, 0.06);
+  --wd-round: 14px;
+}
+body { min-width: 0; background: #f3f6fa; }
+main { min-width: 0; width: 100%; }
+.topbar { min-height: 64px; height: auto; box-shadow: 0 1px 0 rgba(20,44,77,0.03); }
+.brand-name { color: var(--wd-deep); }
+.card { border-radius: var(--wd-round); box-shadow: var(--wd-shadow); }
+.card.student { border-left: 4px solid var(--student); }
+#nav [role="tab"] { transition: background-color 150ms ease, color 150ms ease; }
+#nav [role="tab"][aria-selected="true"] { box-shadow: inset 3px 0 var(--accent); }
+#student-identity, #student-status, #student-events { overflow-wrap: anywhere; }
+
+/* 신원 정보: 실제 연결 상태와 PC 전체 안전 여부를 구분 */
+.wd-identity { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
+.wd-identity > h2, .wd-identity-intro { grid-column: 1 / -1; }
+.wd-identity > h2 { margin: 0; font-size: 1.13rem; color: var(--wd-deep); }
+.wd-identity-intro { margin: -4px 0 2px; color: var(--muted); font-size: .88rem; }
+.wd-identity-panel {
+  min-width: 0; padding: 15px; border: 1px solid var(--wd-line);
+  border-radius: 12px; background: var(--wd-paper);
+}
+.wd-identity-panel > h3 { margin: 0 0 12px; color: var(--wd-deep); font-size: .93rem; }
+.wd-identity-panel > p { margin: 8px 0; font-size: .88rem; overflow-wrap: anywhere; }
+.wd-identity-panel[data-wd-state="error"] { border-color: #f0d1cf; background: #fff9f8; }
+.wd-identity-panel[data-wd-state="loading"] { border-color: #cadcf8; }
+.wd-identity-panel dl { display: grid; grid-template-columns: minmax(75px, .8fr) minmax(0, 1.2fr); gap: 8px; margin: 0; font-size: .84rem; }
+.wd-identity-panel dt { color: var(--muted); }
+.wd-identity-panel dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+
+/* 기록 타임라인: 발생 시각 정렬, 조회 시각은 기존 앱 상단에 유지 */
+.wd-timeline { min-width: 0; }
+.wd-timeline-intro {
+  border-radius: 12px; padding: 18px 20px; color: #eff7ff;
+  background: linear-gradient(120deg, #153158, #22558b 65%, #216b83);
+}
+.wd-eyebrow { margin: 0 0 6px; font-size: .71rem; letter-spacing: .14em; font-weight: 700; color: #c1dcf7; }
+.wd-timeline-intro h3 { margin: 0; font-size: 1.18rem; line-height: 1.35; color: #fff; }
+.wd-timeline-origin { margin: 8px 0 0; font-size: .81rem; color: #deebfa; }
+.wd-timeline-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin: 14px 0; }
+.wd-metric { padding: 14px 15px; display: flex; flex-direction: column; gap: 3px; border: 1px solid var(--wd-line); border-radius: 12px; background: #fff; }
+.wd-metric strong { font-size: 1.55rem; font-variant-numeric: tabular-nums; line-height: 1.15; color: var(--wd-deep); }
+.wd-metric span { font-size: .8rem; color: var(--muted); }
+.wd-timeline-scope { padding: 9px 12px; border-left: 3px solid #96b1d7; color: var(--muted); background: #f3f7fc; font-size: .83rem; border-radius: 0 8px 8px 0; }
+.wd-timeline-filters { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 16px 0; }
+.wd-timeline-filter { display: grid; gap: 6px; color: var(--wd-deep); font-size: .82rem; font-weight: 700; }
+.wd-timeline-filter select { width: 100%; min-width: 0; padding: 9px 12px; border: 1px solid #b9c9df; border-radius: 9px; background: white; color: var(--text); font: inherit; font-weight: 400; }
+.wd-timeline-filter select:hover { border-color: var(--wd-blue); }
+.wd-timeline-count { margin: 0 0 14px; color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
+.wd-timeline-track { position: relative; list-style: none; margin: 0; padding: 0 0 0 26px; display: grid; gap: 14px; }
+.wd-timeline-track::before { content: ""; position: absolute; left: 10px; top: 12px; bottom: 22px; width: 2px; background: var(--wd-line); }
+.wd-timeline-track > li { list-style: none; }
+.wd-timeline-item { position: relative; padding: 15px 16px; border: 1px solid var(--wd-line); border-radius: 12px; background: #fff; box-shadow: 0 3px 12px rgba(23,46,80,.04); }
+.wd-timeline-item::before { content: ""; position: absolute; left: -23px; top: 19px; width: 12px; height: 12px; border-radius: 50%; border: 3px solid white; background: var(--wd-cyan); box-shadow: 0 0 0 2px var(--wd-cyan); }
+.wd-timeline-item[data-wd-kind="xdr"]::before { background: #b16a18; box-shadow: 0 0 0 2px #b16a18; }
+.wd-timeline-item[data-wd-kind="unknown"]::before { background: #64748b; box-shadow: 0 0 0 2px #64748b; }
+.wd-timeline-item h4 { margin: 6px 0 10px; font-size: .98rem; font-weight: 700; color: var(--wd-deep); }
+.wd-timeline-item > p { margin: 4px 0; font-size: .83rem; color: var(--muted); }
+.wd-timeline-meta { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.wd-kind-badge { padding: 3px 9px; border-radius: 999px; background: #e7f6f5; color: #086069; font-size: .76rem; font-weight: 700; }
+.wd-timeline-item[data-wd-kind="xdr"] .wd-kind-badge { background: #fff3df; color: #84500a; }
+.wd-timeline-item[data-wd-kind="unknown"] .wd-kind-badge { background: #edf0f4; color: #475569; }
+.wd-timeline-time { font-size: .79rem; color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.wd-timeline-item button { margin-top: 9px; padding: 7px 12px; background: #f1f6fe; color: #184a9c; border: 1px solid #bcd0ed; border-radius: 8px; font: inherit; cursor: pointer; }
+.wd-timeline-item button:hover:not(:disabled) { background: #e5eefb; }
+.wd-timeline-item button:disabled { opacity: .55; cursor: not-allowed; }
+.wd-record-detail { border-top: 1px solid var(--wd-line); margin-top: 13px; padding-top: 13px; }
+.wd-record-detail h4 { margin: 0 0 10px; }
+.wd-record-detail h5 { margin: 14px 0 7px; }
+.wd-record-detail ul { padding-left: 20px; }
+.wd-record-detail li { overflow-wrap: anywhere; }
+
+/* 내 PC 연결 상태/알림: 연결·조회 오류를 XDR 위협으로 승격하지 않는다. */
+.wd-status > h3 { font-size: 1.06rem; margin-bottom: 8px; color: var(--wd-deep); }
+.wd-status-connection { display: inline-block; margin: 0 0 9px; border: 1px solid #c9d4e4; background: #eef3fa; color: #334155; border-radius: 8px; padding: 7px 12px; font-weight: 700; font-size: .87rem; }
+.wd-status-connection[data-wd-mode="connected"] { border-color: #b9dfca; background: #e9f7ef; color: #166534; }
+.wd-status-connection[data-wd-mode="disconnected"] { border-color: #f3d0cf; background: #fdf0ef; color: #9b241d; }
+.wd-status-connection[data-wd-mode="demo"] { border-color: #f5dda9; background: #fff5de; color: #805005; }
+.wd-status-scope { margin: 0 0 14px; color: var(--muted); font-size: .82rem; }
+.wd-status-panel { margin: 0 0 10px; padding: 14px 16px; background: var(--wd-paper); border: 1px solid var(--wd-line); border-radius: 12px; }
+.wd-status-panel[data-wd-state="error"] { background: #fffaf9; border-color: #f0d3d0; }
+.wd-status-panel h4 { color: var(--wd-deep); font-size: .9rem; margin-bottom: 7px; }
+.wd-status-panel p { margin: 6px 0; font-size: .84rem; overflow-wrap: anywhere; }
+.wd-status-panel ul { margin: 8px 0; padding-left: 19px; }
+.wd-alerts { border-top: 1px solid var(--wd-line); margin-top: 16px; padding-top: 15px; }
+.wd-alerts h4, .wd-status-help h4 { color: var(--wd-deep); font-size: .92rem; margin-bottom: 8px; }
+.wd-alert-scope { font-size: .82rem; color: var(--muted); margin: 0 0 12px; }
+.wd-alert-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.wd-alert { border: 1px solid #e2d6c2; background: #fffaf2; border-left: 4px solid #ac7028; padding: 11px 13px; border-radius: 9px; font-size: .82rem; overflow-wrap: anywhere; }
+.wd-alert[data-wd-alert-kind="connection"] { background: #f7f9fd; border-color: #d3dded; border-left-color: #647c9c; }
+.wd-alert[data-wd-alert-kind="unverified"] { background: #fff4ed; border-color: #f0d7c4; border-left-color: #a55e24; }
+.wd-status-help { margin-top: 16px; padding: 14px 16px; border: 1px solid var(--wd-line); border-radius: 12px; background: #fff; }
+.wd-status-help p { font-size: .83rem; overflow-wrap: anywhere; }
+
+@media (max-width: 1150px) {
+  .wd-identity { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .wd-identity-panel:first-of-type { grid-column: 1 / -1; }
+}
+@media (max-width: 850px) {
+  .topbar { flex-wrap: wrap; padding: 12px 16px; gap: 8px; }
+  .topbar-status { flex-wrap: wrap; gap: 8px; }
+  .layout { grid-template-columns: minmax(0,1fr); }
+  .sidebar { border-right: 0; border-bottom: 1px solid var(--border); padding: 10px; }
+  #nav { flex-direction: row; overflow-x: auto; }
+  #nav [role="tab"] { white-space: nowrap; }
+  #nav [role="tab"][aria-selected="true"] { box-shadow: inset 0 -3px var(--accent); }
+  .sidebar-note { margin: 8px 4px 0; }
+  main { padding: 18px 16px 32px; }
+  .grid-2 { grid-template-columns: minmax(0,1fr); }
+  .wd-identity { grid-template-columns: minmax(0,1fr); }
+  .wd-identity-panel:first-of-type { grid-column: auto; }
+  .wd-timeline-filters { grid-template-columns: minmax(0,1fr); }
+  .wd-timeline-summary { gap: 6px; }
+  .wd-metric { padding: 10px; }
+  .wd-metric strong { font-size: 1.2rem; }
+  .wd-timeline-intro { padding: 16px; }
+  .connect-layout { flex-wrap: wrap; }
+}
+@media (max-width: 460px) {
+  main { padding: 14px 10px 24px; }
+  .card { padding: 14px 12px; }
+  .wd-timeline-track { padding-left: 22px; }
+  .wd-timeline-track::before { left: 8px; }
+  .wd-timeline-item::before { left: -21px; }
+  .wd-timeline-meta { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .wd-identity-panel dl { grid-template-columns: minmax(0,1fr); gap: 3px; }
+  .wd-identity-panel dt:not(:first-child) { margin-top: 6px; }
+}
