@@ -57,32 +57,39 @@ if (Test-Path -LiteralPath $clone) {
 
 파일 내용을 출력하지 않는다. 이전 `M public/data.json`이 사라졌거나 해시가 전후 달라지면 원본 보존을 검증 완료로 기록하지 않는다.
 
-### 3-2. 별도 새 폴더 생성 및 고정 SHA 확인
+### 3-2. 별도 새 폴더 생성 및 정확한 제출 SHA 확인
+
+> 2026-10-26 첫 공식 제출 SHA는 **`2423f04bff3e608cb06b92890367aec379b6b03c`**이다. 이 값은 과거 실패 피드백의 **고정 기록**이다. **이번에 새로 제출하는 커밋은 다른 SHA이므로**, 재현 전 사용자 포털에 입력할 그 **현재 40자리 SHA**를 아래 PowerShell에 입력한 뒤 동일 SHA가 체크아웃되는지 확인한다. 문서가 자신을 포함하는 SHA를 미리 정적 문자열로 적으면 커밋이 바뀌므로, 실제 SHA는 체크아웃 시 `git rev-parse HEAD`로 확인·기록한다.
 
 ~~~powershell
 $clone = "D:\share\alekov-stage22-repro"
 $repoUrl = "https://github.com/Huihuing/choi-bujang-secret-vault.git"
-$recordedCommit = "2423f04bff3e608cb06b92890367aec379b6b03c"
 
-if (Test-Path -LiteralPath $clone) {
-    throw "동일 경로가 이미 존재합니다. 복제·덮어쓰기를 중단합니다."
+# ALEPH의 이번 22단계에 실제로 제출할 Git commit 전체 40자 입력
+$targetCommit = (Read-Host "이번 제출의 40자리 Git 커밋 SHA").Trim()
+if ($targetCommit -notmatch '^[0-9a-f]{40}$') {
+    throw "40자리 Git SHA를 확인하세요."
 }
+if (Test-Path -LiteralPath $clone) {
+    throw "동일 재현 폴더가 이미 있습니다. 삭제하지 말고 새로운 빈 경로를 지정하세요."
+}
+
 git clone --no-checkout --branch main --single-branch $repoUrl $clone
 if ($LASTEXITCODE -ne 0) { throw "GitHub 복제 실패" }
 
-# 피드백이 지목한 정확한 22단계 최초 제출 SHA를 시험 대상으로 지정한다.
-git -C $clone switch --detach $recordedCommit
-if ($LASTEXITCODE -ne 0) { throw "기록된 SHA 체크아웃 실패" }
+git -C $clone switch --detach $targetCommit
+if ($LASTEXITCODE -ne 0) { throw "제출 SHA 체크아웃 실패" }
 $actual = (git -C $clone rev-parse HEAD).Trim()
-if ($actual -ne $recordedCommit) { throw "재현 대상 커밋 불일치" }
-Write-Host "22단계 재현 대상 커밋: $actual"
+if ($actual -ne $targetCommit) { throw "이번 제출 SHA와 체크아웃 SHA 불일치" }
+
+Write-Host "이번 22단계 검증 대상 Git SHA(40자리): $actual"
 git -C $clone status --short
 Test-Path -LiteralPath "$clone\on-client\tools\start-alekov.ps1"
 Test-Path -LiteralPath "$clone\on-client\docs\STUDENT_RUNBOOK.md"
 Test-Path -LiteralPath "$clone\on-client\docs\STUDENT_RELEASE_REPRODUCTION.md"
 ~~~
 
-**검증 대상을 명시적으로 구분한다.** 위 복제 테스트는 `2423f04bff3e608cb06b92890367aec379b6b03c`를 검사한다. **이 문서의 후속 수정 커밋을 제출한다면 그것은 서로 다른 SHA**이므로, 새 제출 커밋 SHA는 포털 필드의 실제 값으로 확인하고 **동일 SHA에서 최소 문법·시작·브라우저·종료·재실행을 다시 점검**한다. 21단계 기준 커밋 또는 다른 SHA에서의 테스트를 현재 제출 커밋의 성공으로 합산하지 않는다. 운영 설정·원본 비밀·미커밋 노트를 복사하지 않는다.
+**검증 원칙:** 위 명령의 `$targetCommit`은 반드시 **이번 포털 제출 필드의 실제 커밋**과 일치해야 한다. 최초 제출 `2423f04...`에서 수행한 시험을 새로운 문서 수정 커밋의 시험 결과로 합산하지 않는다. 기동 전 실제 40자리 SHA, `node --version`, `git status --short`와 이후 HTTP/화면 결과를 서로 묶어서 기록한다. 개인 운영 설정·원본 비밀·미커밋 노트는 복제하지 않는다.
 
 ### 3-3. Node.js 24로 앱 시작(복제본 앱 폴더)
 
@@ -120,7 +127,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\start-alekov.ps1 -Po
 
 ## 4. 동일 최종 커밋 기준 13~21단계 재현 기록
 
-> **고정 시험 대상 Git 커밋: `2423f04bff3e608cb06b92890367aec379b6b03c` (ALEPH 22단계 2026-10-26 11:05 접수).** 해당 SHA를 새 폴더에 복제·실행한 출력이 아직 제공되지 않았으므로 아래 결과는 모두 `미확인`이다. 결과 범주는 `재현됨` / `재현 안 됨` / `연결 없음` / `확인 불가`이며 실제 관측 전에는 `미확인`으로 둔다. 문서 후속 커밋은 다른 SHA이므로 이 이전 SHA 시험을 후속 커밋의 성공으로 바꾸지 않는다.
+> **첫 공식 제출 및 실패 판정의 실제 SHA: `2423f04bff3e608cb06b92890367aec379b6b03c` (2026-10-26 11:05 접수).** 이번 새 폴더 재현 대상은 위 3-2의 `$targetCommit`으로 입력하는 **이번 제출 SHA(40자리)**이며, `git rev-parse HEAD` 출력과 정확하게 일치해야 한다. 새 커밋의 새 환경 실행 출력은 아직 없으므로 표는 모두 `미확인`이다. 결과 범주는 `재현됨` / `재현 안 됨` / `연결 없음` / `확인 불가`이고 실제 관측 전에는 `미확인`을 유지한다. 서로 다른 커밋의 결과를 합산하지 않는다.
 
 | 단계 | 확인 기능·학생 함수 | 새 폴더 결과 | 확인 시각 | 근거·미확인 이유 |
 |---|---|---|---|---|
