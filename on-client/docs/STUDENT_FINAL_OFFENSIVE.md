@@ -10,6 +10,8 @@
 | 2 | 내 계정/기기/세션 연결 상태 | `renderIdentity`, `renderStatus`에서 현재 자원의 `loading/error/ok` 상태와 연결 모드를 카드/글자로 구분. PC의 전체 Windows 보안·백신 상태라고 주장하지 않음 | 운영 SDP 연결·운영체제 보안 측정 미확인 |
 | 3 | 조회 오류·주의 알림 | `renderStatus`의 기존 `notifications` 목록을 읽기 좋은 카드로 바꾸고 `ENGINE_NOT_CONNECTED`, `CONTRACT_MISMATCH`, 기타 조회 경고를 구분. 실제 XDR 사건과 혼동하지 않도록 범위를 설명 | 실제 위험 탐지·새로운 실시간 알림 기능을 추가한 것이 아님 |
 
+사건의 `at`는 사건 발생 시각이며 현재 자료를 조회한 시각이 아닙니다. 기록의 원천 확인 시각은 실제 응답에 `coverage.observedAtMs`가 있을 때 제공 보안 기록 영역의 「확인 시각」으로 표시됩니다. 학생 `renderEvents`는 `status`, `mode`, 기록 배열 `data`, `error`만 받으므로 원천 확인 시각을 새로 만들지 않고, 제공되지 않으면 확인 불가로 안내합니다. 앱 상단의 「확인 시각」은 로그인 정보나 접속 판정 응답에서 갱신될 수 있어 기록의 원천 확인 시각으로 사용하지 않습니다.
+
 ## 변경 파일과 이유
 
 - `on-client/student/extension.mjs`: 위 3개 학생 출력 함수의 DOM 구성·시각적 클래스·상태 문구 개선. 이미 구현된 `renderDecision`, `renderExplanation`, `renderAction`, `renderVulnerabilities`, `renderAiConnection`의 함수명·입력 계약·실행 요청 흐름은 변경하지 않음.

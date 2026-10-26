@@ -1,4 +1,4 @@
-# 워치독스 동반 측정 페이지: 일반 권한, 읽기 전용, 값마다 측정 시각.
+﻿# 워치독스 동반 측정 페이지: 일반 권한, 읽기 전용, 값마다 측정 시각.
 # 이 스크립트는 방화벽/서비스/권한을 변경하지 않고 원문 로그를 출력하지 않습니다.
 param(
   [Parameter(Mandatory=$true)]
@@ -35,6 +35,7 @@ if ($Section -eq "pc") {
   }
   try {
     $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+    if ($null -eq $os.TotalVisibleMemorySize -or $null -eq $os.FreePhysicalMemory) { throw "MISSING_MEMORY" }
     $total = [double]$os.TotalVisibleMemorySize
     $free = [double]$os.FreePhysicalMemory
     if ($total -le 0 -or $free -lt 0 -or $free -gt $total) { throw "INVALID_MEMORY" }
@@ -61,8 +62,12 @@ if ($Section -eq "pc") {
     $adapters = @(Get-NetAdapter -Physical -ErrorAction Stop)
     $up = @($adapters | Where-Object { $_.Status -eq "Up" })
     if ($adapters.Count -eq 0) { throw "NO_ADAPTERS" }
+    $wired = @($adapters | Where-Object { $_.PhysicalMediaType -eq "802.3" }).Count
+    $wireless = @($adapters | Where-Object { $_.PhysicalMediaType -in @("Native 802.11","Wireless LAN","802.11") }).Count
+    $other = $adapters.Count - $wired - $wireless
     $network = Actual $up.Count "개" "Get-NetAdapter -Physical" (
       "물리 어댑터 " + $adapters.Count + "개 중 링크 연결 " + $up.Count +
+      "개 · 유선 " + $wired + "개 / 무선 " + $wireless + "개 / 기타·유형 확인 불가 " + $other +
       "개 · 인터넷 연결/안전성 증명 아님"
     )
   } catch {

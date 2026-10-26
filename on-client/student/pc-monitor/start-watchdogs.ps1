@@ -1,4 +1,4 @@
-# 워치독스의 로컬 PC 상태 읽기 전용 동반 화면 실행.
+﻿# 워치독스의 로컬 PC 상태 읽기 전용 동반 화면 실행.
 # 관리자 권한 상승, 시스템 보안 설정 변경, 자동 조회는 수행하지 않습니다.
 param([ValidateRange(1024,65535)][int]$Port=5191)
 $ErrorActionPreference='Stop'

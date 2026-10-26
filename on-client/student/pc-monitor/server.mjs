@@ -59,8 +59,9 @@ function collect(section){
       child.kill();
       finish(failure('MEASURE_TIMEOUT','측정 시간이 초과됐습니다. 현재 값은 확인 불가입니다.'));
     },section==='network'?25000:15000);
+    child.stdout.setEncoding('utf8');
     child.stdout.on('data',part=>{
-      out+=part.toString('utf8');
+      out+=part;
       if(out.length>100000){
         child.kill();
         finish(failure('RESPONSE_LIMIT','측정 결과 크기 제한을 초과해 표시하지 않습니다.'));
@@ -88,6 +89,8 @@ async function checkSdp(){
     let done=false,body='';
     const finish=data=>{if(!done){done=true;resolve(data);}};
     const req=http.get(target,{timeout:2500,headers:{Accept:'application/json'}},res=>{
+      res.on('error',()=>finish(failure('SDP_NOT_AVAILABLE','기존 보안 Agent 진단 응답이 중단됐습니다. 다시 조회하세요.')));
+      res.on('aborted',()=>finish(failure('SDP_NOT_AVAILABLE','기존 보안 Agent 진단 응답이 중단됐습니다. 다시 조회하세요.')));
       if(res.statusCode!==200){res.resume();return finish(failure('SDP_NOT_AVAILABLE','기존 보안 Agent의 진단 응답을 확인할 수 없습니다.'));}
       res.setEncoding('utf8');
       res.on('data',chunk=>{

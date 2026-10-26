@@ -46,6 +46,8 @@ h3{font-size:.9rem;margin:0 0 9px}
 .metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
 .metric{min-width:0;padding:20px;background:linear-gradient(150deg,#172b46,#14263e);border:1px solid #304963;border-radius:14px}
 .metric[data-state="unavailable"]{background:#20283b;border-color:#55516b}
+.metric[data-state="loading"]{border-color:#377e91}
+.metric[data-state="idle"] .metric-value{color:var(--muted)}
 .metric h3{font-size:.85rem;color:#a5c4dd;margin:0 0 14px}
 .metric-value{display:block;color:#fff;font-size:clamp(1.25rem,2vw,1.85rem);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;letter-spacing:-.02em}
 .metric[data-state="unavailable"] .metric-value{color:#ffd0ce}

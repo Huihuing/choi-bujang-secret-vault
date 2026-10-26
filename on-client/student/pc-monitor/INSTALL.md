@@ -1,6 +1,8 @@
 # 워치독스 · 내 PC 측정 화면 설치·사용 안내 (2~5일차)
 
-> 기존 보안 Agent의 로컬 5189번 화면은 그대로 두고, 일반 사용자 권한의 **별도 읽기 전용 측정 화면(5191)**을 추가합니다. 새 Windows 실측은 사용자가 직접 실행하기 전까지 **미확인**입니다. 운영 자격·원본 데이터·기존 제출물은 수정하거나 복사하지 않습니다.
+> 기존 보안 Agent의 로컬 5189번 화면은 그대로 두고, 일반 사용자 권한의 **별도 읽기 전용 측정 화면(5191)**을 추가합니다. 사용자 직접 실행·다른 PC 재현은 별도로 확인합니다. 운영 자격·원본 데이터·기존 제출물은 수정하거나 복사하지 않습니다.
+
+2026-10-26에는 에이전트가 일반 권한의 로컬 Windows API·브라우저 조회 및 오류 후 복구를 확인했습니다. [검증 기록](../../docs/WATCHDOGS_VERIFICATION_2026-10-26.md)을 참고하세요. 사용자 직접 확인·작업 관리자 비교·다른 사용자 재현은 아직 별도입니다. 두 PowerShell 파일은 한글을 Windows PowerShell 5.1에서 읽을 수 있도록 UTF-8 BOM을 유지합니다.
 
 ## 준비
 
@@ -21,6 +23,18 @@ git status --short
 ~~~
 
 **2. 별도 PowerShell 창에서 Node.js 24.19.0을 해당 세션에만 적용하고 실행.**
+
+이 PC처럼 v24.19.0이 이미 설치돼 있다면 다운로드 없이 다음 명령으로 선택할 수 있습니다. 5191이 이미 켜져 있으면 중복 시작하지 않고 기존 페이지를 엽니다.
+
+~~~powershell
+Set-Location "D:\share\choi-bujang-secret-vault"
+$watchdogsNode24 = Get-Command node -All | Where-Object { (& $_.Source --version).Trim() -eq 'v24.19.0' } | Select-Object -First 1
+if (-not $watchdogsNode24) { throw "Node.js v24.19.0 준비 필요" }
+$env:Path = "$(Split-Path -Parent $watchdogsNode24.Source);$env:Path"
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\on-client\student\pc-monitor\start-watchdogs.ps1"
+~~~
+
+기존 설치본이 없는 환경에서만 아래 준비 절차를 사용합니다.
 
 ~~~powershell
 Set-Location "D:\share\choi-bujang-secret-vault\on-client\student\pc-monitor"
@@ -48,7 +62,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".\tools\start-alekov.ps1"
 | CPU | `GET /api/pc` → `Win32_Processor.LoadPercentage` | % · WMI 순간 스냅샷, 작업 관리자와 시각/집계 범위 차이 가능 |
 | 메모리 | `Win32_OperatingSystem.TotalVisibleMemorySize/FreePhysicalMemory` | GiB · 사용 중 / 전체 |
 | 디스크 여유 | `Win32_LogicalDisk.FreeSpace` (고정 시스템 드라이브 우선) | GiB · 남은 공간 |
-| 네트워크 | `GET /api/network` → `Get-NetAdapter -Physical` | 연결된 물리 어댑터 개수(인터넷 성공 의미 아님) |
+| 네트워크 | `GET /api/network` → `Get-NetAdapter -Physical` | 연결 개수·유선/무선/기타 유형 건수(인터넷 성공 의미 아님, 식별정보 제외) |
 | 방화벽 | `Get-NetFirewallProfile` | Domain/Private/Public별 켜짐·꺼짐 · **읽기만 함** |
 | Windows 기록 | `Get-WinEvent`, System/Application, Level 2·3, 최근 24시간 | 경고/오류 건수 · **침해 탐지 아님** |
 | SDP | `GET /api/sdp` → 기존 보안 Agent `GET /api/diagnostics` | SDP 미연결·예제·어댑터 구성됨·확인 불가. Windows PC 조회와 구분 |

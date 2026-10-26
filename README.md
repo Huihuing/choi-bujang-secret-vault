@@ -1,5 +1,21 @@
 # BYTE BACK · 12단계 저장점 — 탈환 작전실
 
+## WATCHDOGS PC 측정 저장점 · 2026-10-26
+
+기존 보안 Agent(5189)와 별도인 학생용 측정 화면(5191)에서 CPU·메모리·디스크, 네트워크·방화벽·Windows 이벤트를 일반 권한으로 읽습니다. PowerShell 5.1 인코딩 오류를 고친 뒤 실제 로컬 조회·키보드 조작·접속 오류 후 재조회 복구를 확인했습니다. 조회 전·조회 중·부분 성공·실패를 구분하고, 읽지 못한 값은 0이나 정상으로 바꾸지 않습니다. 사건 발생 시각과 기록 원천 확인 시각도 구분합니다.
+
+Windows PowerShell 5.1과 Node **v24.19.0** 세션에서, 저장소 루트 기준 실행:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\on-client\student\pc-monitor\start-watchdogs.ps1
+```
+
+5191이 이미 실행 중이면 중복 시작하지 말고 `http://127.0.0.1:5191/`의 각 「다시 조회」를 누릅니다. 종료는 실행 창의 Ctrl+C입니다. 정상 결과는 값·단위·출처·측정 시각이며 읽기 실패는 이유·다음 행동을 표시합니다. POST·교차 출처·잘못된 Host 요청은 거부합니다.
+
+같은 Node 버전의 모의 회귀 검사: `node --test on-client/student/pc-monitor/app.test.mjs on-client/student/pc-monitor/server.test.mjs` (26개 통과, 실제 심판 판정 아님). 설치된 Node 버전 선택과 재실행은 [측정기 안내](on-client/student/pc-monitor/INSTALL.md)를, 실측 근거와 1~7일차 조건별 상태는 [검증 기록](on-client/docs/WATCHDOGS_VERIFICATION_2026-10-26.md)을 따릅니다.
+
+작업 관리자 동시 비교·제3자 재현·실제 SDP/XDR 연결은 미확인입니다. 공식 `package-app`/승인 실행 패키지가 없어 설치·제거·공식 포장·최종 제출은 미완료입니다. 기존 13~22단계 기록, 사용자 데이터, 인증·판정 코드와 운영 설정은 보존합니다. 아래는 이전 방어전 저장점 기록입니다.
+
 ## 보너스 xdr-06 저장점 · 자료 빼돌리기를 잡아 냅니다
 
 **기존 18건 합성 데이터 오류 수정:** 수업용 Wazuh 연습 경보 30건을 서로 다른 세 공개 과제 저장소에서 대조했고 세 파일의 Git blob SHA는 동일한 `ccd294ff72eade41f13c350d69b05a42c346ba40`입니다. [자료 참조](https://github.com/youngjinphys/choi-bujang-secret-vault/blob/main/xdr/fixtures/exfiltration.json). 이 공개 교육 데이터가 심판 비공개 원본과 완전히 같다고 단정하지 않습니다. 기존의 AI 창작 18건은 본 훈련 fixture로 사용하지 않습니다.

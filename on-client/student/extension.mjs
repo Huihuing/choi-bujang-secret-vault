@@ -217,7 +217,7 @@ export function createStudentView() {
       eyebrow.className = 'wd-eyebrow';
       introduction.appendChild(eyebrow);
       introduction.appendChild(make('h3', '내 접속 기록과 XDR 경보'));
-      const originNote = make('p', '발생 시각(at) 최신순 · 실제 조회 시각은 앱 상단의 「확인 시각」을 확인하세요.');
+      const originNote = make('p', '사건 발생 시각(at) 최신순 · 기록의 원천 확인 시각은 제공 보안 기록 영역의 「확인 시각」을 확인하세요. 제공되지 않으면 확인 불가입니다.');
       originNote.className = 'wd-timeline-origin';
       introduction.appendChild(originNote);
       root.appendChild(introduction);
@@ -370,14 +370,14 @@ export function createStudentView() {
           const badge = make('span', (kindLabels[event.kind] ?? '기록 종류 확인 불가') + '(' + value(event.kind) + ')');
           badge.className = 'wd-kind-badge';
           meta.appendChild(badge);
-          const at = make('time', '발생 ' + value(event.at));
+          const at = make('time', '사건 발생 시각: ' + value(event.at));
           at.className = 'wd-timeline-time';
           if (typeof event.at === 'string' && Number.isFinite(Date.parse(event.at))) at.dateTime = event.at;
           meta.appendChild(at);
           item.appendChild(meta);
           item.appendChild(make('h4', '요약: ' + value(event.summary)));
           line(item, '사건 ID: ' + value(event.id));
-          line(item, '시각: ' + value(event.at));
+          line(item, '사건 발생 시각: ' + value(event.at));
           line(item, '종류: ' + (kindLabels[event.kind] ?? '확인 불가') + '(' + value(event.kind) + ')');
           line(item, '앱 ID: ' + appLabel(event.appId));
           const button = make('button', value(event.id) + ' 상세');
