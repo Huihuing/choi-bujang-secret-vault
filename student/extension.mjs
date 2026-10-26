@@ -449,6 +449,16 @@ export function createStudentView() {
       modeLine.setAttribute('data-wd-mode', Object.prototype.hasOwnProperty.call(modeNames, mode) ? mode : 'unknown');
       const scopeLine = line(root, '등록 기기는 최대 100개까지 조회합니다. 세션은 현재 검증된 연결 한 개만 조회하며, 과거 세션 목록이 아닙니다.');
       scopeLine.className = 'wd-status-scope';
+      const localPanel = document.createElement('section');
+      localPanel.className = 'wd-local-monitor-entry';
+      localPanel.appendChild(make('h4', '내 PC 실측·Windows 보안 상태'));
+      line(localPanel, '별도 로컬 측정 프로그램을 시작한 뒤 이 링크를 직접 여세요. Windows 조회값과 SDP 보안 연결은 서로 다른 출처입니다.');
+      const localLink = make('a', '읽기 전용 PC 측정 페이지 열기 (127.0.0.1:5191)');
+      localLink.href = 'http://127.0.0.1:5191/';
+      localLink.target = '_blank';
+      localLink.rel = 'noopener noreferrer';
+      localPanel.appendChild(localLink);
+      root.appendChild(localPanel);
 
       const showList = (name, input, type, emptyText) => {
         const section = document.createElement('section');

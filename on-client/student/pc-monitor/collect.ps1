@@ -7,7 +7,7 @@ param(
 )
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
-[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 
 function Stamp { return [DateTime]::UtcNow.ToString("o") }
 function Missing([string]$source,[string]$reason) {

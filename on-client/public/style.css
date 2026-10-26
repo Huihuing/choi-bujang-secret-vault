@@ -345,3 +345,19 @@ main { min-width: 0; width: 100%; }
   .wd-identity-panel dl { grid-template-columns: minmax(0,1fr); gap: 3px; }
   .wd-identity-panel dt:not(:first-child) { margin-top: 6px; }
 }
+
+
+/* 마지막 총공세 2~4일차: 별도 Windows 읽기 전용 측정 화면으로 수동 이동 */
+.wd-local-monitor-entry {
+  padding: 13px 16px; margin: 8px 0 16px;
+  background: #eff8fb; border: 1px solid #b9dee7;
+  border-radius: 12px; border-left: 4px solid #17869a;
+}
+.wd-local-monitor-entry h4 { color: #184c63; margin: 0 0 6px; }
+.wd-local-monitor-entry p { margin: 6px 0 10px; font-size: .83rem; color: #375468; }
+.wd-local-monitor-entry a {
+  display: inline-block; padding: 8px 12px; border-radius: 8px;
+  color: #11586d; background: #fff; border: 1px solid #87c1d3;
+  text-decoration: underline; font-size: .86rem; font-weight: 650;
+}
+.wd-local-monitor-entry a:hover { background: #def2f6; }
