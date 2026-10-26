@@ -122,7 +122,7 @@ const server=http.createServer(async(req,res)=>{
     respond(res,403,failure('LOOPBACK_ONLY','허용되지 않은 접근입니다.'));return;
   }
   const origin=req.headers.origin;
-  if(origin&&!allowedHost.has(origin.replace(/^https?:\/\//i,'').toLowerCase())){
+  if(origin&&!new Set(['http://127.0.0.1:'+port,'http://localhost:'+port]).has(origin.toLowerCase())){
     respond(res,403,failure('ORIGIN_REJECTED','교차 출처 접근을 허용하지 않습니다.'));return;
   }
   if(req.headers['sec-fetch-site']==='cross-site'){

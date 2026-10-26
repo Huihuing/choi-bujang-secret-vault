@@ -147,7 +147,9 @@ async function refreshNetwork(){
       renderNetwork(actual.data);
     }else{
       putStatusCards('network-cards',[['물리 네트워크 연결',null],['Windows 방화벽 프로필',null]]);
-      logData=null;renderEvents();
+      logData=null;
+      const eventArea=byId('event-cards');
+      eventArea.replaceChildren(make('p','Windows 기록 확인 불가: '+reason(actual.error?.message)+' · 일반 사용자 조회 권한과 로컬 측정 도구를 확인한 뒤 다시 조회하세요.','empty'));
       status(byId('network-status'),'확인 불가: '+reason(actual.error?.message)+' · 읽기 권한을 확인하고 다시 조회하세요.','error');
     }
     if(sdp.ok){
