@@ -2,7 +2,7 @@
 
 > **대상:** `Huihuing/choi-bujang-secret-vault`의 `on-client`(13~22단계). 이 파일 `on-client/docs/STUDENT_RUNBOOK.md`는 **학생이 추가한 문서**이며 제공 `README.md`·`public/app.js`·`src/server.mjs`·인증 설정은 수정하지 않는다.
 >
-> **확인 수준:** [코드 확인]은 GitHub 제출 커밋의 실제 파일·명령을 읽고 대조한 것, [사용자 실행]은 사용자가 공유한 PowerShell 실제 출력, [모의 확인]은 학생 함수를 가짜 DOM/자료로 점검한 것, [미확인/UNV]는 로컬 앱 기동이나 실제 운영 연동을 수행·검증하지 않은 것이다. 이 문서 작성 자체를 실행 성공 또는 공식 단계 통과로 적지 않는다.
+> **확인 수준:** [코드 확인]은 GitHub 원문과 명령을 읽고 대조한 것, [사용자 실행·화면 확인]은 사용자가 공유한 PowerShell 출력과 브라우저 표시, [모의 확인]은 가짜 DOM과 입력의 검사, [미확인/UNV]는 실행·결과 관측이 없는 항목을 말한다. **2026-10-26 로컬 앱 시작과 기본 미연결 화면은 실제로 확인됐지만, 종료·재실행 및 운영 SDP·AI·OSV 연결은 미확인**이다.
 >
 > **명칭:** 개인 보안 Agent 이름은 **워치독스**. 제공 앱의 브라우저 제목·실행 안내에 남아 있는 기본 제품명은 **케셰브(KESHEV)**다. 이를 고치기 위해 제공 파일을 변경하지 않는다.
 
@@ -18,10 +18,10 @@
 |---|---|---|
 | 앱 패키지 | `on-client/package.json`: `alekov-client-starter` **0.2.11**, 모듈 `type=module` | [코드 확인] |
 | Node.js | `package.json`의 엔진 기준 **24.19.0**. 실행 도구는 **Node 22~24** 허용, 24.19.0 권장 | [코드 확인] |
-| 사용자 PC Node | 앞서 공유한 PowerShell에서 **Node 26** 사용. 실행 도구는 이 버전을 **거부**함. Node 24.19.0 실제 앱 실행 여부는 미확인 | [사용자 실행] + [코드 확인] |
+| 사용자 PC Node | 기존 시스템 기본 Node `v26.7.0`은 앱 시작 도구 지원 범위 밖. `npx --yes node@24`로 Node **v24.22.1**을 찾고 현재 PowerShell의 PATH를 임시 조정한 뒤 공식 앱을 시작해 성공함. 수업 권장 `v24.19.0`과 구분 | **[사용자 실행]** |
 | Git | `git fetch origin main`, `git cat-file -e`로 제출 커밋 안의 관련 원문을 확인한 사용자 출력 있음 | [사용자 실행] |
 | 원문 전달용 Node 24 | `npx --yes node@24`로 공식 원문 전달 JSON을 생성한 기록은 있으나, **앱 실행 성공 증거가 아님** | [사용자 실행] |
-| Windows PowerShell | 앱 실행 `tools/start-alekov.ps1` 제공. 브라우저는 로컬 `127.0.0.1`을 연다 | [코드 확인], 브라우저 실측은 [미확인] |
+| Windows PowerShell | 공식 `tools/start-alekov.ps1`이 로컬 `127.0.0.1:5189` 서버 HTTP 응답을 확인했고 브라우저에서 보호 현황 및 학생 출력을 확인 | **[사용자 실행·화면 확인]** |
 | 의존성 | `on-client/package.json`에 외부 `dependencies` 항목 없음. Git 최상위의 `package.json`은 과거 1~12단계 별도 서버용 | [코드 확인] |
 | 보안 연결 설정 | 기존 SDP·native 호스트 및 CLCO 앱 권한은 **운영자 발급**이 있어야 이용. 파일 내용·자격 값을 생성하거나 이 문서에 싣지 않음 | [미확인/UNV] |
 
@@ -53,12 +53,12 @@ D:\share\choi-bujang-secret-vault\        ← Git 최상위 / 제출 커밋
    └─ docs\STUDENT_RUNBOOK.md             ← 이 학생용 설명서
 ~~~
 
-- **Git 관리:** `D:\share\choi-bujang-secret-vault`. **앱 실행:** `D:\share\choi-bujang-secret-vault\on-client`. 먼저 `Test-Path`로 실제 파일 존재를 확인한다. Git 경로 자체는 확인됐지만 현재 Windows 작업 트리의 앱 실행 스크립트 경로는 아직 직접 실측하지 않았다.
+- **Git 관리:** `D:\share\choi-bujang-secret-vault`. **앱 실행:** `D:\share\choi-bujang-secret-vault\on-client`. 사용자의 `Test-Path` 결과 **True**와 앱 폴더 실행 출력으로 확인했다. 작업 중이던 `public/data.json`의 미커밋 수정은 삭제하거나 덮어쓰지 않는다.
 - `on-client/.on-starter-manifest.json`은 제공 원본 목록 참고 자료다. `.env.example`은 제공 안내에는 언급되지만 **현재 제출 Git 트리에는 존재하지 않는다**(Git 루트 `.gitignore`가 `.env.*`를 제외한다). 없는 견본을 있는 것처럼 안내하거나 비밀값을 직접 채우지 않는다.
 
 ## 4. 처음 실행·확인·종료·재실행
 
-아래 명령은 **제공 `on-client/README.md` 및 `docs/STUDENT_LAUNCH_GUIDE.md`와 실제 `tools/start-alekov.ps1`에서 확인한 명령**이다. 이 사용자의 새 PowerShell 창에서 실행한 결과는 아직 **[미확인/UNV]**이므로, 정상 메시지는 예상 출력으로만 적는다.
+아래 명령은 **제공 `on-client/README.md`, `docs/STUDENT_LAUNCH_GUIDE.md`, `tools/start-alekov.ps1`에서 확인한 것**이며, 2026-10-26 사용자가 실제 앱을 실행해 로컬 서버의 HTTP 응답과 브라우저 화면을 확인했다. 종료·재실행은 아직 미확인이다.
 
 ### A. Git 폴더와 앱 파일 확인
 
@@ -81,11 +81,24 @@ node --version    # Node 22~24에서 진행, 권장 v24.19.0
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\start-alekov.ps1
 ~~~
 
-**Node 26이면 `지금 Node.js 는 vXX 입니다` 오류와 함께 실행 도구가 중지되므로 Node 24.19.0 환경 준비 후 새 창에서 재확인해야 한다.** 별도 원문 도구를 `npx node@24`로 실행했다는 사실만으로 앱 도구도 Node 24로 실행된 것은 아니다.
+**Node 26은 공식 앱 실행 스크립트의 지원 범위(22~24) 밖이다.** 수업 기준은 24.19.0이지만, 사용자는 **v24.22.1**을 임시 PATH에 적용해 성공했다. 실제 실행한 방법은 다음과 같다(최초 npx 실행 시 다운로드가 필요할 수 있음).
+
+~~~powershell
+Set-Location "D:\share\choi-bujang-secret-vault\on-client"
+$node24 = (& npx --yes node@24 -p "process.execPath" | Select-Object -Last 1).Trim()
+if (-not (Test-Path -LiteralPath $node24)) { throw "Node.js 24 실행 파일을 찾지 못했습니다." }
+$version = (& $node24 --version).Trim()
+if ($version -notmatch '^v24\.') { throw "Node.js 24 버전이 아닙니다." }
+$env:Path = "$(Split-Path -Parent $node24);$env:Path"
+node --version
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\start-alekov.ps1
+~~~
+
+이번 실행의 \`node --version\` 출력은 \`v24.22.1\`이었다. PATH 변경은 해당 PowerShell 세션에만 적용되며, 앱 실행과 원문 JSON 생성은 별도 작업이다.
 
 ### C. 정상 실행 신호와 브라우저 화면
 
-스크립트에서 확인한 **예상 정상 출력**(실제 이 PC에서의 관측 결과는 아직 없음):
+2026-10-26 **사용자 PowerShell에서 실제로 관측한** 정상 시작 출력:
 
 ~~~text
 케셰브가 켜졌습니다. 브라우저에서 http://127.0.0.1:5189/ 을 여세요.
@@ -93,7 +106,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\start-alekov.ps1
 끄려면 이 창에서 Ctrl+C 를 누르세요.
 ~~~
 
-브라우저 `http://127.0.0.1:5189/`에서 탭 **보호 현황 / 업무 앱 / 보안 기록**, 상단 「다시 불러오기」가 보이는지 확인한다. 정상 기동은 **로컬 서버의 HTTP 응답만** 확인하며 실제 SDP·AI·OSV 연결 성공은 아니다.
+브라우저 `http://127.0.0.1:5189/`에서 **보호 현황 / 업무 앱 / 보안 기록** 탭, 「다시 불러오기」, 학생 `renderIdentity`·`renderStatus`·`renderAiConnection`·`renderVulnerabilities` 표시를 사용자가 확인했다. 화면의 확인 시각은 **2026-10-26 오전 10:25:06**. 상단은 **「연결 없음」**, 로그인·업무 앱·기기·세션·보안 기록의 오류는 **`ENGINE_NOT_CONNECTED`**이다. 이는 기본 실행에서 운영자 SDP 엔진이 미연결임을 뜻하며, **로컬 서버 기동 성공과 운영 시스템 연결 성공은 다르다**.
 
 - **종료:** 이 앱을 실행한 PowerShell 창에서 `Ctrl+C`. 브라우저 연결이 종료됐는지 직접 확인한다.
 - **재실행:** 같은 `on-client` 폴더로 돌아와 위 공식 명령을 다시 실행한다. 파일·Git 이력 삭제 불필요.
@@ -191,25 +204,26 @@ flowchart LR
 | Git 커밋·원문 위치 | 사용자가 `D:\share\choi-bujang-secret-vault`에서 `git fetch origin main`·`git cat-file -e` 성공 결과 공유 | **[사용자 실행]** |
 | 공식 원문 JSON 생성 | 기존 `D:\share\alekov-source-tool`과 `npx --yes node@24`로 JSON 생성 후 파일 7개 원문 대조 | **[사용자 실행]; 앱 실행과 무관** |
 | 학생 DOM 표시 | 대화에서 18단계 34개·19단계 40개·20단계 36개 모의 입력 검사 | **[모의 확인]; 운영 화면 아님** |
-| 새 PowerShell에서 지원 Node 버전으로 앱 기동 | `node --version` 및 `start-alekov.ps1` 재실행의 새 관측 없음 | **[미확인/UNV]** |
-| 브라우저 접속·종료·재기동 | 실제 PC 브라우저·PowerShell 성공 출력 없음 | **[미확인/UNV]** |
+| PowerShell에서 지원 Node로 앱 실행 | Node `v24.22.1` 확인, 공식 `start-alekov.ps1` 실행 및 HTTP 응답 확인 | **[사용자 실행·성공]** |
+| 브라우저 보호 현황·학생 칸 표시 | `127.0.0.1:5189` 화면과 「연결 없음」·`ENGINE_NOT_CONNECTED` 확인 | **[사용자 화면 확인·기본 미연결]** |
+| 종료·재기동 | `Ctrl+C` 종료와 재실행 결과 아직 제공되지 않음 | **[미확인/UNV]** |
 | SDP 로그인·앱 접근·실제 XDR | 본인 시스템 승인/운영자 호스트 설정 미검증 | **[미확인/UNV]** |
 | AI 앱 권한·유료 사건 설명 | 실제 모델 수용 미검증. 과거 공개된 17단계 피드백에서 `ai_model_called` 확인 불가였음 | **[미확인/UNV]** |
 | 사람 확인 후 원천 조치·효과 | 운영 집행기 및 대상 권한 연결 미검증, 현재 사건의 `supportedActions`는 비어 있을 수 있음 | **[미확인/UNV]** |
 | lock 설치 메타데이터와 실제 OSV | 운영자 프로젝트 경로/허용 공개 패키지와 조회 결과 미검증 | **[미확인/UNV]** |
 | ALEPH 21단계 통과/22단계 개방 | 실제 포털 제출·판정 별개 | **[미확인/UNV]** |
 
-**새 환경 확인 기록 템플릿(실측 전에는 ‘미확인’으로 보존):**
+**2026-10-26 실측 및 추후 확인할 재현 기록:**
 
 | 시각 | 위치 / 명령 또는 버튼 | 관측한 출력·상태 | 판정 |
 |---|---|---|---|
-| 미기록 | Git 최상위 `git status --short` / `Test-Path` | 미관측 | 미확인 |
-| 미기록 | 앱 폴더 `node --version` | 새 창 결과 미관측(이전 Node 26) | 미확인 |
-| 미기록 | 앱 폴더 `start-alekov.ps1` | 정상 서버 출력 미관측 | 미확인 |
-| 미기록 | 브라우저 `http://127.0.0.1:5189/` | 실제 화면 미관측 | 미확인 |
+| 2026-10-26 (정확한 시각 미기록) | Git 최상위 `git status --short` / `Test-Path` | `M public/data.json` 보존, 앱 시작 도구 `True`, 최신 `main` 커밋 반영 | **[사용자 실행]** |
+| 2026-10-26 (정확한 시각 미기록) | 앱 폴더에서 Node 24 임시 PATH 설정 | `v24.22.1` | **[사용자 실행]** |
+| 2026-10-26 (정확한 시각 미기록) | 앱 폴더에서 `start-alekov.ps1` | `케셰브가 켜졌습니다` / `서버가 응답한 것만 확인했습니다` | **[사용자 실행·성공]** |
+| 2026-10-26 (화면 표시 시각 10:25:06) | 브라우저 `http://127.0.0.1:5189/` | 보호 현황·학생 화면·「연결 없음」 / `ENGINE_NOT_CONNECTED` | **[사용자 화면 확인·기본 미연결]** |
 | 미기록 | 실행 창 `Ctrl+C` 뒤 재실행 | 종료/재실행 미관측 | 미확인 |
 
-22단계에서 이 표를 실제 출력과 확인 시각으로 갱신할 수 있지만, 오늘 확인하지 않은 내용을 임의로 채우지 않는다.
+22단계 새 환경 재현에는 별도의 설치·종료·재시작 기록이 필요하다. 현재 21단계 로컬 앱 시작 성공을 새 환경 재현 성공이나 공식 채점 통과로 바꾸지 않는다. 관측하지 않은 것은 미확인으로 남긴다.
 
 ## 9. 21단계 제출과 Git 원문 전달
 
