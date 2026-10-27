@@ -71,7 +71,7 @@ export default async function handler(req,res){
  if(!login)return send(res,401,{error:'authentication_required'});
  if(login.kind!=='student')return send(res,403,{error:'student_identity_required'});
  const {data:devices,error:deviceError}=await supabase.from('app_devices')
-  .select('credential_id,public_x,public_y,sign_count,status')
+  .select('credential_id,key_algorithm,public_x,public_y,public_n,public_e,sign_count,status')
   .eq('owner_id',login.userId).eq('status','approved');
  if(deviceError)return send(res,503,{error:'device_status_unavailable'});
  if(!devices?.length)return send(res,403,{error:'device_not_approved'});

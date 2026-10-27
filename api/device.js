@@ -53,14 +53,14 @@ export default async function handler(req,res){
   return send(res,200,{challengeId:data.id,options:{
    challenge,rp:{name:'BYTE BACK 자료실',id:RPID},
    user:{id:b64(randomBytes(32)),name:'자료실 사용자',displayName:'자료실 사용자'},
-   pubKeyCredParams:[{type:'public-key',alg:-7}],
+   pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
    timeout:60000,attestation:'none',
    authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'discouraged',
     userVerification:'required'},
    excludeCredentials:(registered.data??[]).map(x=>({type:'public-key',id:x.credential_id})),
   }});
  }
- const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+ const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
  if(typeof body.challengeId!=='string'||!uuid.test(body.challengeId)||!body.response)
   return send(res,400,{error:'invalid_device_registration'});
  const {data:challenge,error:challengeError}=await client.rpc('stage11_consume_challenge',{
@@ -75,7 +75,9 @@ export default async function handler(req,res){
  }catch{return send(res,403,{error:'registration_signature_invalid'});}
  const {error}=await client.from('app_devices').insert({
   owner_id:owner,credential_id:credential.credentialId,
-  public_x:credential.publicX,public_y:credential.publicY,
+  key_algorithm:credential.keyAlgorithm??-7,
+  public_x:credential.publicX??null,public_y:credential.publicY??null,
+  public_n:credential.publicN??null,public_e:credential.publicE??null,
   sign_count:credential.signCount,status:'pending',
  });
  if(error)return send(res,409,{error:'registration_not_accepted'});

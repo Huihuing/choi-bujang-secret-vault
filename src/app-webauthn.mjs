@@ -1,6 +1,6 @@
-// Minimal ES256 WebAuthn verifier for the Stage 11 origin, with strict inputs.
-// Private keys stay in the platform authenticator; only public x/y are stored.
-import {createHash,createPublicKey,verify as verifySignature} from 'node:crypto';
+// ES256 and RS256 WebAuthn verifier for the Stage 11 origin, with strict inputs.
+// Private keys stay in the authenticator; only verified public components are stored.
+import {constants,createHash,createPublicKey,verify as verifySignature} from 'node:crypto';
 const B64=/^[A-Za-z0-9_-]{1,24000}$/u;
 const base64=value=>Buffer.from(value).toString('base64url');
 export const sha256=value=>createHash('sha256').update(value).digest();
@@ -62,6 +62,18 @@ function checkedAuthenticator(data,rpID,registered=false) {
  if(!(flags&1)||!(flags&4)||(registered&&!(flags&64)))throw Error('user_verification_required');
  return {flags,count:data.readUInt32BE(33)};
 }
+function rsaPublicKey(modulus,exponent){
+ if(!Buffer.isBuffer(modulus)||![256,384,512].includes(modulus.length)
+  ||!(modulus[0]&0x80)||!(modulus[modulus.length-1]&1)
+  ||!Buffer.isBuffer(exponent)||!exponent.equals(Buffer.from([1,0,1])))
+  throw Error('unsupported_credential_key');
+ const n=base64(modulus),e=base64(exponent);
+ const key=createPublicKey({key:{kty:'RSA',n,e},format:'jwk'});
+ if(key.asymmetricKeyType!=='rsa'||key.asymmetricKeyDetails?.modulusLength!==modulus.length*8
+  ||key.asymmetricKeyDetails?.publicExponent!==65537n)
+  throw Error('unsupported_credential_key');
+ return {key,n,e};
+}
 export function verifyRegistration({response,challenge,origin,rpID}){
  if(response?.type!=='public-key'||!response.id||
   response.id!==response.rawId||!response.response)throw Error('invalid_registration_response');
@@ -81,8 +93,14 @@ export function verifyRegistration({response,challenge,origin,rpID}){
  const id=base64(auth.subarray(55,55+len));
  if(id!==response.id)throw Error('credential_id_mismatch');
  const cose=cbor(auth,55+len);
- if(!(cose.v instanceof Map)||cose.pos!==auth.length ||
-  cose.v.get(1)!==2||cose.v.get(3)!==-7||cose.v.get(-1)!==1 ||
+ if(!(cose.v instanceof Map)||cose.pos!==auth.length)
+  throw Error('unsupported_credential_key');
+ if(cose.v.get(1)===3&&cose.v.get(3)===-257){
+  if(cose.v.size!==4)throw Error('unsupported_credential_key');
+  const {n,e}=rsaPublicKey(cose.v.get(-1),cose.v.get(-2));
+  return {credentialId:id,keyAlgorithm:-257,publicN:n,publicE:e,signCount:status.count};
+ }
+ if(cose.v.get(1)!==2||cose.v.get(3)!==-7||cose.v.get(-1)!==1 ||
   !Buffer.isBuffer(cose.v.get(-2)) || cose.v.get(-2).length!==32 ||
   !Buffer.isBuffer(cose.v.get(-3)) || cose.v.get(-3).length!==32)throw Error('unsupported_credential_key');
  const x=base64(cose.v.get(-2)),y=base64(cose.v.get(-3));
@@ -98,10 +116,21 @@ export function verifyAssertion({response,challenge,origin,rpID,credential}){
  const auth=decode(response.response.authenticatorData,4096);
  const status=checkedAuthenticator(auth,rpID);
  const sig=decode(response.response.signature,2048);
- const key=createPublicKey({key:{
-  kty:'EC',crv:'P-256',x:credential.public_x,y:credential.public_y,
- },format:'jwk'});
- if(!verifySignature('sha256',Buffer.concat([auth,sha256(data)]),key,sig))
+ const algorithm=credential.key_algorithm??-7;
+ let verificationKey;
+ if(algorithm===-257){
+  if(credential.public_x!=null||credential.public_y!=null)
+   throw Error('unsupported_credential_key');
+  const {key}=rsaPublicKey(decode(credential.public_n,512),decode(credential.public_e,4));
+  verificationKey={key,padding:constants.RSA_PKCS1_PADDING};
+ }else if(algorithm===-7){
+  if(credential.public_n!=null||credential.public_e!=null)
+   throw Error('unsupported_credential_key');
+  verificationKey=createPublicKey({key:{
+   kty:'EC',crv:'P-256',x:credential.public_x,y:credential.public_y,
+  },format:'jwk'});
+ }else throw Error('unsupported_credential_key');
+ if(!verifySignature('sha256',Buffer.concat([auth,sha256(data)]),verificationKey,sig))
   throw Error('invalid_signature');
  const previous=Number(credential.sign_count);
  if(!Number.isSafeInteger(previous)||previous<0||
