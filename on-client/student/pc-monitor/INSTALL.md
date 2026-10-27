@@ -33,6 +33,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\on-client\student\start-wa
 
 ## 값의 실제 출처
 
+Vercel 통합 화면은 [기존 운영 주소](https://choi-bujang-secret-vault-jwnp.vercel.app/)에서 엽니다. 상단 워치독스 메뉴의 「다시 조회」를 누르면 브라우저가 이 PC의 측정기에 직접 연결합니다. 루프백·로컬 네트워크 권한 요청이 나오면 직접 확인하고 허용해야 합니다. 측정값·자료실 로그인 토큰을 외부 중계로 보내지 않습니다. 이전 측정 서버가 실행 중이라면 원래 실행 창에서 Ctrl+C로 종료한 뒤 위 명령으로 최신 소스를 실행하세요. 다른 사이트에는 로컬 읽기를 허용하지 않습니다. 연결되지 않으면 기존 5191 주소에서 사용할 수 있습니다. 자세한 경계와 검증 결과는 [통합 안내](../../../docs/WATCHDOGS_VERCEL_INTEGRATION.md)를 참고하세요.
+
 | 항목 | Windows 조회 API/명령 | 표시 단위·의미 |
 |---|---|---|
 | CPU | `GET /api/pc` → `Win32_Processor.LoadPercentage` | % · WMI 순간 스냅샷, 작업 관리자와 시각/집계 범위 차이 가능 |

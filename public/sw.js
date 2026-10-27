@@ -1,6 +1,7 @@
 // Only cache non-sensitive static shell assets; never cache API replies or notes.
-const CACHE='byteback-shell-v13';
-const ASSETS=['/','/index.html','/app.js','/icon.svg','/icon-192.png','/icon-512.png','/war-room.js','/war-summary.js','/manifest.webmanifest'];
+const CACHE='byteback-shell-v14';
+const ASSETS=['/','/index.html','/site-shell.js','/app.js','/icon.svg','/icon-192.png','/icon-512.png','/war-room.js','/war-summary.js','/manifest.webmanifest',
+ '/watchdogs/','/watchdogs/index.html','/watchdogs/app.js','/watchdogs/style.css'];
 self.addEventListener('install',event=>{
  event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
 });

@@ -30,6 +30,19 @@
   <h1 id="heading">내 PC의 상태를 읽고,<br>조회한 순서대로 기록합니다.</h1>
   <p>숫자는 실제 Windows 조회에 성공했을 때만 표시됩니다. <strong>예시 수치는 전혀 표시하지 않습니다.</strong> 실패한 값은 확인 불가와 이유를 함께 보여 줍니다.</p>
   <p class="intro-hint">측정은 아래 <strong>다시 조회</strong> 버튼을 누를 때만 진행됩니다. 자동 감시·방화벽 변경·이벤트 로그 수정은 하지 않습니다.</p>
+  <p id="local-connection" class="connection-note" role="status">이 PC에서 실행한 측정기를 사용합니다. 아직 조회하지 않았습니다.</p>
+  <details id="connection-help" class="connection-help" hidden>
+    <summary>내 PC 연결 방법</summary>
+    <ol>
+      <li>이 화면을 보는 Windows PC의 기존 프로젝트 폴더에서 아래 명령으로 측정기를 실행하세요.
+        <pre><code>powershell -NoProfile -ExecutionPolicy Bypass -File .\on-client\student\start-watchdogs.ps1</code></pre>
+      </li>
+      <li>아래 「다시 조회」를 누릅니다. 브라우저가 로컬 네트워크 또는 루프백 접근을 물으면 이 사이트의 내 PC 조회를 직접 허용하세요.</li>
+      <li>연결되지 않으면 <a href="http://127.0.0.1:5191/" target="_blank" rel="noopener noreferrer">로컬 측정 화면</a>이 열리는지 확인하고 다시 조회하세요. 이전 버전이 실행 중이면 그 실행 창에서 종료한 뒤 최신 소스로 다시 켜세요.</li>
+    </ol>
+    <p>이 브라우저의 PC만 조회합니다. 다른 기기의 PC 상태를 볼 수 없으며, 측정값을 서버에 저장하지 않습니다. 브라우저·방화벽의 보호 설정을 끄지 마세요.</p>
+    <a href="/#archive" target="_top">BYTE BACK 자료실로 이동</a>
+  </details>
 </section>
 <nav class="core-links" aria-label="핵심 기능 3가지">
   <a href="#timeline"><span class="core-number">01</span><strong>조회 기록</strong><span>완료 시각 순서 · 종류별 필터</span></a>

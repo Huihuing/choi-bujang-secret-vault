@@ -12,12 +12,14 @@ if (!Number.isSafeInteger(port) || port < 1024 || port > 65535 || port === 5189)
   throw new Error('WATCHDOGS_MONITOR_PORT_INVALID');
 }
 const allowedHost = new Set(['127.0.0.1:' + port, 'localhost:' + port]);
+const productionOrigin = 'https://choi-bujang-secret-vault-jwnp.vercel.app';
 const files = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']],
 ]);
 const sectionPaths = new Map([['/api/pc','pc'],['/api/network','network']]);
+const webPaths = new Set([...sectionPaths.keys(), '/api/sdp']);
 const safeHeader = {
   'Cache-Control':'no-store',
   'X-Content-Type-Options':'nosniff',
@@ -125,18 +127,30 @@ const server=http.createServer(async(req,res)=>{
     respond(res,403,failure('LOOPBACK_ONLY','허용되지 않은 접근입니다.'));return;
   }
   const origin=req.headers.origin;
-  if(origin&&!new Set(['http://127.0.0.1:'+port,'http://localhost:'+port]).has(origin.toLowerCase())){
+  const webRequest=origin===productionOrigin;
+  if(origin&&!webRequest&&!new Set(['http://127.0.0.1:'+port,'http://localhost:'+port]).has(origin.toLowerCase())){
     respond(res,403,failure('ORIGIN_REJECTED','교차 출처 접근을 허용하지 않습니다.'));return;
   }
-  if(req.headers['sec-fetch-site']==='cross-site'){
+  if(req.headers['sec-fetch-site']==='cross-site'&&!webRequest){
     respond(res,403,failure('ORIGIN_REJECTED','다른 사이트의 조회 요청을 허용하지 않습니다.'));return;
-  }
-  if(req.method!=='GET'){
-    respond(res,405,failure('METHOD_NOT_ALLOWED','읽기 전용 GET 조회만 지원합니다.'));return;
   }
   let path;
   try {const u=new URL(req.url,'http://127.0.0.1:'+port);if(u.search||u.hash)throw Error('QUERY');path=u.pathname;}
   catch{return respond(res,404,failure('NOT_FOUND','지원하지 않는 조회입니다.'));}
+  if(webRequest&&!webPaths.has(path)){
+    respond(res,403,failure('ORIGIN_REJECTED','웹 화면에는 지정한 세 조회만 제공합니다.'));return;
+  }
+  if(req.method!=='GET'){
+    respond(res,405,failure('METHOD_NOT_ALLOWED','읽기 전용 GET 조회만 지원합니다.'));return;
+  }
+  if(webRequest){
+    if('authorization' in req.headers||'cookie' in req.headers){
+      respond(res,403,failure('CREDENTIALS_REJECTED','로컬 조회에는 로그인 자격을 사용하지 않습니다.'));return;
+    }
+    // Browser-to-loopback JSON only; never grant credentials, static files, or other origins.
+    res.setHeader('Access-Control-Allow-Origin',productionOrigin);
+    res.setHeader('Vary','Origin');
+  }
   if(files.has(path)){
     const [name,type]=files.get(path);
     try {

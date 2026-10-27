@@ -1,5 +1,8 @@
 // 워치독스 개인 PC 읽기 전용 화면. 예시 값·자동 조회·설정 쓰기는 없음.
 const byId=id=>document.getElementById(id);
+const hosted=document.documentElement?.dataset.watchdogsHosted==='true';
+const localApiOrigin=hosted?'http://127.0.0.1:5191':'';
+const readPaths=new Set(['/api/pc','/api/network','/api/sdp']);
 const make=(tag,text,cls)=>{
   const element=document.createElement(tag);
   if(text!==undefined)element.textContent=String(text);
@@ -199,10 +202,14 @@ function renderNetwork(data){
   rememberLogs(logData);
 }
 async function get(path){
+  if(!readPaths.has(path))return{ok:false,error:{code:'UNSUPPORTED_READ',message:'지원하지 않는 조회입니다.'}};
   let response;
   try{
-    response=await fetch(path,{method:'GET',cache:'no-store',credentials:'omit'});
-  }catch{return{ok:false,error:{code:'NETWORK_FAILURE',message:'로컬 측정 서비스에 접속하지 못했습니다.'}};}
+    response=await fetch(localApiOrigin+path,{method:'GET',cache:'no-store',credentials:'omit',
+      mode:'cors',redirect:'error',referrerPolicy:'no-referrer',headers:{Accept:'application/json'}});
+  }catch{return{ok:false,error:{code:'NETWORK_FAILURE',message:hosted?
+    '내 PC 측정기에 연결하지 못했습니다. 측정기 실행과 브라우저의 로컬 네트워크 접근 허용을 확인한 뒤 다시 조회하세요.':
+    '로컬 측정 서비스에 접속하지 못했습니다.'}};}
   try{
     const payload=await response.json();
     if(response.ok&&payload?.ok===true)return payload;
@@ -259,6 +266,8 @@ byId('refresh-pc').addEventListener('click',refreshPc);
 byId('refresh-network').addEventListener('click',refreshNetwork);
 byId('event-filter').addEventListener('change',renderEvents);
 byId('timeline-filter').addEventListener('change',renderActivity);
+byId('connection-help').hidden=!hosted;
+if(hosted)byId('local-connection').textContent='내 PC 측정기를 켜고 「다시 조회」를 누르세요. 값은 이 PC에서 직접 읽으며 자료실 서버로 보내지 않습니다. 아직 연결을 확인하지 않았습니다.';
 putStatusCards('pc-cards',[['CPU 사용률',null],['메모리 사용량',null],['디스크 남은 공간',null]],'idle');
 putStatusCards('network-cards',[['물리 네트워크 연결',null],['Windows 방화벽 프로필',null]],'idle');
 renderActivity();

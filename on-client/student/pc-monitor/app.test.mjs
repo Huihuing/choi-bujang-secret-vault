@@ -29,7 +29,7 @@ class Element {
   }
 }
 
-function harness(){
+function harness({hosted=false}={}){
   const nodes=new Map([...html.matchAll(/\bid="([^"]+)"/g)].map(([,id])=>[id,new Element()]));
   nodes.get('event-filter').value='all';
   nodes.get('timeline-filter').value='all';
@@ -37,6 +37,7 @@ function harness(){
   const replies=new Map();
   const context=vm.createContext({
     document:{
+      documentElement:{dataset:{watchdogsHosted:hosted?'true':'false'}},
       getElementById(id){assert.ok(nodes.has(id),'알려진 화면 요소: '+id);return nodes.get(id);},
       createElement(tag){return new Element(tag);},
     },
@@ -350,4 +351,44 @@ test('모의 타임라인: SDP 응답 형식이 틀려도 PC 조회와 구별하
   await h.timeline('sdp');
   assert.equal(cards(h,'timeline-list')[0].dataset.state,'error');
   assert.doesNotMatch(content(h,'timeline-list'),/어댑터 구성됨/);
+});
+
+test('모의 웹 연결: 웹 화면도 자동 조회하지 않고 수동 GET만 내 PC의 고정 주소로 보낸다',async()=>{
+  const h=harness({hosted:true});
+  assert.equal(h.requests.length,0);
+  assert.equal(h.node('connection-help').hidden,false);
+  assert.match(content(h,'local-connection'),/자료실 서버로 보내지 않습니다/);
+  h.queue('http://127.0.0.1:5191/api/pc',pc());await h.click('refresh-pc');
+  assert.equal(h.node('pc-status').dataset.state,'ok');
+  assert.equal(h.requests[0].path,'http://127.0.0.1:5191/api/pc');
+  const options=h.requests[0].options;
+  assert.equal(options.method,'GET');assert.equal(options.credentials,'omit');
+  assert.equal(options.cache,'no-store');assert.equal(options.mode,'cors');
+  assert.equal(options.redirect,'error');assert.equal(options.referrerPolicy,'no-referrer');
+  assert.deepEqual(Object.keys(options.headers),['Accept']);
+  assert.equal(options.headers.Accept,'application/json');
+  assert.equal(options.body,undefined);
+});
+
+test('모의 웹 연결: PC 값과 SDP는 원격 자료실 API를 거치지 않는다',async()=>{
+  const h=harness({hosted:true});
+  h.queue('http://127.0.0.1:5191/api/network',network());h.queue('http://127.0.0.1:5191/api/sdp',sdp());
+  await h.click('refresh-network');
+  assert.equal(h.node('network-status').dataset.state,'ok');
+  assert.match(content(h,'sdp-status'),/SDP 미연결/);
+  assert.deepEqual(h.requests.map(request=>request.path),[
+    'http://127.0.0.1:5191/api/network','http://127.0.0.1:5191/api/sdp',
+  ]);
+  for(const request of h.requests)assert.equal(request.options.credentials,'omit');
+});
+
+test('모의 웹 연결: 로컬 실행/권한 거부는 확인 불가와 다음 행동으로 남긴다',async()=>{
+  const h=harness({hosted:true});h.queue('http://127.0.0.1:5191/api/pc',new Error('모의 로컬 네트워크 권한 거부'));
+  await h.click('refresh-pc');
+  assert.equal(h.node('pc-status').dataset.state,'error');
+  assert.match(content(h,'pc-status'),/측정기 실행과 브라우저의 로컬 네트워크 접근 허용/);
+  assert.match(content(h,'timeline-list'),/확인 불가/);
+  assert.doesNotMatch(content(h,'pc-cards'),/12\.5 %/);
+  assert.equal(h.node('refresh-pc').disabled,false);
+  assert.equal(harness().node('connection-help').hidden,true);
 });

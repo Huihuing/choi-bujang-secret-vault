@@ -8,3 +8,6 @@ public/aleph.json
 # Generated raster PWA icons are created at build time
 public/icon-192.png
 public/icon-512.png
+
+# Generated WATCHDOGS UI only; its student sources remain tracked.
+/public/watchdogs/

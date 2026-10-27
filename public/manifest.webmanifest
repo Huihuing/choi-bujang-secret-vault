@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "BYTE BACK 승인형 자료실",
-  "short_name": "BYTE BACK",
-  "description": "WebAuthn 서버 승인형 개인 자료실",
+  "name": "WATCHDOGS + BYTE BACK",
+  "short_name": "WATCHDOGS",
+  "description": "PC 상태 조회와 WebAuthn 서버 승인형 개인 자료실",
   "lang": "ko",
   "start_url": "/",
   "scope": "/",

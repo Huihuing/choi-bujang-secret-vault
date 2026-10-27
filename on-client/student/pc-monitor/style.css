@@ -30,6 +30,12 @@ main{min-width:0;padding:30px clamp(16px,3vw,46px) 50px}
 .intro h1{font-size:clamp(1.45rem,2.8vw,2.2rem);line-height:1.22;margin:0 0 14px;letter-spacing:-.025em;color:#fff}
 .intro p{max-width:740px;color:#c7d9eb}
 .intro-hint{font-size:.86rem}
+.connection-note{font-size:.86rem;border-left:3px solid var(--accent);padding-left:14px}
+.connection-help{border:1px solid #54708b;border-radius:10px;padding:14px 16px;margin-top:18px;color:#c7d9eb;font-size:.83rem}
+.connection-help summary{cursor:pointer;font-weight:700;color:#e7f6ff}
+.connection-help ol{padding-left:22px;line-height:1.8}
+.connection-help li{margin:10px 0}
+.connection-help pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;border-radius:8px;background:#0b1b2d;color:#c5f3ee}
 .core-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}
 .core-links a{display:grid;gap:8px;align-content:start;min-width:0;padding:20px;border:1px solid #365670;border-radius:14px;background:#142b42;color:#dce9f8;text-decoration:none}
 .core-links a:hover{background:#1a3852;border-color:var(--accent)}
