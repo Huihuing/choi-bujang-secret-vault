@@ -4,19 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
-<title>워치독스 | 내 PC 읽기 전용 관제</title>
+<title>워치독스 | 내 PC 조회 기록</title>
 <link rel="stylesheet" href="/style.css">
 <script type="module" src="/app.js"></script>
 </head>
 <body>
 <a class="skip" href="#main">본문으로 이동</a>
 <header class="topbar">
-  <div class="brand"><span class="mark" aria-hidden="true">W</span><div><strong>WATCHDOGS</strong><small>PERSONAL SECURITY DESK</small></div></div>
+  <div class="brand"><span class="mark" aria-hidden="true">W</span><div><strong>워치독스</strong><small>WATCHDOGS · MY PC JOURNAL</small></div></div>
   <div class="mode">일반 사용자 권한 · 읽기 전용</div>
 </header>
 <div class="shell">
 <nav class="nav" aria-label="워치독스 바로가기">
   <p class="nav-heading">MONITOR</p>
+  <a href="#timeline">조회 기록 타임라인</a>
   <a href="#pc">내 PC 상태</a>
   <a href="#network">네트워크·방화벽</a>
   <a href="#events">Windows 기록</a>
@@ -25,10 +26,25 @@
 </nav>
 <main id="main">
 <section class="intro" aria-labelledby="heading">
-  <div class="eyebrow">LOCAL READ-ONLY TELEMETRY</div>
-  <h1 id="heading">내 PC를 읽고, 상태를 구분합니다.</h1>
+  <div class="eyebrow">MY PC · READ-ONLY JOURNAL</div>
+  <h1 id="heading">내 PC의 상태를 읽고,<br>조회한 순서대로 기록합니다.</h1>
   <p>숫자는 실제 Windows 조회에 성공했을 때만 표시됩니다. <strong>예시 수치는 전혀 표시하지 않습니다.</strong> 실패한 값은 확인 불가와 이유를 함께 보여 줍니다.</p>
   <p class="intro-hint">측정은 아래 <strong>다시 조회</strong> 버튼을 누를 때만 진행됩니다. 자동 감시·방화벽 변경·이벤트 로그 수정은 하지 않습니다.</p>
+</section>
+<nav class="core-links" aria-label="핵심 기능 3가지">
+  <a href="#timeline"><span class="core-number">01</span><strong>조회 기록</strong><span>완료 시각 순서 · 종류별 필터</span></a>
+  <a href="#pc"><span class="core-number">02</span><strong>내 PC 상태</strong><span>CPU · 메모리 · 디스크 실측</span></a>
+  <a href="#network"><span class="core-number">03</span><strong>연결과 Windows 기록</strong><span>방화벽 읽기 · 경고·오류 확인</span></a>
+</nav>
+<section id="timeline" class="panel timeline-panel" aria-labelledby="timeline-title">
+  <div class="section-head">
+    <div><div class="eyebrow">ACTIVITY · LATEST FIRST</div><h2 id="timeline-title">내 조회 기록</h2></div>
+    <label class="selector">조회 종류 <select id="timeline-filter"><option value="all">전체</option><option value="pc">내 PC 상태</option><option value="network">네트워크·방화벽</option><option value="events">Windows 기록</option><option value="sdp">SDP 연결</option></select></label>
+  </div>
+  <p class="section-desc">아래 「다시 조회」로 완료한 결과를 최신순으로 표시합니다. 조회 완료 시각과 원천 측정 시각을 구분합니다. 성공·부분 확인·실패를 모두 남기며 이 탭의 최근 20건만 기억합니다. 새로고침하거나 탭을 닫으면 사라집니다.</p>
+  <p id="timeline-summary" class="timeline-summary" role="status" aria-live="polite">아직 조회한 기록이 없습니다.</p>
+  <ol id="timeline-list" class="timeline-list" aria-label="조회 완료 최신순 기록"></ol>
+  <p class="section-desc">이 목록은 내 PC의 조회 이력입니다. SDP의 접속·XDR 사건 기록은 <a href="http://127.0.0.1:5189/" target="_blank" rel="noopener noreferrer">기존 보안 Agent</a>에서 확인하며, 연결되지 않은 자료를 대신 만들어 표시하지 않습니다.</p>
 </section>
 <section id="pc" class="panel" aria-labelledby="pc-title">
   <div class="section-head">
@@ -39,7 +55,7 @@
   <p id="pc-status" class="state" data-state="idle" role="status" aria-live="polite">조회 전 · 아직 측정하지 않음</p>
   <div id="pc-cards" class="metric-grid" aria-live="polite"></div>
   <section class="history" aria-labelledby="history-title">
-    <h3 id="history-title">최근 조회 추이 <span class="soft">이 브라우저에서 성공한 최대 5회 · 저장하지 않음</span></h3>
+    <h3 id="history-title">최근 조회 추이 <span class="soft">실측값을 하나 이상 읽은 최근 5회 · 저장하지 않음</span></h3>
     <ol id="history-list" class="history-list" aria-live="polite"><li>측정 기록 없음</li></ol>
   </section>
 </section>

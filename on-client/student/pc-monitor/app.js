@@ -7,6 +7,7 @@ const make=(tag,text,cls)=>{
   return element;
 };
 const lastFive=[];
+const activity=[];
 let logData=null;
 let logState='idle';
 let logError=null;
@@ -23,6 +24,63 @@ const observed=v=>typeof v==='string'&&Number.isFinite(Date.parse(v))
 const reason=v=>typeof v==='string'&&v.trim()?v:'조회 실패 이유 확인 불가';
 function status(node,message,kind){
   node.textContent=message;node.dataset.state=kind||'idle';
+}
+const kindNames={pc:'내 PC 상태',network:'네트워크·방화벽',events:'Windows 기록',sdp:'SDP 연결'};
+const resultNames={ok:'실제 조회',partial:'부분 확인',error:'확인 불가',disconnected:'미연결',demo:'예제 자료',configured:'어댑터 구성됨'};
+function remember(kind,state,lines,sources,measuredAt){
+  activity.unshift({kind,state,lines:[...lines],sources:[...new Set(sources.filter(value=>typeof value==='string'&&value.trim()))],
+    measuredAt,completedAt:new Date().toISOString()});
+  if(activity.length>20)activity.length=20;
+  renderActivity();
+}
+function renderActivity(){
+  const list=byId('timeline-list'),filter=byId('timeline-filter').value||'all';
+  const entries=activity.filter(item=>filter==='all'||item.kind===filter);
+  list.replaceChildren();
+  byId('timeline-summary').textContent=activity.length===0?'아직 조회한 기록이 없습니다.':
+    '이 탭의 최근 '+activity.length+'건 중 '+entries.length+'건 표시 · 조회 완료 최신순';
+  if(entries.length===0){
+    list.appendChild(make('li',activity.length===0?
+      '내 PC 상태나 연결과 Windows 기록의 「다시 조회」를 눌러 첫 기록을 남겨 보세요.':
+      '선택한 종류의 조회 기록이 없습니다. 필터는 새 조회를 실행하지 않습니다.','empty'));
+    return;
+  }
+  for(const entry of entries){
+    const row=make('li',undefined,'timeline-entry');row.dataset.kind=entry.kind;row.dataset.state=entry.state;
+    const heading=make('div',undefined,'timeline-entry-head');
+    heading.appendChild(make('h3',kindNames[entry.kind]));
+    heading.appendChild(make('span',resultNames[entry.state],'result-badge'));
+    row.appendChild(heading);
+    const completed=make('time','조회 완료 '+observed(entry.completedAt),'timeline-completed');
+    completed.setAttribute('datetime',entry.completedAt);row.appendChild(completed);
+    for(const line of entry.lines)row.appendChild(make('p',line,'timeline-detail'));
+    row.appendChild(make('p','출처: '+(entry.sources.join(' · ')||'응답을 확인하지 못함'),'source'));
+    if(entry.measuredAt!==undefined)row.appendChild(make('p','원천 측정: '+observed(entry.measuredAt),'time'));
+    list.appendChild(row);
+  }
+}
+function rememberMetrics(kind,items){
+  const count=items.filter(([,item])=>actual(item)).length;
+  remember(kind,count===items.length?'ok':count===0?'error':'partial',
+    items.map(([label,item])=>actual(item)?label+' '+item.value+' '+(item.unit||''):
+      label+' 확인 불가 · '+reason(item?.reason)).concat(
+        items.map(([label,item])=>label+' 측정: '+observed(item?.measuredAt))),
+    items.map(([,item])=>item?.source));
+}
+function rememberLogs(logs){
+  const entries=['System','Application'].map(name=>[name,logs?.[name]]);
+  const count=entries.filter(([,item])=>validLog(item)).length;
+  const complete=entries.every(([,item])=>validLog(item)&&item.status==='ok');
+  remember('events',complete?'ok':count===0?'error':'partial',
+    ['Windows 경고·오류 건수는 침해·공격 탐지 결과가 아닙니다.',
+      ...entries.map(([name,item])=>validLog(item)?
+        name+' 경고 '+item.warningCount+'건 · 오류 '+item.errorCount+'건'+
+          (item.status==='partial'?' · 최대 1000개 표본, 전체 건수 확인 불가':' · 최근 24시간')+
+          ' · 측정: '+observed(item.measuredAt):name+' 확인 불가 · '+reason(item?.reason))],
+    entries.map(([,item])=>item?.source));
+}
+function rememberFailure(kind,message){
+  remember(kind,'error',[reason(message),'다음 행동: 일반 사용자 조회 권한과 로컬 서비스 상태를 확인한 뒤 다시 조회하세요.'],[],null);
 }
 function metric(label,item,phase){
   const card=make('article',undefined,'metric');
@@ -89,6 +147,7 @@ function renderPc(data){
   pushHistory(fields);renderHistory();
   const count=[fields.cpu,fields.memory,fields.disk].filter(actual).length;
   status(byId('pc-status'),'실제 조회: '+count+'개 확인 / 3개 항목 · 요청 완료 '+observed(data?.queriedAt),count===3?'ok':count===0?'error':'partial');
+  rememberMetrics('pc',[['CPU',fields.cpu],['메모리',fields.memory],['디스크 여유',fields.disk]]);
 }
 function eventCard(name,data){
   const card=make('article',undefined,'event-card');
@@ -136,6 +195,8 @@ function renderNetwork(data){
   const logCount=logs.filter(validLog).length;
   const complete=count===2&&logs.every(x=>validLog(x)&&x.status==='ok');
   status(byId('network-status'),'실제 Windows 조회: '+count+'개 확인 / 2개 구성 · 기록 '+logCount+'개 확인 / 2개 로그 · 요청 완료 '+observed(data?.queriedAt),complete?'ok':count===0&&logCount===0?'error':'partial');
+  rememberMetrics('network',[['물리 링크',fields.network],['방화벽',fields.firewall]]);
+  rememberLogs(logData);
 }
 async function get(path){
   let response;
@@ -161,6 +222,7 @@ async function refreshPc(){
         ['CPU 사용률',{reason:reason(result.error?.message)}],['메모리 사용량',{reason:reason(result.error?.message)}],['디스크 남은 공간',{reason:reason(result.error?.message)}],
       ]);
       status(byId('pc-status'),'확인 불가: '+reason(result.error?.message)+' · Windows 권한/측정 서비스 상태를 확인한 뒤 다시 조회하세요.','error');
+      rememberFailure('pc',result.error?.message);
     }
   }finally{button.disabled=false;}
 }
@@ -178,17 +240,25 @@ async function refreshNetwork(){
       putStatusCards('network-cards',[['물리 네트워크 연결',{reason:reason(actual.error?.message)}],['Windows 방화벽 프로필',{reason:reason(actual.error?.message)}]]);
       logData=null;logState='error';logError=actual.error?.message;renderEvents();
       status(byId('network-status'),'확인 불가: '+reason(actual.error?.message)+' · 읽기 권한을 확인하고 다시 조회하세요.','error');
+      rememberFailure('network',actual.error?.message);
+      rememberFailure('events',actual.error?.message);
     }
-    if(sdp.ok){
+    if(sdp.ok&&['connected','disconnected','demo'].includes(sdp.data?.mode)
+      &&typeof sdp.data.label==='string'&&typeof sdp.data.source==='string'&&validTime(sdp.data.checkedAt)){
       status(byId('sdp-status'),sdp.data.label+' · 측정: '+observed(sdp.data.checkedAt)+' · 출처: '+sdp.data.source,
         sdp.data.mode==='connected'?'ok':'partial');
+      remember('sdp',sdp.data.mode==='connected'?'configured':sdp.data.mode,
+        [sdp.data.label], [sdp.data.source],sdp.data.checkedAt);
     }else{
       status(byId('sdp-status'),'SDP 상태 확인 불가: '+reason(sdp.error?.message)+' · 기존 워치독스 앱의 연결 표시를 따로 확인하세요.','error');
+      rememberFailure('sdp',sdp.error?.message);
     }
   }finally{button.disabled=false;}
 }
 byId('refresh-pc').addEventListener('click',refreshPc);
 byId('refresh-network').addEventListener('click',refreshNetwork);
 byId('event-filter').addEventListener('change',renderEvents);
+byId('timeline-filter').addEventListener('change',renderActivity);
 putStatusCards('pc-cards',[['CPU 사용률',null],['메모리 사용량',null],['디스크 남은 공간',null]],'idle');
 putStatusCards('network-cards',[['물리 네트워크 연결',null],['Windows 방화벽 프로필',null]],'idle');
+renderActivity();

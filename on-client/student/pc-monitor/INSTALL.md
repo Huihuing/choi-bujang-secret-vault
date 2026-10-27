@@ -2,7 +2,7 @@
 
 > 기존 보안 Agent의 로컬 5189번 화면은 그대로 두고, 일반 사용자 권한의 **별도 읽기 전용 측정 화면(5191)**을 추가합니다. 사용자 직접 실행·다른 PC 재현은 별도로 확인합니다. 운영 자격·원본 데이터·기존 제출물은 수정하거나 복사하지 않습니다.
 
-2026-10-26에는 에이전트가 일반 권한의 로컬 Windows API·브라우저 조회 및 오류 후 복구를 확인했습니다. [검증 기록](../../docs/WATCHDOGS_VERIFICATION_2026-10-26.md)을 참고하세요. 사용자 직접 확인·작업 관리자 비교·다른 사용자 재현은 아직 별도입니다. 두 PowerShell 파일은 한글을 Windows PowerShell 5.1에서 읽을 수 있도록 UTF-8 BOM을 유지합니다.
+2026-10-26에는 에이전트가 일반 권한의 로컬 Windows API·브라우저 조회 및 오류 후 복구를 확인했습니다. [검증 기록](../../docs/WATCHDOGS_VERIFICATION_2026-10-26.md)을 참고하세요. 사용자 직접 확인·작업 관리자 비교·다른 사용자 재현은 아직 별도입니다. 측정기의 두 PowerShell 파일과 통합 실행 도구는 한글을 Windows PowerShell 5.1에서 읽을 수 있도록 UTF-8 BOM을 유지합니다.
 
 ## 준비
 
@@ -10,50 +10,26 @@ Windows 10/11과 Windows PowerShell 5.1, Node.js **v24.19.0**. 관리자 권한 
 
 소스 경로: `D:\share\choi-bujang-secret-vault\on-client\student\pc-monitor`. 해당 경로는 이 PC에서 확인된 경로 예시이고, 다른 PC에서는 새 체크아웃 경로에 맞게 변경합니다. 기존 원본 폴더에서 `M public/data.json` 상태를 보존합니다.
 
-## 실행 순서
+## 한 명령으로 프로젝트 실행
 
-**1. Git 최신 소스를 보존하며 동기화**(기존 폴더에 미커밋 작업이 있으므로 강제 reset 금지).
-
-~~~powershell
-Set-Location "D:\share\choi-bujang-secret-vault"
-git status --short
-git fetch origin main
-git merge --ff-only origin/main
-git status --short
-~~~
-
-**2. 별도 PowerShell 창에서 Node.js 24.19.0을 해당 세션에만 적용하고 실행.**
-
-이 PC처럼 v24.19.0이 이미 설치돼 있다면 다운로드 없이 다음 명령으로 선택할 수 있습니다. 5191이 이미 켜져 있으면 중복 시작하지 않고 기존 페이지를 엽니다.
+기존 폴더와 미커밋 작업을 유지하고 저장소 루트 `D:\share\choi-bujang-secret-vault`의 일반 PowerShell에서 실행합니다. 다른 PC에서는 체크아웃한 저장소 루트로 이동합니다.
 
 ~~~powershell
-Set-Location "D:\share\choi-bujang-secret-vault"
-$watchdogsNode24 = Get-Command node -All | Where-Object { (& $_.Source --version).Trim() -eq 'v24.19.0' } | Select-Object -First 1
-if (-not $watchdogsNode24) { throw "Node.js v24.19.0 준비 필요" }
-$env:Path = "$(Split-Path -Parent $watchdogsNode24.Source);$env:Path"
-powershell -NoProfile -ExecutionPolicy Bypass -File ".\on-client\student\pc-monitor\start-watchdogs.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\on-client\student\start-watchdogs.ps1
 ~~~
 
-기존 설치본이 없는 환경에서만 아래 준비 절차를 사용합니다.
+학생 실행 도구는 기존 설치 중 **Node.js v24.19.0**을 선택합니다. 없으면 `NODE_24_REQUIRED`로 멈추며 다운로드·설치하거나 PC 전역 PATH를 바꾸지 않습니다. 새 5189 서버는 제공 `tools/start-alekov.ps1 -Background`, 새 5191 서버는 기존 `student/pc-monitor/start-watchdogs.ps1`을 숨김 자식 프로세스로 실행합니다. 필요한 Windows 경로만 자식 환경에 전달하며 토큰·AI·DB 설정·`NODE_OPTIONS`는 전달하거나 출력하지 않습니다.
 
-~~~powershell
-Set-Location "D:\share\choi-bujang-secret-vault\on-client\student\pc-monitor"
-$node24 = (& npx --yes node@24.19.0 -p "process.execPath" | Select-Object -Last 1).Trim()
-if (-not (Test-Path -LiteralPath $node24)) { throw "Node.js 24.19.0 실행 파일 없음" }
-$env:Path = "$(Split-Path -Parent $node24);$env:Path"
-if ((node --version).Trim() -ne "v24.19.0") { throw "Node 버전 확인 필요" }
-powershell -NoProfile -ExecutionPolicy Bypass -File ".\start-watchdogs.ps1"
-~~~
+- **먼저 열 화면 `http://127.0.0.1:5191/`**: 워치독스 학생 조회 기록·PC 측정 화면입니다. 첫 화면의 **조회 기록 → 내 PC 상태 → 연결과 Windows 기록**을 사용합니다. **각 「다시 조회」 버튼을 눌렀을 때만** 실제 Windows 값을 읽습니다. 실행 도구는 화면·진단 응답만 확인하고 자동으로 CPU·이벤트를 측정하지 않습니다.
+- `http://127.0.0.1:5189/`: 기존 보안 Agent입니다. **보호 현황**의 PC 측정 링크 또는 **보안 기록**의 접속·XDR 타임라인을 사용합니다. 운영 SDP가 미연결이면 확인 불가를 유지하며 예제 자료를 실제 사건으로 표시하지 않습니다.
 
-출력의 `http://127.0.0.1:5191/`을 본인 브라우저에서 직접 엽니다. 자동 수집은 없고 **각 「다시 조회」 버튼을 눌렀을 때만** Windows 데이터를 읽습니다. 종료는 실행 PowerShell의 `Ctrl+C`. PC 정책·방화벽·이벤트 로그는 절대 수정하지 않습니다.
+두 포트를 모두 확인한 다음 시작합니다. 같은 프로젝트의 서버 파일을 실행하는 현재 사용자 소유 Node 프로세스와 앱 응답을 확인한 경우만 재사용합니다. 다른 프로그램이 포트를 쓰거나 소유자를 확인할 수 없으면 멈춥니다. 기존 프로세스 종료·임의 포트 변경·관리자 권한 상승은 하지 않습니다. 기존 앱을 상대 경로 등으로 실행해 소유자를 정확히 확인하지 못한 경우에도 재사용을 추측하지 않습니다.
 
-**3. 기존 보안 Agent도 필요할 경우 다른 PowerShell에서 별도로 실행**(이미 5189 서버가 켜져 있으면 또 시작하지 않음).
+이 도구가 새로 시작한 앱이 있으면 실행 창을 유지합니다. **Ctrl+C**로 이번 실행에서 확보한 프로세스 핸들만 종료하고, 재사용한 기존 앱은 그대로 둡니다. 두 앱을 모두 재사용하면 도구는 안내 후 끝나며 기존 실행 창에서 종료를 관리합니다. 창을 강제로 닫았다면 앱이 남아 있을 수 있으므로 다시 실행해 동일 앱 여부를 확인합니다. 이름으로 Node 프로세스를 일괄 종료하지 않습니다.
 
-~~~powershell
-Set-Location "D:\share\choi-bujang-secret-vault\on-client"
-node --version  # v24.19.0 확인
-powershell -NoProfile -ExecutionPolicy Bypass -File ".\tools\start-alekov.ps1"
-~~~
+이것은 **제공 프로젝트 소스를 로컬에서 실행하는 도구**입니다. 공식 설치형 런타임·승인 Host·운영 SDP 연결·앱 포장이 완료됐다는 뜻이 아닙니다. 공식 설치 패키지가 없어도 기본 5189 화면과 별도 5191 측정 소스는 실행할 수 있습니다. 기존 제출물·인증 설정·PC 정책·방화벽·이벤트 로그는 변경하지 않습니다.
+
+측정 화면만 필요한 경우에는 기존 `student/pc-monitor/start-watchdogs.ps1`을 계속 사용할 수 있습니다. 이 개별 도구는 현재 세션의 `node`가 정확히 v24.19.0이어야 하며 실행 창의 Ctrl+C로 종료합니다.
 
 ## 값의 실제 출처
 
@@ -67,12 +43,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".\tools\start-alekov.ps1"
 | Windows 기록 | `Get-WinEvent`, System/Application, Level 2·3, 최근 24시간 | 경고/오류 건수 · **침해 탐지 아님** |
 | SDP | `GET /api/sdp` → 기존 보안 Agent `GET /api/diagnostics` | SDP 미연결·예제·어댑터 구성됨·확인 불가. Windows PC 조회와 구분 |
 
-각 항목은 출처·측정 시각(UTC에서 브라우저 현지 시각으로 변환)·단위를 표시합니다. 이벤트 로그는 **로그별 최대 1000건**을 읽고 그 이상이면 표본/부분 조회로 분리하므로 전체 건수로 주장하지 않습니다. 최근 5회 값은 **브라우저 탭 메모리만 사용**하며 새로 열면 사라집니다. 임의 예제 숫자, 이벤트 메시지 전문, 키·토큰, MAC·IP·계정명은 표시하지 않습니다.
+각 항목은 출처·측정 시각(UTC에서 브라우저 현지 시각으로 변환)·단위를 표시합니다. 이벤트 로그는 **로그별 최대 1000건**을 읽고 그 이상이면 표본/부분 조회로 분리하므로 전체 건수로 주장하지 않습니다. 조회 기록은 PC·네트워크·Windows 기록·SDP 종류별로 거를 수 있으며 성공·부분·실패·미연결을 최근 20건까지 조회 완료순으로 기억합니다. 네트워크 버튼 한 번은 네트워크·Windows 기록·SDP의 세 기록을 남깁니다. PC 실측 최대 5회 비교는 별도로 유지합니다. 모두 **현재 탭 메모리만 사용**하며 새로고침하거나 탭을 닫으면 사라집니다. 임의 예제 숫자, 이벤트 메시지 전문, 키·토큰, MAC·IP·계정명은 표시하지 않습니다.
 
 ## 실패·권한 부족
 
 | 코드/현상 | 원인·다음 행동 |
 |---|---|
+| `NODE_24_REQUIRED` | 기존 설치에 v24.19.0이 없음. 해당 버전을 준비한 뒤 통합 실행 도구 재실행 |
+| `PORT_OCCUPIED` / `PORT_OWNER_UNVERIFIED` / `PORT_CHECK_UNAVAILABLE` | 포트나 동일 사용자·프로젝트 소유자를 확인할 수 없음. 기존 실행 창을 확인하며 다른 프로세스를 자동 종료하지 않음 |
+| `APP_RESPONSE_UNVERIFIED` / `PORT_CHANGED` | 앱 응답이 다르거나 확인 중 포트 상태가 바뀜. 기존 앱 상태를 확인한 뒤 다시 실행 |
+| `APP_START_FAILED` / `APP_START_TIMEOUT` / `APP_EXITED` | 이번 실행 앱의 시작·응답·수명 확인 실패. 도구가 시작한 것으로 확인한 프로세스만 정리하며 재사용한 앱은 유지 |
 | `WINDOWS_ONLY` | 다른 OS에선 계측 불가. Windows에서 실행 |
 | `READER_UNAVAILABLE` / `MEASURE_FAILED` | PowerShell/WMI 접근 불가. 관리자 권한 우회하지 않고 명령 이용 가능 여부를 확인 |
 | `MEASURE_TIMEOUT` | 실측 시간 초과. 읽기 권한과 항목을 확인한 뒤 직접 다시 조회 |
@@ -88,6 +68,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ".\tools\start-alekov.ps1"
 3. 네트워크·방화벽의 **다시 조회** → 이벤트 필터 System/Application 전환. Windows 경고·오류는 공격·침해 판정이 아님을 확인합니다.
 4. SDP가 꺼져 있으면 「확인 불가」, 기본 미연결 앱이 켜져 있으면 「SDP 미연결」로 따로 표시되는지 확인합니다.
 5. 관리자 권한이 없어 읽지 못한 값은 「확인 불가」와 이유·다음 행동만 있는지 확인합니다.
-6. 종료 `Ctrl+C`. 실행 안내만 보고 제3자가 성공했다는 증거는 아직 **미확인**입니다. 위 순서로 검증한 값을 상대방이 전달하면 기록할 수 있습니다.
+6. 통합 실행 창의 `Ctrl+C`는 이번에 새로 시작한 앱만 종료합니다. 재사용한 앱은 원래 실행 창에서 관리합니다. 실행 안내만 보고 제3자가 성공했다는 증거는 아직 **미확인**입니다. 위 순서로 검증한 값을 상대방이 전달하면 기록할 수 있습니다.
 
 **보안 경계:** 로컬 GET만 지원, 서버 `127.0.0.1` 바인딩, 교차 출처/Host 거부, 조회 시각 명시. 기존 제공 `public/app.js`·`src/server.mjs`·계정 연결/조치 집행 코드는 건드리지 않습니다. 5191은 기존 앱과 **별개 학생용 동반 페이지**이며 공식 설치형 앱으로 패키징된 것은 아닙니다.

@@ -1,4 +1,20 @@
-# BYTE BACK · 12단계 저장점 — 탈환 작전실
+# 워치독스 · 내 PC 조회 기록
+
+## WATCHDOGS 로컬 앱 최신 안내 · 2026-10-27
+
+마지막 총공세 워치독스는 **기록 타임라인형·프로젝트 폴더 실행**을 선택했습니다. 기존 보안 Agent(5189)와 학생용 PC 측정 화면(5191)을 함께 사용하며, CPU·메모리·디스크와 네트워크·방화벽·Windows 이벤트를 일반 권한으로 읽습니다. 2026-10-27 16:48~16:49 KST의 Node v24.19.0·관리자 권한 false 실측에 이어, 16:55 새 UI의 실제 측정·타임라인 4개 기록·Windows 종류 필터 1개 표시와 SDP 미연결을 확인했습니다. 2026-10-26 실측·키보드·오류 복구 근거도 보존합니다.
+
+Windows PowerShell 5.1과 Node **v24.19.0** 세션에서 저장소 루트 기준 실행합니다.
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\on-client\student\start-watchdogs.ps1
+```
+
+이미 실행 중인 앱은 재사용합니다. 두 앱 모두 신규 시작·기존 재사용·혼합 시작과 Ctrl+C에서 이번에 시작한 프로세스만 종료하는 것을 실제 확인했습니다. 검증 종료 시 두 앱은 실행 중입니다. 측정 화면의 **내 PC 상태·조회 기록·네트워크/Windows 기록**에서 「다시 조회」를 누릅니다. 정상 결과는 실제 값·단위·출처·측정 시각이고, 실패는 현재 수치를 지우고 이유·다음 행동을 표시합니다. 16:56:56 서비스 접속 실패 뒤 17:00:08 새 런처와 Enter 재조회로 PC 세 값이 복구되고 과거 실패 기록도 유지됐습니다. 실제 HTTP 검사에서 POST 405·다른 Origin 403·잘못된 Host 403을 확인했습니다.
+
+기존 최근 5회 PC 비교와 함께 PC·네트워크·Windows 기록·SDP 종류별 조회 완료순 최대 20개 탭 기록을 제공합니다. 네트워크 버튼 한 번은 3종 기록을 남깁니다. **UI 모의 24개·서버 모의 9개, 총 33개 통과**와 **에이전트의 실제 세 기능 시연**을 확인했습니다. 20건 상한·권한 부족·부분 표본은 모의 확인만 했으며 실제 발생으로 기록하지 않습니다. 환경 준비·종료는 [실행 안내](on-client/student/pc-monitor/INSTALL.md), 상세 실측·오류 복구·런처 근거는 [2~7일차 기록](on-client/docs/WATCHDOGS_FINAL_OFFENSIVE_D2_D7.md)·[시연 체크리스트](on-client/docs/WATCHDOGS_FINAL_DEMO.md), 이전 근거는 [검증 기록](on-client/docs/WATCHDOGS_VERIFICATION_2026-10-26.md)을 따릅니다.
+
+최신 **6일차 제출은 GitHub 저장소 주소와 동일 작업의 40자리 커밋 SHA**, **7일차는 핵심 3기능의 실제 시연·근거·한계**입니다. 최종 커밋·푸시 후 `git rev-parse HEAD`와 `git ls-remote origin refs/heads/main`의 40자리 값을 GitHub와 대조하며 특정 SHA를 문서에 고정하지 않습니다. 포장·설치 프로그램·`package-app`·업데이트 실행은 이번 과정에서 제외합니다. 제3자 재현·작업 관리자 동시 비교·실제 SDP/XDR 연결·공식 제출 수락은 미확인입니다. 캡처는 저장소 밖에 보관하고, 기존 사용자 자료·13~22단계 기록·자료실 인증 기능을 보존합니다. 이번 로컬 개선에서 제공 서버·5191 서버·수집기·인증 계약은 변경하지 않았습니다. 아래는 이전 방어전 저장점 기록입니다.
 
 ## Windows Hello 호환성 저장점 · 2026-10-27
 
@@ -11,22 +27,6 @@ node --test test/stage11.test.mjs test/stage11-rsa.test.mjs test/stage11-device-
 ```
 
 운영 화면은 [자료실](https://choi-bujang-secret-vault-jwnp.vercel.app)에서 새로고침 후 로그인 → 「기기 등록 요청」을 누르고 Windows 인증을 직접 완료합니다. 정상 결과는 서버 관리자 승인 대기이며, 미승인 기기·잘못된 서명·재사용한 확인 요청은 거부되어야 합니다. 실제 Windows Hello 등록과 승인 후 보호 요청의 성공은 아직 미확인입니다. 변경 근거·적용 순서·한계는 [호환성 검증 기록](docs/WEBAUTHN_WINDOWS_COMPATIBILITY.md)에 남겼습니다. 이 검사는 공식 심판 판정이 아닙니다.
-
-## WATCHDOGS PC 측정 저장점 · 2026-10-26
-
-기존 보안 Agent(5189)와 별도인 학생용 측정 화면(5191)에서 CPU·메모리·디스크, 네트워크·방화벽·Windows 이벤트를 일반 권한으로 읽습니다. PowerShell 5.1 인코딩 오류를 고친 뒤 실제 로컬 조회·키보드 조작·접속 오류 후 재조회 복구를 확인했습니다. 조회 전·조회 중·부분 성공·실패를 구분하고, 읽지 못한 값은 0이나 정상으로 바꾸지 않습니다. 사건 발생 시각과 기록 원천 확인 시각도 구분합니다.
-
-Windows PowerShell 5.1과 Node **v24.19.0** 세션에서, 저장소 루트 기준 실행:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\on-client\student\pc-monitor\start-watchdogs.ps1
-```
-
-5191이 이미 실행 중이면 중복 시작하지 말고 `http://127.0.0.1:5191/`의 각 「다시 조회」를 누릅니다. 종료는 실행 창의 Ctrl+C입니다. 정상 결과는 값·단위·출처·측정 시각이며 읽기 실패는 이유·다음 행동을 표시합니다. POST·교차 출처·잘못된 Host 요청은 거부합니다.
-
-같은 Node 버전의 모의 회귀 검사: `node --test on-client/student/pc-monitor/app.test.mjs on-client/student/pc-monitor/server.test.mjs` (26개 통과, 실제 심판 판정 아님). 설치된 Node 버전 선택과 재실행은 [측정기 안내](on-client/student/pc-monitor/INSTALL.md)를, 실측 근거와 1~7일차 조건별 상태는 [검증 기록](on-client/docs/WATCHDOGS_VERIFICATION_2026-10-26.md)을 따릅니다.
-
-작업 관리자 동시 비교·제3자 재현·실제 SDP/XDR 연결은 미확인입니다. 공식 `package-app`/승인 실행 패키지가 없어 설치·제거·공식 포장·최종 제출은 미완료입니다. 기존 13~22단계 기록, 사용자 데이터, 인증·판정 코드와 운영 설정은 보존합니다. 아래는 이전 방어전 저장점 기록입니다.
 
 ## 보너스 xdr-06 저장점 · 자료 빼돌리기를 잡아 냅니다
 

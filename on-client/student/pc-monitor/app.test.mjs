@@ -32,6 +32,7 @@ class Element {
 function harness(){
   const nodes=new Map([...html.matchAll(/\bid="([^"]+)"/g)].map(([,id])=>[id,new Element()]));
   nodes.get('event-filter').value='all';
+  nodes.get('timeline-filter').value='all';
   const requests=[];
   const replies=new Map();
   const context=vm.createContext({
@@ -56,6 +57,7 @@ function harness(){
     queue(path,...payloads){replies.set(path,[...(replies.get(path)||[]),...payloads]);},
     click:id=>nodes.get(id).emit('click'),
     filter:async value=>{nodes.get('event-filter').value=value;await nodes.get('event-filter').emit('change');},
+    timeline:async value=>{nodes.get('timeline-filter').value=value;await nodes.get('timeline-filter').emit('change');},
   };
 }
 
@@ -249,4 +251,103 @@ test('모의 UI: SDP 조회 실패는 Windows 조회 성공과 독립적으로 �
   assert.equal(h.node('network-status').dataset.state,'ok');
   assert.equal(h.node('sdp-status').dataset.state,'error');
   assert.match(content(h,'sdp-status'),/모의 SDP 서버 미실행/);
+});
+
+test('모의 타임라인: 조회 전 빈 기록과 세 기능 진입을 제공하고 자동 수집하지 않는다',()=>{
+  const h=harness();
+  assert.equal(h.requests.length,0);
+  assert.match(content(h,'timeline-summary'),/아직 조회한 기록이 없습니다/);
+  assert.match(content(h,'timeline-list'),/첫 기록/);
+  assert.match(html,/aria-label="핵심 기능 3가지"/);
+  assert.match(html,/href="#timeline"/);
+  assert.match(html,/href="#pc"/);
+  assert.match(html,/href="#network"/);
+});
+
+test('모의 타임라인: 실패와 복구 모두 보존하고 현재 수치와 과거 기록을 구분한다',async()=>{
+  const h=harness();h.queue('/api/pc',pc(),failure('모의 WMI 연결 실패'),pc({cpu:field(20,'%')}));
+  await h.click('refresh-pc');await h.click('refresh-pc');
+  let rows=cards(h,'timeline-list');
+  assert.equal(rows.length,2);
+  assert.equal(rows[0].dataset.state,'error');
+  assert.match(rows[0].textContent,/확인 불가.*모의 WMI 연결 실패/);
+  assert.doesNotMatch(rows[0].textContent,/CPU 12\.5/);
+  assert.match(rows[1].textContent,/CPU 12\.5 %/);
+  assert.doesNotMatch(content(h,'pc-cards'),/12\.5 %/);
+  await h.click('refresh-pc');rows=cards(h,'timeline-list');
+  assert.equal(rows.length,3);
+  assert.equal(rows[0].dataset.state,'ok');
+  assert.match(rows[0].textContent,/CPU 20 %/);
+  assert.equal(rows[1].dataset.state,'error');
+  assert.doesNotMatch(content(h,'pc-cards'),/모의 WMI 연결 실패/);
+  assert.match(rows[0].textContent,/조회 완료/);
+  assert.ok(rows[0].textContent.includes('CPU 측정: '+localAt));
+});
+
+test('모의 타임라인: PC 일부 확인 불가와 로그 표본 상한을 정상으로 바꾸지 않는다',async()=>{
+  const h=harness();
+  h.queue('/api/pc',pc({memory:missing('모의 메모리 권한 부족')}));
+  await h.click('refresh-pc');
+  assert.equal(cards(h,'timeline-list')[0].dataset.state,'partial');
+  assert.match(content(h,'timeline-list'),/메모리 확인 불가 · 모의 메모리 권한 부족/);
+  h.queue('/api/network',network({logs:{System:log({status:'partial',errorCount:400,warningCount:600,sampled:1000}),Application:log()}}));
+  h.queue('/api/sdp',sdp());await h.click('refresh-network');await h.timeline('events');
+  const rows=cards(h,'timeline-list');
+  assert.equal(rows.length,1);
+  assert.equal(rows[0].dataset.state,'partial');
+  assert.match(rows[0].textContent,/최대 1000개 표본, 전체 건수 확인 불가/);
+  assert.match(rows[0].textContent,/침해·공격 탐지 결과가 아닙니다/);
+});
+
+test('모의 타임라인: 종류 필터와 빈 결과는 원래 기록을 바꾸거나 새 요청하지 않는다',async()=>{
+  const h=harness();h.queue('/api/pc',pc());await h.click('refresh-pc');
+  h.queue('/api/network',network());h.queue('/api/sdp',sdp());await h.click('refresh-network');
+  const requests=h.requests.length;
+  await h.timeline('events');
+  assert.equal(cards(h,'timeline-list').length,1);
+  assert.match(content(h,'timeline-list'),/Windows 기록/);
+  assert.doesNotMatch(content(h,'timeline-list'),/CPU 12\.5 %/);
+  await h.timeline('sdp');
+  assert.equal(cards(h,'timeline-list')[0].dataset.state,'disconnected');
+  assert.match(content(h,'timeline-list'),/SDP 미연결/);
+  assert.doesNotMatch(content(h,'timeline-list'),/실제 조회/);
+  await h.timeline('all');assert.equal(cards(h,'timeline-list').length,4);
+  assert.equal(h.requests.length,requests);
+  const empty=harness();empty.queue('/api/pc',pc());await empty.click('refresh-pc');await empty.timeline('events');
+  assert.match(content(empty,'timeline-list'),/선택한 종류의 조회 기록이 없습니다/);
+});
+
+test('모의 타임라인: 20건 상한·완료순 정렬·새 탭 초기화를 지킨다',async()=>{
+  const h=harness();h.queue('/api/pc',...Array.from({length:22},(_,index)=>pc({cpu:field(index,'%')})));
+  for(let index=0;index<22;index++)await h.click('refresh-pc');
+  const rows=cards(h,'timeline-list');
+  assert.equal(rows.length,20);
+  assert.match(rows[0].textContent,/CPU 21 %/);
+  assert.match(rows[19].textContent,/CPU 2 %/);
+  assert.match(content(h,'timeline-summary'),/최근 20건 중 20건/);
+  assert.match(content(harness(),'timeline-summary'),/아직 조회한 기록이 없습니다/);
+});
+
+test('모의 타임라인: 요청 시작 순서 대신 실제 완료 순서를 기록한다',async()=>{
+  const h=harness();let release;
+  h.queue('/api/pc',new Promise(resolve=>{release=resolve;}));
+  const pending=h.click('refresh-pc');
+  h.queue('/api/network',network());h.queue('/api/sdp',sdp('demo'));await h.click('refresh-network');
+  release(pc());await pending;
+  const rows=cards(h,'timeline-list');
+  assert.equal(rows[0].dataset.kind,'pc');
+  assert.equal(rows[1].dataset.kind,'sdp');
+  assert.equal(rows[1].dataset.state,'demo');
+  assert.match(rows[1].textContent,/실제 SDP 연결 아님/);
+});
+
+test('모의 타임라인: SDP 응답 형식이 틀려도 PC 조회와 구별하고 버튼을 복구한다',async()=>{
+  const h=harness();h.queue('/api/network',network());h.queue('/api/sdp',{ok:true,data:{mode:'connected'}});
+  await h.click('refresh-network');
+  assert.equal(h.node('network-status').dataset.state,'ok');
+  assert.equal(h.node('sdp-status').dataset.state,'error');
+  assert.equal(h.node('refresh-network').disabled,false);
+  await h.timeline('sdp');
+  assert.equal(cards(h,'timeline-list')[0].dataset.state,'error');
+  assert.doesNotMatch(content(h,'timeline-list'),/어댑터 구성됨/);
 });
