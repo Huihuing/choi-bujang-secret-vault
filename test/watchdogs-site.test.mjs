@@ -169,3 +169,13 @@ test('combined PWA keeps its installed identity, start URL, scope and icon route
  const ignored=await readFile(new URL('.gitignore',repository),'utf8');
  assert.ok(ignored.split(/\r?\n/).includes('/public/watchdogs/'));
 });
+
+test('watchdogs activity records scroll inside a bounded keyboard-focusable list',async()=>{
+ const html=await readFile(new URL('on-client/student/pc-monitor/index.html',repository),'utf8');
+ const css=await readFile(new URL('on-client/student/pc-monitor/style.css',repository),'utf8');
+ assert.match(html,/<ol id="timeline-list" class="timeline-list" tabindex="0" aria-label="조회 완료 최신순 기록"><\/ol>/);
+ assert.match(css,/\.timeline-list\{[^}]*max-height:min\(65vh,600px\)/);
+ assert.match(css,/\.timeline-list\{[^}]*overflow-y:auto/);
+ assert.match(css,/\.timeline-list\{[^}]*scrollbar-gutter:stable/);
+ assert.match(css,/@media\(max-width:700px\)\{[^]*?\.timeline-list\{max-height:min\(58vh,480px\)\}/);
+});
