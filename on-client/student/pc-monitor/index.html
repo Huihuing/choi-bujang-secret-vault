@@ -54,9 +54,9 @@
     <div><div class="eyebrow">ACTIVITY · LATEST FIRST</div><h2 id="timeline-title">내 조회 기록</h2></div>
     <label class="selector">조회 종류 <select id="timeline-filter"><option value="all">전체</option><option value="pc">내 PC 상태</option><option value="network">네트워크·방화벽</option><option value="events">Windows 기록</option><option value="sdp">SDP 연결</option></select></label>
   </div>
-  <p class="section-desc">아래 「다시 조회」로 완료한 결과를 최신순으로 표시합니다. 조회 완료 시각과 원천 측정 시각을 구분합니다. 성공·부분 확인·실패를 모두 남기며 이 탭의 최근 20건만 기억합니다. 새로고침하거나 탭을 닫으면 사라집니다.</p>
+  <p class="section-desc">아래 「다시 조회」로 완료한 결과를 최신순으로 표시합니다. 조회 완료 시각과 원천 측정 시각을 구분합니다. 성공·부분 확인·실패를 모두 남기며 이 탭의 최근 20건만 기억합니다. 새로고침하거나 탭을 닫으면 사라집니다. 기록이 많아지면 아래 목록 안에서 스크롤할 수 있습니다.</p>
   <p id="timeline-summary" class="timeline-summary" role="status" aria-live="polite">아직 조회한 기록이 없습니다.</p>
-  <ol id="timeline-list" class="timeline-list" aria-label="조회 완료 최신순 기록"></ol>
+  <ol id="timeline-list" class="timeline-list" tabindex="0" aria-label="조회 완료 최신순 기록"></ol>
   <p class="section-desc">이 목록은 내 PC의 조회 이력입니다. SDP의 접속·XDR 사건 기록은 <a href="http://127.0.0.1:5189/" target="_blank" rel="noopener noreferrer">기존 보안 Agent</a>에서 확인하며, 연결되지 않은 자료를 대신 만들어 표시하지 않습니다.</p>
 </section>
 <section id="pc" class="panel" aria-labelledby="pc-title">
