@@ -44,7 +44,7 @@ main{min-width:0;padding:30px clamp(16px,3vw,46px) 50px}
 .core-links a>span:last-child{font-size:.78rem;color:#b2c8dd}
 .core-number{font-size:.75rem;font-weight:800;letter-spacing:.12em;color:#70d2e0}
 .timeline-summary{font-size:.82rem;color:#c7d9eb;margin:18px 0}
-.timeline-list{margin:0;padding:0;list-style:none;display:grid;gap:12px}
+.timeline-list{margin:0;max-height:min(65vh,600px);padding:0 8px 0 0;list-style:none;display:grid;align-content:start;gap:12px;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch}
 .timeline-entry{border:1px solid #344b65;border-left:3px solid #5ec9d8;border-radius:4px 12px 12px 4px;padding:18px 20px;background:#14273d;overflow-wrap:anywhere}
 .timeline-entry[data-state="error"]{border-left-color:#f69b9b}
 .timeline-entry[data-state="partial"],.timeline-entry[data-state="disconnected"],.timeline-entry[data-state="demo"],.timeline-entry[data-state="configured"]{border-left-color:#e6c17b}
@@ -104,6 +104,7 @@ h3{font-size:.9rem;margin:0 0 9px}
 @media(max-width:700px){
 .topbar{position:static}
 .panel{padding:20px 15px}
+.timeline-list{max-height:min(58vh,480px)}
 .metric-grid,.event-grid,.core-links{grid-template-columns:minmax(0,1fr)}
 main{padding:18px 12px}
 .intro{padding:24px 18px}
