@@ -179,3 +179,16 @@ test('watchdogs activity records scroll inside a bounded keyboard-focusable list
  assert.match(css,/\.timeline-list\{[^}]*scrollbar-gutter:stable/);
  assert.match(css,/@media\(max-width:700px\)\{[^]*?\.timeline-list\{max-height:min\(58vh,480px\)\}/);
 });
+
+test('hosted connection guide explains actual project path, exact Node 24 and troubleshooting',async()=>{
+ const html=await readFile(new URL('on-client/student/pc-monitor/index.html',repository),'utf8');
+ assert.match(html,/<details id="connection-help" class="connection-help" hidden>/);
+ assert.ok(html.includes('Set-Location "D:\\share\\choi-bujang-secret-vault"'));
+ assert.ok(html.includes('WatchdogsNode\\node-v24.19.0-win-x64'));
+ assert.ok(html.includes('Node.js v24.19.0'));
+ assert.ok(html.includes('NODE_24_REQUIRED'));
+ assert.ok(html.includes('Test-NetConnection 127.0.0.1 -Port 5191'));
+ assert.match(html,/동일한 Windows PC/);
+ assert.match(html,/브라우저·방화벽의 보호 설정을 끄지 마세요/);
+ assert.match(html,/<a href="\/#archive" target="_top">BYTE BACK 자료실로 이동<\/a>/);
+});

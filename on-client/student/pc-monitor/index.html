@@ -32,15 +32,27 @@
   <p class="intro-hint">측정은 아래 <strong>다시 조회</strong> 버튼을 누를 때만 진행됩니다. 자동 감시·방화벽 변경·이벤트 로그 수정은 하지 않습니다.</p>
   <p id="local-connection" class="connection-note" role="status">이 PC에서 실행한 측정기를 사용합니다. 아직 조회하지 않았습니다.</p>
   <details id="connection-help" class="connection-help" hidden>
-    <summary>내 PC 연결 방법</summary>
+    <summary>내 PC 연결 방법 (실행 경로·Node.js 확인)</summary>
+    <p>PC 상태는 웹 서버가 대신 측정하지 않습니다. <strong>이 화면을 보는 동일한 Windows PC</strong>에서 로컬 측정기를 실행해야 합니다. Windows PowerShell 5.1과 <strong>Node.js v24.19.0</strong>이 필요합니다.</p>
     <ol>
-      <li>이 화면을 보는 Windows PC의 기존 프로젝트 폴더에서 아래 명령으로 측정기를 실행하세요.
-        <pre><code>powershell -NoProfile -ExecutionPolicy Bypass -File .\on-client\student\start-watchdogs.ps1</code></pre>
+      <li><strong>실제 프로젝트 폴더로 이동합니다.</strong> 아래 경로는 이 프로젝트의 작업 PC에서 사용한 예시입니다. 다른 PC에서는 본인이 저장한 폴더 경로로 바꾸세요.
+        <pre><code>Set-Location "D:\share\choi-bujang-secret-vault"
+Test-Path ".\on-client\student\start-watchdogs.ps1"</code></pre>
+        <p><code>True</code>이면 실행 파일이 존재합니다. <code>False</code>이면 프로젝트 경로를 먼저 확인하세요. 다른 프로젝트 폴더에서 실행하지 마세요.</p>
       </li>
-      <li>아래 「다시 조회」를 누릅니다. 브라우저가 로컬 네트워크 또는 루프백 접근을 물으면 이 사이트의 내 PC 조회를 직접 허용하세요.</li>
-      <li>연결되지 않으면 <a href="http://127.0.0.1:5191/" target="_blank" rel="noopener noreferrer">로컬 측정 화면</a>이 열리는지 확인하고 다시 조회하세요. 이전 버전이 실행 중이면 그 실행 창에서 종료한 뒤 최신 소스로 다시 켜세요.</li>
+      <li><strong>Node.js v24.19.0을 선택하고 실행합니다.</strong> 워치독스 전용 Node.js ZIP을 이미 준비했다면 아래 명령을 사용할 수 있습니다. 이 경로에 Node.js가 없다면 v24.19.0을 별도로 준비해야 합니다.
+        <pre><code>$node24 = Join-Path $env:LOCALAPPDATA "WatchdogsNode\node-v24.19.0-win-x64"
+if (Test-Path (Join-Path $node24 "node.exe")) {
+  $env:Path = "$node24;$env:Path"
+}
+node --version
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\on-client\student\start-watchdogs.ps1"</code></pre>
+        <p><code>node --version</code>에서 <code>v24.19.0</code>이 표시되는지 확인하세요. <code>NODE_24_REQUIRED</code>는 필요한 버전을 찾지 못했다는 뜻입니다. 기존 Node.js v26을 삭제하거나 Windows 전역 PATH를 변경할 필요는 없습니다. 새 PowerShell 창에서는 전용 경로 설정을 다시 적용해야 합니다. 측정기를 실행한 창은 유지하세요.</p>
+      </li>
+      <li><strong>로컬 연결을 확인하고 다시 조회합니다.</strong> 같은 PC에서 <a href="http://127.0.0.1:5191/" target="_blank" rel="noopener noreferrer">로컬 측정 화면 (127.0.0.1:5191)</a>이 열리는지 먼저 확인하세요. 이후 워치독스의 「다시 조회」를 누르고, 브라우저가 로컬 네트워크 또는 루프백 접근을 요청하면 이 사이트의 요청인지 확인한 후 허용하세요.</li>
     </ol>
-    <p>이 브라우저의 PC만 조회합니다. 다른 기기의 PC 상태를 볼 수 없으며, 측정값을 서버에 저장하지 않습니다. 브라우저·방화벽의 보호 설정을 끄지 마세요.</p>
+    <p><strong>연결되지 않는 경우:</strong> PowerShell에서 <code>Test-NetConnection 127.0.0.1 -Port 5191</code>을 실행하세요. <code>TcpTestSucceeded: False</code>이면 측정기 실행 여부부터 확인합니다. 이전 측정기가 실행 중이면 원래 실행 창에서 정상 종료한 후 최신 소스로 다시 시작하세요. 포트가 열려 있는데 웹에서만 실패한다면 브라우저의 해당 사이트 로컬 네트워크 접근 권한을 확인하세요.</p>
+    <p>이 브라우저와 동일한 PC의 값만 읽습니다. 다른 기기의 PC 상태를 볼 수 없으며, 측정값을 Vercel 서버에 저장하지 않습니다. 브라우저·방화벽의 보호 설정을 끄지 마세요.</p>
     <a href="/#archive" target="_top">BYTE BACK 자료실로 이동</a>
   </details>
 </section>
