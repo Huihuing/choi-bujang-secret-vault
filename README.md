@@ -1,6 +1,10 @@
-# 패키징 후보(P1~P8) — 공식 판정 전
+# ZTNA·XDR 패키징 후보(P1~P8) — main 반영 / 공식 판정 대기
 
-기존 1~12단계 및 XDR·워치독스 기능을 보존하면서 신규 인증 API와 배포·검증 절차를 추가한 패키징 후보입니다. **[패키지 안내](package/README.md)** · **[P1~P8 자체 점검표](package/SELF-CHECK.md)** · **[구성도](package/ARCHITECTURE.md)**. 신규 Vercel 프로젝트 재배포·운영 SDP 연결·공식 심판 통과는 아직 확인되지 않았습니다. 기존 프로덕션 배포는 변경하지 않았습니다.
+2026-10-30 패키징 코드·설명서가 [main](https://github.com/Huihuing/choi-bujang-secret-vault)에 병합되었습니다. 기존 1~12단계, XDR 6개 시나리오, Windows 워치독스 코드와 사용자 자료는 보존했습니다. 기존 Vercel 운영 프로젝트는 새 main 커밋으로 재배포되었고, 별도 [시연 프로젝트](https://watchdogs-ztna-xdr-package-20261030.vercel.app/)도 READY 상태입니다. 기존 Supabase에는 전용 AI 호출 제한 테이블·함수만 추가했으며 기존 메모·사용자 데이터는 변경하지 않았습니다.
+
+**[설치 및 배포 안내](package/README.md)** · **[P1~P8 내부 점검](package/SELF-CHECK.md)** · **[구성도](package/ARCHITECTURE.md)** · **[구성도 SVG](package/ARCHITECTURE.svg)**
+
+내부 자동 검사와 GitHub Actions 검증은 수행했지만 **ALEPH 패키징 공식 P1~P8 통과는 아직 확인하지 못했습니다.** 방어전 41종 공식 사건별 결과도 여전히 미연동이며, 실제 SDP 집행·운영 AI 연동 성공을 주장하지 않습니다.
 
 ---
 
