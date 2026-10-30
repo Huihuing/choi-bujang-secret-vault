@@ -17,7 +17,7 @@ api/ai.js, api/threat-intel.js 모두 src/package-auth.mjs을 거쳐 기존 서�
 
 db/package-ai-quota.sql은 서버가 검증한 사용자 UUID를 기반으로 PostgreSQL에서 직렬화된 카운터를 증가시킨다. 설정: 4회/분, 20회/UTC일. Redis 또는 DB 없는 프로세스 메모리 제한은 서버리스 인스턴스 간 일관성이 없어 사용하지 않는다.
 
-서비스 역할로만 RPC 실행을 허용하고 anon/authenticated에는 실행 권한을 부여하지 않는다. RPC 또는 저장소가 실패하면 요청을 차단한다(503). 소진 시 HTTP 429 및 Retry-After를 반환한다. 동시성·실제 배포 환경 결과는 미확인이다. 호출 상한은 서버 비용을 무제한으로 방지하는 보호 장치이지 전체 비용 보장을 의미하지 않는다.
+DB 함수는 SECURITY INVOKER로 실행되며 서비스 역할로만 RPC 실행을 허용한다. PUBLIC/anon/authenticated는 EXECUTE 권한을 가지지 않고 테이블 RLS도 활성화한다. RPC 또는 저장소가 실패하면 요청을 차단한다(503). 소진 시 HTTP 429 및 Retry-After를 반환한다. 동시성·실제 배포 환경 결과는 미확인이다. 호출 상한은 서버 비용을 무제한으로 방지하는 보호 장치이지 전체 비용 보장을 의미하지 않는다.
 
 ## API 입력과 외부 통신
 

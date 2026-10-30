@@ -1,5 +1,7 @@
 -- Apply only after reviewing the intended Supabase project and backup.
 -- Enforced in PostgreSQL, not an in-memory serverless map.
+-- Security invoker + exclusive EXECUTE privilege for service_role.
+-- No existing user data or existing tables are modified.
 CREATE TABLE IF NOT EXISTS public.package_ai_quota (
   owner_id uuid PRIMARY KEY,
   minute_started_at timestamptz NOT NULL,
@@ -13,7 +15,7 @@ GRANT SELECT, INSERT, UPDATE ON public.package_ai_quota TO service_role;
 
 CREATE OR REPLACE FUNCTION public.package_ai_consume(p_owner_id uuid)
 RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER
+LANGUAGE plpgsql SECURITY INVOKER
 SET search_path = pg_catalog, public
 AS $$
 DECLARE
@@ -25,9 +27,6 @@ DECLARE
   v_minute_at timestamptz;
   v_retry integer;
 BEGIN
-  IF auth.role() IS DISTINCT FROM 'service_role' THEN
-    RAISE EXCEPTION 'not_authorized';
-  END IF;
   IF p_owner_id IS NULL THEN
     RAISE EXCEPTION 'invalid_owner';
   END IF;

@@ -118,6 +118,10 @@ test('package documents and server-side access decision files exist', async () =
   assert.ok(sql.includes('pg_advisory_xact_lock'));
   assert.ok(sql.includes('service_role'));
   assert.ok(sql.includes('REVOKE ALL ON FUNCTION'));
+  assert.ok(sql.includes('SECURITY INVOKER'));
+  assert.ok(!sql.includes('SECURITY DEFINER'));
+  assert.ok(!sql.includes('auth.role()'));
+  assert.ok(sql.includes('ENABLE ROW LEVEL SECURITY'));
 });
 
 test('only the two intended top-level package API functions were added', async () => {

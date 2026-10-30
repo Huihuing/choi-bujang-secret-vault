@@ -32,13 +32,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: node scripts/package-secret-check.mjs
       - run: npm run package:check
       - run: npm run decider:test
       - run: npm run test:r5
+      - run: npm run fixture:7
+      - run: npm run detect:test
+      - run: node --test test/stage10.test.mjs test/stage11.test.mjs test/stage12.test.mjs test/stage12-public.test.mjs test/judge-owner-identity.test.mjs test/watchdogs-site.test.mjs
+      - run: npm run test:r8
       - run: npm run xdr:test
       - run: npm run build -- --local
