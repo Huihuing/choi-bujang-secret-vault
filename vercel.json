@@ -13,5 +13,15 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/public-config",
+      "destination": "/api/war-room?__package_route=public-config"
+    },
+    {
+      "source": "/api/war-room-summary",
+      "destination": "/api/war-room?__package_route=war-room-summary"
+    }
   ]
 }

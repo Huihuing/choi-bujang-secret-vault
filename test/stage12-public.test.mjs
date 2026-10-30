@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {publicOperationsResponse} from '../api/war-room-summary.js';
+import {publicOperationsResponse} from '../src/package-war-room-summary.mjs';
 
 const observed={
  observed_at:'2026-10-13T06:25:58.000+00:00',
@@ -77,7 +77,7 @@ test('public aggregate RPC is service-role-only and does not select private note
  assert.match(sql,/GRANT EXECUTE ON FUNCTION public.stage12_public_operational_snapshot\(\) TO service_role/);
  assert.ok(!sql.includes('FROM public.notes'));
  assert.ok(sql.includes('public.stage10_policy_preview()'));
- const api=await readFile(new URL('../api/war-room-summary.js',import.meta.url),'utf8');
+ const api=await readFile(new URL('../src/package-war-room-summary.mjs',import.meta.url),'utf8');
  assert.ok(api.includes("req.method!=='GET'"));
  assert.ok(api.includes("Cache-Control','no-store'"));
  assert.ok(api.includes("stage12_public_operational_snapshot"));

@@ -37,3 +37,5 @@ if (!process.argv.includes('--local')) {
     `${JSON.stringify(identity, null, 2)}\n`, 'utf8');
   console.log('배포 저장소·커밋·주소를 public/aleph.json에 기록했습니다.');
 }
+
+

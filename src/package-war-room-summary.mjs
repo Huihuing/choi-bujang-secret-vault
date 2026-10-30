@@ -1,6 +1,6 @@
 import {createClient} from '@supabase/supabase-js';
 import config from '../aleph.config.json' with {type:'json'};
-import {RULE_IDS} from '../src/decider.mjs';
+import {RULE_IDS} from './decider.mjs';
 
 // Public aggregate-only evidence. No user ID, note contents, tokens,
 // credential identifiers, device IDs, IPs or raw event rows leave the server.
