@@ -12,6 +12,10 @@ on:
       - 'db/package-ai-quota.sql'
       - 'test/package.test.mjs'
       - 'package.json'
+      - 'package-lock.json'
+      - 'vercel.json'
+      - 'scripts/package-secret-check.mjs'
+      - 'supabase/migrations/**'
       - '.github/workflows/package-check.yml'
   pull_request:
     paths:
@@ -49,3 +53,28 @@ jobs:
       - run: npm run test:r8
       - run: npm run xdr:test
       - run: npm run build -- --local
+      - name: Check package demo HTTP from GitHub runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://watchdogs-ztna-xdr-package-20261030.vercel.app"
+          check() {
+            path="$1"
+            expected="$2"
+            actual=""
+            for i in 1 2 3; do
+              actual="$(curl --location --silent --show-error \
+                --max-time 12 --output /dev/null --write-out '%{http_code}' \
+                "$base$path" || true)"
+              if [ "$actual" = "$expected" ]; then
+                echo "PASS $path: HTTP $actual"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "FAIL $path: got $actual, expected $expected" >&2
+            return 1
+          }
+          check "/" "200"
+          check "/api/ai" "401"
+          check "/api/threat-intel?cve=CVE-2021-44228" "401"

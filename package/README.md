@@ -13,7 +13,7 @@
 
 ## 새 환경에 배포하는 절차 (첫 화면과 비로그인 거부는 새 프로젝트에서 실측)
 
-1. 빈 작업 폴더에 이 저장소를 복제한다. Node.js 24.19.0을 권장한다.
+1. 빈 작업 폴더에 이 저장소를 복제한다. 로컬 검증 기준은 Node.js 24.19.0이며, Vercel serverless는 package.json의 Node 24.x 범위를 사용한다.
 2. 저장소 루트에서 npm ci, node scripts/package-secret-check.mjs, npm run package:check, npm run xdr:test, npm run build -- --local 을 실행한다. 테스트와 빌드는 운영 연동을 증명하지 않는다.
 3. Vercel에서 기존 운영 프로젝트와 별개인 새 프로젝트를 같은 저장소의 검토된 커밋으로 가져온다. Framework Preset=Other, Root Directory=저장소 루트, Build Command=npm run build, Output Directory=public을 설정한다. Hobby 무료 플랜의 서버리스 함수 상한 12개를 지키기 위해 기존의 공개 읽기용 /api/public-config 와 /api/war-room-summary를 한 기존 함수(api/war-room)에서 처리한다. vercel.json이 두 URL을 재작성하고 각 공용 핸들러를 호출한다. 신규 두 서버 함수 /api/ai 와 /api/threat-intel은 각각 독립적으로 유지되며 인증된 학생 JWT를 요구한다.
 4. 공개 첫 화면에 어떤 개인정보도 노출되지 않는지 확인한다. Vercel Authentication/Deployment Protection 상태와 비로그인 첫 화면의 HTTP 응답을 별도로 실측하고 기록한다. 기존 프로젝트의 보호 설정을 임의로 완화하지 않는다.

@@ -14,7 +14,7 @@
     "xdr:test": "node --test test/brute-force.test.mjs test/web-injection.test.mjs test/known-cve.test.mjs test/persistence.test.mjs test/privilege.test.mjs test/exfiltration.test.mjs",
     "package:check": "node --test test/package.test.mjs"
   },
-  "engines": { "node": ">=22" },
+  "engines": { "node": "24.x" },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2",
     "jose": "6.2.12"
