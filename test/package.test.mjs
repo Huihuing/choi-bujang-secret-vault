@@ -130,3 +130,21 @@ test('only the two intended top-level package API functions were added', async (
   ];
   assert.deepEqual(files, [...original, 'ai.js', 'threat-intel.js'].sort());
 });
+
+
+test('Hobby compact routing keeps both authenticated endpoints on the existing function', async () => {
+  const { default: dispatcher } = await import('../api/war-room-summary.js');
+  for (const path of ['ai', 'threat-intel']) {
+    const res = response();
+    await dispatcher({ method: 'GET', query: { __package_route: path }, headers: {} }, res);
+    assert.equal(res.code, 401, path);
+    assert.equal(res.body.error, 'authentication_required');
+  }
+  const vercel = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
+  assert.equal(vercel.rewrites.length, 2);
+  assert.ok(vercel.rewrites.every(entry =>
+    entry.destination.startsWith('/api/war-room-summary?__package_route=')));
+  const build = await readFile(new URL('../scripts/build-public.mjs', import.meta.url), 'utf8');
+  assert.ok(build.includes("process.env.PACKAGE_HOBBY_COMPACT === '1'"));
+  assert.ok(build.includes('PACKAGE_COMPACT_WRAPPER_MISMATCH'));
+});

@@ -15,7 +15,7 @@
 
 1. 빈 작업 폴더에 이 저장소를 복제한다. Node.js 24.19.0을 권장한다.
 2. 저장소 루트에서 npm ci, npm run package:check, npm run xdr:test, npm run build -- --local 을 실행한다. 테스트와 빌드는 운영 연동을 증명하지 않는다.
-3. Vercel에서 기존 운영 프로젝트와 별개인 새 프로젝트를 같은 저장소의 검토된 커밋으로 가져온다. Framework Preset=Other, Root Directory=저장소 루트, Build Command=npm run build, Output Directory=public을 설정한다.
+3. Vercel에서 기존 운영 프로젝트와 별개인 새 프로젝트를 같은 저장소의 검토된 커밋으로 가져온다. Framework Preset=Other, Root Directory=저장소 루트, Build Command=npm run build, Output Directory=public을 설정한다. Hobby 무료 플랜은 서버리스 함수가 12개로 제한되므로 새 데모 프로젝트에만 비밀이 아닌 환경 변수 PACKAGE_HOBBY_COMPACT=1을 추가한다. 기존 12개 기존 API와 함께 신규 두 API 경로를 하나의 기존 함수(api/war-room-summary)에서 인증된 핸들러로 분기한다. 실제 HTTP 경로는 여전히 /api/ai 와 /api/threat-intel이다.
 4. 공개 첫 화면에 어떤 개인정보도 노출되지 않는지 확인한다. Vercel Authentication/Deployment Protection 상태와 비로그인 첫 화면의 HTTP 응답을 별도로 실측하고 기록한다. 기존 프로젝트의 보호 설정을 임의로 완화하지 않는다.
 5. 별도 검증용 Supabase 프로젝트에서 먼저 db/package-ai-quota.sql의 객체와 권한을 검토한다. 실제 운영 DB에 바로 적용하지 않는다. 서버에서만 SUPABASE_URL, SUPABASE_SECRET_KEY를 설정한다. SUPABASE_PUBLISHABLE_KEY는 공개 로그인용이며 비밀 서비스 키와 다르다.
 6. AI 기능을 실제로 켜야 하는 경우에만 Vercel 서버 환경 변수 OPENAI_API_KEY를 직접 설정한다. 예산·호출 과금·사용자별 4회/분 및 20회/UTC일 제한을 확인한다. OpenAI 키가 없으면 AI 요청은 503(미설정)으로 실패한다.

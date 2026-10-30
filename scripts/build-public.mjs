@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { deploymentIdentity } from './deployment-identity.mjs';
 import {generateIcons} from './create-icons.mjs';
@@ -36,4 +36,24 @@ if (!process.argv.includes('--local')) {
   await writeFile(resolve(root, 'public', 'aleph.json'),
     `${JSON.stringify(identity, null, 2)}\n`, 'utf8');
   console.log('배포 저장소·커밋·주소를 public/aleph.json에 기록했습니다.');
+}
+
+
+// Hobby free plan supports at most 12 Vercel functions. Opt-in only for the
+// separate package demonstration project, never for the existing production app.
+// The two thin API entrypoints are removed in the ephemeral build worktree;
+// vercel.json rewrites point to the existing war-room-summary entrypoint.
+// Shared handler modules in src/ retain the exact authentication / quota logic.
+if (process.env.PACKAGE_HOBBY_COMPACT === '1') {
+  const wrappers = [
+    ['ai.js', "export { default } from '../src/package-ai-handler.mjs';"],
+    ['threat-intel.js', "export { default } from '../src/package-threat-intel-handler.mjs';"],
+  ];
+  for (const [file, expected] of wrappers) {
+    const path = resolve(root, 'api', file);
+    const actual = (await readFile(path, 'utf8')).trim();
+    if (actual !== expected) throw new Error('PACKAGE_COMPACT_WRAPPER_MISMATCH: ' + file);
+    await rm(path);
+  }
+  console.log('Hobby package: two thin API wrappers merged into existing authenticated dispatcher.');
 }

@@ -28,3 +28,5 @@ db/package-ai-quota.sql은 서버가 검증한 사용자 UUID를 기반으로 Po
 ## 패키징 자체 점검 주의
 
 실제 secret scan은 모든 Git 이력, 서버·브라우저 빌드 산출물, Vercel 프로젝트 환경/배포 설정과 연결해 별도로 수행해야 한다. 이 문서는 비밀이 없다는 공식 보증이 아니다.
+
+Hobby용 PACKAGE_HOBBY_COMPACT=1 설정은 별도 시연 프로젝트의 빌드 시점에만 두 API 진입점 파일을 제거한다. API 경로는 vercel.json rewrite로 기존 함수에 전달하고 src/의 인증된 핸들러를 호출한다. 원래 API/보안 정책은 우회하지 않는다. 실제 라우팅과 외부 검증은 배포 후 확인한다.

@@ -7,7 +7,7 @@
 | --- | --- | --- |
 | P1 | package/README.md, SELF-CHECK.md, ARCHITECTURE.md, RULES.md, THREAT-INTEL.md, SECURITY.md, 그림 SVG 준비 | 심판의 필수 파일명·구조 검사 미확인 |
 | P2 | 새 서버 코드의 키는 process.env에서만 조회. 공개 프런트는 SUPABASE_PUBLISHABLE_KEY만 사용 | 전체 소스·Git 이력·배포 빌드·실제 브라우저 응답에서 비밀값 스캔 미완료 |
-| P3 | 패키지용 신규 HTTP 함수는 api/ai.js, api/threat-intel.js 2개. 모두 검증된 학생 JWT를 요구하고 비로그인은 401 | 실제 배포의 유효/무효 JWT 및 권한 테스트 미완료 |
+| P3 | 패키지용 신규 HTTP 함수 소스는 api/ai.js, api/threat-intel.js 2개. Hobby 빌드에서는 opt-in으로 두 얇은 함수 진입점을 기존 api/war-room-summary로 합쳐 12개 물리 함수만 배포한다. 두 경로 모두 검증된 학생 JWT를 요구하고 비로그인은 401 | 실제 배포의 유효/무효 JWT 및 권한 테스트 미완료 |
 | P4 | API AI 라우트는 DB RPC package_ai_consume으로 인증된 사용자별 4회/분·20회/UTC일 제한; DB 실패 시 차단 | SQL 반영·여러 서버 인스턴스 동시성·운영 상한 실측 미완료 |
 | P5 | threat-intel API는 고정된 NVD CVE API / CISA KEV JSON을 서버에서 조회, 각 원천의 fetchedAt 및 원천 갱신 시각 기록 | 실제 외부 응답과 실패 시 표시 실측 미완료 |
 | P6 | src/decider.mjs의 엔진 검증 사실 및 API의 서버 검증 로그인 기준 유지. 프런트가 정책 결정을 하지 않도록 새 API는 읽기/설명만 수행 | 전체 브라우저 코드와 새로운 시연 프로젝트의 요청 경로 재점검 필요 |

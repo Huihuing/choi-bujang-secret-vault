@@ -13,5 +13,15 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/ai",
+      "destination": "/api/war-room-summary?__package_route=ai"
+    },
+    {
+      "source": "/api/threat-intel",
+      "destination": "/api/war-room-summary?__package_route=threat-intel"
+    }
   ]
 }
