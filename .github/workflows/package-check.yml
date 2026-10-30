@@ -1,0 +1,44 @@
+name: P1-P8 package candidate checks
+
+on:
+  push:
+    branches:
+      - 'feat/ztna-xdr-package-*'
+    paths:
+      - 'package/**'
+      - 'api/ai.js'
+      - 'api/threat-intel.js'
+      - 'src/package-*.mjs'
+      - 'db/package-ai-quota.sql'
+      - 'test/package.test.mjs'
+      - 'package.json'
+      - '.github/workflows/package-check.yml'
+  pull_request:
+    paths:
+      - 'package/**'
+      - 'api/ai.js'
+      - 'api/threat-intel.js'
+      - 'src/package-*.mjs'
+      - 'db/package-ai-quota.sql'
+      - 'test/package.test.mjs'
+      - 'package.json'
+      - '.github/workflows/package-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run package:check
+      - run: npm run decider:test
+      - run: npm run test:r5
+      - run: npm run xdr:test
+      - run: npm run build -- --local

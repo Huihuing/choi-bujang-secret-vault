@@ -11,11 +11,10 @@
     "detect:test": "node scripts/detect-test.mjs",
     "fixture:7": "node scripts/fixture-7.mjs",
     "xdr:run": "node scripts/xdr-run.mjs",
-    "xdr:test": "node --test test/brute-force.test.mjs test/web-injection.test.mjs test/known-cve.test.mjs test/persistence.test.mjs test/privilege.test.mjs test/exfiltration.test.mjs"
+    "xdr:test": "node --test test/brute-force.test.mjs test/web-injection.test.mjs test/known-cve.test.mjs test/persistence.test.mjs test/privilege.test.mjs test/exfiltration.test.mjs",
+    "package:check": "node --test test/package.test.mjs"
   },
-  "engines": {
-    "node": ">=22"
-  },
+  "engines": { "node": ">=22" },
   "dependencies": {
     "@supabase/supabase-js": "2.117.2",
     "jose": "6.2.12"
