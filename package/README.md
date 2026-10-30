@@ -17,7 +17,7 @@
 2. 저장소 루트에서 npm ci, node scripts/package-secret-check.mjs, npm run package:check, npm run xdr:test, npm run build -- --local 을 실행한다. 테스트와 빌드는 운영 연동을 증명하지 않는다.
 3. Vercel에서 기존 운영 프로젝트와 별개인 새 프로젝트를 같은 저장소의 검토된 커밋으로 가져온다. Framework Preset=Other, Root Directory=저장소 루트, Build Command=npm run build, Output Directory=public을 설정한다. Hobby 무료 플랜의 서버리스 함수 상한 12개를 지키기 위해 기존의 공개 읽기용 /api/public-config 와 /api/war-room-summary를 한 기존 함수(api/war-room)에서 처리한다. vercel.json이 두 URL을 재작성하고 각 공용 핸들러를 호출한다. 신규 두 서버 함수 /api/ai 와 /api/threat-intel은 각각 독립적으로 유지되며 인증된 학생 JWT를 요구한다.
 4. 공개 첫 화면에 어떤 개인정보도 노출되지 않는지 확인한다. Vercel Authentication/Deployment Protection 상태와 비로그인 첫 화면의 HTTP 응답을 별도로 실측하고 기록한다. 기존 프로젝트의 보호 설정을 임의로 완화하지 않는다.
-5. 별도 검증용 Supabase 프로젝트에서 먼저 db/package-ai-quota.sql의 객체와 권한을 검토한다. 실제 운영 DB에 바로 적용하지 않는다. 서버에서만 SUPABASE_URL, SUPABASE_SECRET_KEY를 설정한다. SUPABASE_PUBLISHABLE_KEY는 공개 로그인용이며 비밀 서비스 키와 다르다.
+5. 기존 Supabase 프로젝트에 한해 비파괴형 `package_ai_quota` 테이블과 `package_ai_consume` 함수를 2026-10-30 마이그레이션으로 추가했다. 서비스 역할만 실행 가능, RLS 활성, 기존 계정/메모 데이터는 변경하지 않았다. 분당 4회·UTC 하루 20회 제한은 합성 사용자 2명에 대한 트랜잭션 및 롤백 검사로 확인했다. **다른 Supabase 프로젝트를 쓰는 새 설치**는 `supabase/migrations/20261030084225_package_ai_quota_server_side_limit.sql`을 별도로 적용하고 권한을 검증해야 한다. 서버에서만 SUPABASE_URL, SUPABASE_SECRET_KEY를 설정한다. SUPABASE_PUBLISHABLE_KEY는 공개 로그인용이며 비밀 서비스 키와 다르다.
 6. AI 기능을 실제로 켜야 하는 경우에만 Vercel 서버 환경 변수 OPENAI_API_KEY를 직접 설정한다. 예산·호출 과금·사용자별 4회/분 및 20회/UTC일 제한을 확인한다. OpenAI 키가 없으면 AI 요청은 503(미설정)으로 실패한다.
 7. NVD_API_KEY는 필요할 때만 서버에 설정한다. /api/threat-intel 은 NVD·CISA KEV의 현재 조회 결과를 보여 주며 두 원천이 실패하면 503, 한 원천 실패 시 partial 상태로 구분한다.
 8. 시험 계정의 검증된 JWT를 이용해 /api/ai 와 /api/threat-intel 을 확인한다. 비로그인 요청이 401인지 반드시 먼저 확인하고, 인증 실패·AI 제공자 오류·호출 제한·외부 원천 장애를 각각 구분한다.
@@ -38,5 +38,5 @@ npm run build -- --local
 
 - ALEPH SDP 원천 엔진, 실제 XDR 대응 집행, 공식 41종 총공세 판정은 이 GitHub 소스만으로 증명되지 않는다.
 - on-client 보안 Agent(기본 포트 5189)와 Windows 로컬 측정기(5191)는 Vercel에 배포되는 Node 서버리스 함수가 아니다.
-- 이 브랜치의 API 2개는 기존 앱에 영향을 주지 않는 별도 인증 API로 작성했다. UI에서 실제 사용하고 있는지, 새 Vercel 프로젝트에서 작동하는지는 아직 검증 전이다.
+- 새 Vercel에서는 첫 화면 HTTP 200과 새 API 비로그인 401을 실측했다. 별도 데모에는 운영 로그인/서버 비밀값이 설정되지 않아 인증 사용자 API와 실제 외부 AI/NVD/KEV 연결은 미확인이다. 기존 로그인/SDP 운영 연동을 주장하지 않는다.
 - Supabase 서버 비밀키, AI 제공자 키, 실제 사건 데이터는 패키지에 넣지 않는다.

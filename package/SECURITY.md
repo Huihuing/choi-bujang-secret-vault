@@ -30,3 +30,5 @@ DB 함수는 SECURITY INVOKER로 실행되며 서비스 역할로만 RPC 실행�
 실제 secret scan은 모든 Git 이력, 서버·브라우저 빌드 산출물, Vercel 프로젝트 환경/배포 설정과 연결해 별도로 수행해야 한다. 이 문서는 비밀이 없다는 공식 보증이 아니다.
 
 Hobby 무료 플랜에 맞춰 기존 공개 읽기 API 두 개(/api/public-config, /api/war-room-summary)는 vercel.json에서 기존 api/war-room 함수로 재작성한다. 공개 요청 분기는 인증 검사를 통과시키지 않으며 각각 원래의 공개 데이터만 반환한다. 학생 데이터 접근과 신규 AI/침해 정보 API의 JWT 인증은 기존대로 유지한다.
+
+2026-10-30 실제 DB 적용: `package_ai_consume` SECURITY INVOKER, `service_role` 전용 EXECUTE/테이블 grant, RLS 활성 및 anon/authenticated 접근 불가를 확인했다. 테스트용 UUID 2건은 ROLLBACK 이후 남지 않았다. 외부 사용자 JWT로 호출한 결과는 아직 확인하지 않았다.

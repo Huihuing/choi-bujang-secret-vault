@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import aiHandler from '../api/ai.js';
+import { createAiHandler } from '../src/package-ai-handler.mjs';
 import threatHandler from '../api/threat-intel.js';
+import { createThreatIntelHandler } from '../src/package-threat-intel-handler.mjs';
 import {
   consumeQuota, explanationPayload, extractExplanation, parseExplanation,
 } from '../src/package-ai.mjs';
@@ -156,4 +158,68 @@ test('Hobby server count stays within 12 and public read-only routes remain sepa
     .filter(e => e.isFile() && e.name.endsWith('.js'));
   // Plus two existing nested item handlers = 12 Vercel functions on Hobby.
   assert.equal(files.length + 2, 12);
+});
+
+
+test('authenticated AI handler enforces quota and never makes an upstream request on exhaustion', async () => {
+  let called = 0;
+  const authenticated = async () => ({ supabase: {}, userId: '00000000-0000-4000-8000-000000000001' });
+  const handler = createAiHandler({
+    authenticate: authenticated, keyProvider: () => 'test-only-fake-key',
+    quotaCheck: async () => ({ state: 'limited', retryAfterSeconds: 29 }),
+    fetcher: async () => { called++; throw new Error('must not call provider'); },
+  });
+  const res = response();
+  await handler({ method: 'POST', body: { summary: 'Multiple failed logins were detected.', ruleIds: ['test'] } }, res);
+  assert.equal(res.code, 429);
+  assert.equal(res.headers['Retry-After'], '29');
+  assert.equal(res.body.error, 'ai_quota_exceeded');
+  assert.equal(called, 0);
+});
+
+test('authenticated AI handler returns advisory explanation without exposing provider secrets', async () => {
+  const calls = [];
+  const handler = createAiHandler({
+    authenticate: async () => ({ supabase: {}, userId: '00000000-0000-4000-8000-000000000001' }),
+    keyProvider: () => 'test-only-fake-key',
+    quotaCheck: async () => ({ state: 'allowed' }),
+    fetcher: async (url, options) => {
+      calls.push({ url, options });
+      return { ok: true, json: async () => ({ output: [{ content: [{ type: 'output_text', text: 'Verify the evidence first.' }] }] }) };
+    },
+  });
+  const res = response();
+  await handler({ method: 'POST', body: { summary: 'Multiple failed logins were detected.', ruleIds: ['rule_1'] } }, res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body.kind, 'advisory_only');
+  assert.equal(res.body.explanation, 'Verify the evidence first.');
+  assert.ok(!JSON.stringify(res.body).includes('test-only-fake-key'));
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].options.headers.Authorization, 'Bearer test-only-fake-key');
+  assert.equal(JSON.parse(calls[0].options.body).store, false);
+  assert.equal(JSON.parse(calls[0].options.body).max_output_tokens, 256);
+});
+
+test('authenticated threat intel handler preserves partial/unavailable source states', async () => {
+  const known = [];
+  const handler = createThreatIntelHandler({
+    authenticate: async () => ({ userId: 'test', supabase: {} }),
+    keyProvider: () => '',
+    lookup: async (id) => {
+      known.push(id);
+      return { schema: 'watchdogs.threat-intel.v1', state: 'partial', sources: {
+        nvd: { available: true }, cisaKev: { available: false, knownExploited: null },
+      } };
+    },
+  });
+  const bad = response();
+  await handler({ method: 'GET', query: { cve: 'not-a-cve' } }, bad);
+  assert.equal(bad.code, 400);
+  assert.equal(known.length, 0);
+  const res = response();
+  await handler({ method: 'GET', query: { cve: 'CVE-2021-44228' } }, res);
+  assert.equal(res.code, 200);
+  assert.equal(res.body.state, 'partial');
+  assert.equal(res.body.sources.cisaKev.knownExploited, null);
+  assert.deepEqual(known, ['CVE-2021-44228']);
 });
