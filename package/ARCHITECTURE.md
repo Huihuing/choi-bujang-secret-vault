@@ -25,7 +25,7 @@ flowchart LR
 2. 인증 및 DB: src/verify-login.mjs에서 검증된 Supabase 학생 토큰·별도 ALEPH 심판 토큰을 구분한다. api/notes*.js는 서버에서 소유권과 기기 승인 여부를 검사한다. 브라우저 값만으로 권한을 결정하지 않는다.
 3. 기존 ZTNA: src/decider.mjs의 RULE_IDS 4개와 서버 소유권 검사. 정확한 엔진 검증 필드 기반으로 allow/deny/step_up을 만든다. 운영 정책 원문·실제 집행 엔진은 이 저장소와 별개다.
 4. XDR: src/xdr-decider.mjs가 기존 decide()를 감싸고 XDR 추가 거부 후보 규칙을 읽는다. 원본 실제 이벤트 → 집행 연결은 제공 엔진 지원에 의존한다. 실험 fixture는 실사건 아님.
-5. 패키지 서버 확장: api/ai.js, api/threat-intel.js만 신규 HTTP 함수. 두 API 모두 src/package-auth.mjs에서 검증된 학생 신원을 요구한다.
+5. 패키지 서버 확장: api/ai.js, api/threat-intel.js만 신규 HTTP 함수. 두 API 모두 src/package-auth.mjs에서 검증된 학생 신원을 요구한다. 무료 플랜의 12개 함수 상한에 맞추기 위해 기존 공개 읽기 API 2개는 src/package-public-config.mjs, src/package-war-room-summary.mjs로 옮기고, 원래 URL은 api/war-room.js로 재작성해 기존 공개 응답 규격을 유지한다.
 6. 호출 제한: DB의 package_ai_consume RPC로 이용자 UUID별 호출 수를 원자적으로 갱신한다. 실제 DB가 미설치라면 AI 호출은 거부된다.
 7. 침해 정보: src/package-threat-intel.mjs가 고정 NVD와 CISA KEV를 조회하고 각 출처의 성공/실패, 확인 시각을 별도 반환한다.
 8. Windows 로컬: on-client/src/server.mjs, on-client/student/pc-monitor/server.mjs 및 collect.ps1은 사용자의 PC에서 실행한다. Vercel에서 원격 Windows 기기를 직접 측정하는 서버가 아니다.

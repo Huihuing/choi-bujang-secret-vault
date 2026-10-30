@@ -29,4 +29,4 @@ db/package-ai-quota.sql은 서버가 검증한 사용자 UUID를 기반으로 Po
 
 실제 secret scan은 모든 Git 이력, 서버·브라우저 빌드 산출물, Vercel 프로젝트 환경/배포 설정과 연결해 별도로 수행해야 한다. 이 문서는 비밀이 없다는 공식 보증이 아니다.
 
-Hobby용 PACKAGE_HOBBY_COMPACT=1 설정은 별도 시연 프로젝트의 빌드 시점에만 두 API 진입점 파일을 제거한다. API 경로는 vercel.json rewrite로 기존 함수에 전달하고 src/의 인증된 핸들러를 호출한다. 원래 API/보안 정책은 우회하지 않는다. 실제 라우팅과 외부 검증은 배포 후 확인한다.
+Hobby 무료 플랜에 맞춰 기존 공개 읽기 API 두 개(/api/public-config, /api/war-room-summary)는 vercel.json에서 기존 api/war-room 함수로 재작성한다. 공개 요청 분기는 인증 검사를 통과시키지 않으며 각각 원래의 공개 데이터만 반환한다. 학생 데이터 접근과 신규 AI/침해 정보 API의 JWT 인증은 기존대로 유지한다.

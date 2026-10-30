@@ -125,26 +125,31 @@ test('only the two intended top-level package API functions were added', async (
   const files = entries.filter(e => e.isFile() && e.name.endsWith('.js')).map(e => e.name).sort();
   const original = [
     'app-request.js', 'device.js', 'instructor-notices.js', 'notes.js',
-    'public-config.js', 'recovery-policy.js', 'restore.js',
-    'war-room-check.js', 'war-room-summary.js', 'war-room.js',
+    'recovery-policy.js', 'restore.js',
+    'war-room-check.js', 'war-room.js',
   ];
   assert.deepEqual(files, [...original, 'ai.js', 'threat-intel.js'].sort());
 });
 
 
-test('Hobby compact routing keeps both authenticated endpoints on the existing function', async () => {
-  const { default: dispatcher } = await import('../api/war-room-summary.js');
-  for (const path of ['ai', 'threat-intel']) {
-    const res = response();
-    await dispatcher({ method: 'GET', query: { __package_route: path }, headers: {} }, res);
-    assert.equal(res.code, 401, path);
-    assert.equal(res.body.error, 'authentication_required');
-  }
+
+test('Hobby server count stays within 12 and public read-only routes remain separate', async () => {
+  const { default: dispatcher } = await import('../api/war-room.js');
   const vercel = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
-  assert.equal(vercel.rewrites.length, 2);
-  assert.ok(vercel.rewrites.every(entry =>
-    entry.destination.startsWith('/api/war-room-summary?__package_route=')));
-  const build = await readFile(new URL('../scripts/build-public.mjs', import.meta.url), 'utf8');
-  assert.ok(build.includes("process.env.PACKAGE_HOBBY_COMPACT === '1'"));
-  assert.ok(build.includes('PACKAGE_COMPACT_WRAPPER_MISMATCH'));
+  assert.deepEqual(vercel.rewrites, [
+    { source: '/api/public-config', destination: '/api/war-room?__package_route=public-config' },
+    { source: '/api/war-room-summary', destination: '/api/war-room?__package_route=war-room-summary' },
+  ]);
+  const publicConfig = response();
+  await dispatcher({ method: 'GET', query: { __package_route: 'public-config' }, headers: {} }, publicConfig);
+  assert.equal(publicConfig.code, 503);
+  assert.equal(publicConfig.body.error, 'public_auth_not_configured');
+  const publicSummary = response();
+  await dispatcher({ method: 'GET', query: { __package_route: 'war-room-summary' }, headers: {} }, publicSummary);
+  assert.equal(publicSummary.code, 503);
+  assert.equal(publicSummary.body.error, 'operations_evidence_unavailable');
+  const files = (await readdir(new URL('../api', import.meta.url), { withFileTypes: true }))
+    .filter(e => e.isFile() && e.name.endsWith('.js'));
+  // Plus two existing nested item handlers = 12 Vercel functions on Hobby.
+  assert.equal(files.length + 2, 12);
 });

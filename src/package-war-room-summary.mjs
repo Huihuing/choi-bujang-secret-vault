@@ -1,8 +1,6 @@
 import {createClient} from '@supabase/supabase-js';
-import packageAiHandler from '../src/package-ai-handler.mjs';
-import packageThreatIntelHandler from '../src/package-threat-intel-handler.mjs';
 import config from '../aleph.config.json' with {type:'json'};
-import {RULE_IDS} from '../src/decider.mjs';
+import {RULE_IDS} from './decider.mjs';
 
 // Public aggregate-only evidence. No user ID, note contents, tokens,
 // credential identifiers, device IDs, IPs or raw event rows leave the server.
@@ -45,11 +43,6 @@ function respond(res,status,body){
  return res.json(body);
 }
 export default async function handler(req,res){
- // The Hobby packaging build removes only the two thin API entrypoints.
- // Both rewrite destinations dispatch to the same authenticated handlers.
- if(req.query?.__package_route==='ai')return packageAiHandler(req,res);
- if(req.query?.__package_route==='threat-intel')return packageThreatIntelHandler(req,res);
-
  // Vercel's protected deployment links may append routing/query metadata.
  // This function is already bound to /api/war-room-summary by file routing.
  // Do not authorize based on user-controlled query strings.

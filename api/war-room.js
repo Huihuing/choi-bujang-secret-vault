@@ -1,4 +1,6 @@
 import {createClient} from '@supabase/supabase-js';
+import publicConfigHandler from '../src/package-public-config.mjs';
+import publicSummaryHandler from '../src/package-war-room-summary.mjs';
 import config from '../aleph.config.json' with {type:'json'};
 import {createLoginVerifier} from '../src/verify-login.mjs';
 import {RULE_IDS} from '../src/decider.mjs';
@@ -19,6 +21,11 @@ function send(res,status,body){
  return res.json(body);
 }
 export default async function handler(req,res){
+ // Two previously public read-only routes share this Vercel function on Hobby.
+ // The original URL contracts and access controls remain in their own handlers.
+ if(req.query?.__package_route==='public-config')return publicConfigHandler(req,res);
+ if(req.query?.__package_route==='war-room-summary')return publicSummaryHandler(req,res);
+
  if(req.method!=='GET'||req.url!=='/api/war-room')
   return send(res,405,{error:'invalid_operations_request'});
  const url=process.env.SUPABASE_URL,key=process.env.SUPABASE_SECRET_KEY;
